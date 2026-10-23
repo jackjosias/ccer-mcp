@@ -2,9 +2,10 @@
 
 **Règle permanente du propriétaire, valable dans toute conversation future.**
 ChatGPT GPT-6 est le réalisateur. Toutes les modifications de vidéo doivent être
-faites **visiblement dans la fenêtre Concat Desktop** (souris, clavier,
-sélection, glisser-déposer, menus, timeline, export). Le propriétaire doit
-voir les gestes sur son écran et pouvoir les commenter ou corriger entre actions.
+faites **visiblement dans une session Concat isolée** (souris, clavier,
+sélection, glisser-déposer, menus, timeline, export). L'utilisateur doit
+pouvoir observer cette session dans un visualiseur qu'il choisit, sans
+interruption de son travail dans Antigravity, VLC ou une autre application.
 
 ## Protection dans le code (pas seulement un prompt)
 
@@ -25,7 +26,9 @@ via `Gateway`, qui n'est PAS exposé par le tunnel ChatGPT.
 1. Faire `ccer_preflight` puis `ccer_desktop_status`.
 2. Faire `ccer_desktop_capture` **avant chaque geste**. La capture doit
    dater de moins de 75 secondes et correspondre à la fenêtre ciblée.
-3. Faire une seule action réelle `ccer_desktop_act`, avec
+3. Avant toute action, vérifier `inputReady=true` dans `ccer_desktop_status`.
+   Si l'affichage est partagé avec l'utilisateur, refuser tout geste.
+   Faire une seule action réelle `ccer_desktop_act`, avec
    `expectedWindowId` exact, `confirm=true` et `withCapture=true` :
    `click`, `drag`, `scroll`, `key`, `type`.
 4. Examiner l'image retournée **après chaque geste** ; reconnaître les
@@ -41,8 +44,8 @@ Ne jamais basculer silencieusement sur le moteur headless.
 
 ## Visibilité et limites
 
-- `drag` déplace la souris physiquement en plusieurs petites étapes,
-  sur une durée visible. Les clics ont aussi une courte pause de stabilisation.
+- `drag` déplace uniquement le pointeur privé Xvfb, jamais la souris
+  physique de l'utilisateur. Les clics ont aussi une courte pause de stabilisation.
 - Les images sont des **captures successives**, et non un flux vidéo continu.
   Les sélecteurs « Importer des médias » de GTK sont désormais pris en charge
   **uniquement** après vérification stricte de leur classe, titre, PID et type.
@@ -60,9 +63,10 @@ python3 -m unittest discover -s tests -v
 python3 -m tests.live_direct_control
 ```
 
-Le test réel refuse la création headless, exige une capture avant, envoie
-`Escape`, renvoie une capture après et bloque une seconde action sans
-nouvelle observation.
+Le test refuse la création headless, permet les captures et bloque la
+touche `Escape` sur le bureau humain. Les gestes réels ne seront certifiés
+qu'après fonctionnement de Concat dans une session graphique isolée.
+Voir [isolation du focus et de la souris](CCER_FOCUS_ISOLATION.md).
 
 Après mise à jour du code, le propriétaire doit redémarrer uniquement son
 `tunnel-client run --profile ccer-direct` dans le même terminal, puis

@@ -3,7 +3,10 @@
 **RÈGLE PERMANENTE POUR CHATGPT : montage visuel manuel obligatoire.**
 Chaque action modifiant Concat exige une capture avant, un geste réel souris/clavier,
 puis une capture après. Aucune mutation headless n'est permise via le connecteur.
-Voir [CCER GUI-FIRST](docs/CCER_GUI_FIRST_CONTRACT.md).
+Voir [CCER GUI-FIRST](docs/CCER_GUI_FIRST_CONTRACT.md) et
+[isolation focus/souris](docs/CCER_FOCUS_ISOLATION.md).
+**Aucune action CCER n'est autorisée sur le focus ou le pointeur du bureau
+humain.** Le rendu Concat dans un Xvfb isolé reste bloqué par Vulkan/DRI3.
 
 A guarded, **local-first** MCP gateway for **Concat Desktop** on Linux, macOS and Windows.
 
@@ -141,7 +144,8 @@ The window must be verified by exact class/PID, all actions must carry a fresh
 window ID and `confirm=true`; this integration is **X11-only**.
 Detailed instructions and safeguards: [CCER Desktop Control](docs/CCER_DESKTOP_CONTROL.md).
 Live acceptance: `python3 -m tests.live_direct_control`.
-Le glisser-déposer déplace réellement la souris en plusieurs étapes visibles.
+Le glisser-déposer est limité au pointeur d'un Xvfb privé attesté ;
+il ne doit jamais déplacer la souris physique de l'utilisateur.
 Le dialogue GTK « Importer des médias » est pris en charge après vérification
 stricte de sa classe, de son titre et de son processus (aucune autre fenêtre).
 

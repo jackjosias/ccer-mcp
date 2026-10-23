@@ -15,6 +15,7 @@ import threading
 import time
 
 from .controls import PolicyError, confirm
+from .focus_isolation import require_private_input
 
 
 _GUI_LOCK = threading.RLock()
@@ -147,9 +148,16 @@ def _window():
 def status():
     """Read-only; no desktop activation."""
     with _GUI_LOCK:
+        try:
+            isolation = require_private_input()
+            input_ready = True
+        except PolicyError:
+            isolation = {"private": False, "reason": "FOCUS_ISOLATION_REQUIRED"}
+            input_ready = False
         return {"available": True, "window": _window(),
                 "captureScope": "verified Concat X11 window or exact media-import portal dialog only",
-                "controlScope": "verified target window-ID, xdotool focus checked",
+                "controlScope": "private-Xvfb-only; no physical desktop focus or cursor access",
+                "inputReady": input_ready, "isolation": isolation,
                 "requiresActionConfirmation": True,
                 "otherAppsAccessible": False}
 
@@ -212,21 +220,17 @@ def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
             raise PolicyError("Type supports only up to 500 printable characters")
         if action == "scroll" and (type(scroll) is not int or not -8 <= scroll <= 8 or scroll == 0):
             raise PolicyError("Scroll must be an integer between -8 and +8, excluding zero")
+        # This MUST precede even windowfocus/mousemove. Activating a real
+        # desktop window is categorically forbidden, even if the user agrees
+        # to a Concat editing mission. Only a distinct attested Xvfb pointer
+        # and input focus may be manipulated.
+        require_private_input()
         target_window = int(win["windowId"], 16)
-        _run(["xdotool", "windowactivate", "--sync", str(target_window)])
-        # Some X11 window-manager states expose _NET_ACTIVE_WINDOW=0 or do
-        # not support that property. Recover by explicitly requesting input
-        # focus, but NEVER assume success without verifying the exact window.
+        _run(["xdotool", "windowfocus", "--sync", str(target_window)])
         try:
-            active = int(_run(["xdotool", "getactivewindow"]).strip())
-        except (PolicyError, ValueError):
-            active = None
-        if active != target_window:
-            _run(["xdotool", "windowfocus", "--sync", str(target_window)])
-            try:
-                active = int(_run(["xdotool", "getwindowfocus"]).strip())
-            except (PolicyError, ValueError) as exc:
-                raise PolicyError("Concat input focus could not be verified") from exc
+            active = int(_run(["xdotool", "getwindowfocus"]).strip())
+        except (PolicyError, ValueError) as exc:
+            raise PolicyError("Concat virtual input focus could not be verified") from exc
         if active != target_window:
             raise PolicyError("Concat is not the focused window; aborting input")
         if action in ("click", "scroll", "drag"):

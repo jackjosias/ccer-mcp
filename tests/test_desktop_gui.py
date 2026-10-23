@@ -57,12 +57,13 @@ class DesktopGuiTests(unittest.TestCase):
                      target_x=70, target_y=100, duration=20)
         win.assert_called()
 
+    @patch("ccer.desktop_gui.require_private_input")
     @patch("ccer.desktop_gui.time.sleep")
     @patch("ccer.desktop_gui._run")
     @patch("ccer.desktop_gui._window", return_value=WINDOW)
-    def test_drag_produces_actual_stepwise_pointer_motion(self, win, run, sleep):
+    def test_drag_produces_actual_stepwise_pointer_motion(self, win, run, sleep, isolated):
         def reply(argv, **kwargs):
-            return "60817413" if argv[:2] == ["xdotool", "getactivewindow"] else ""
+            return "60817413" if argv[:2] == ["xdotool", "getwindowfocus"] else ""
         run.side_effect = reply
         result = interact(expected_window_id="0x3a00005", action="drag",
                           confirm_action=True, x=25, y=50,
@@ -74,12 +75,11 @@ class DesktopGuiTests(unittest.TestCase):
         self.assertGreaterEqual(sum(x[:2] == ["xdotool", "mousemove"] for x in calls), 10)
         self.assertTrue(result["actionSent"])
 
+    @patch("ccer.desktop_gui.require_private_input")
     @patch("ccer.desktop_gui._run")
     @patch("ccer.desktop_gui._window", return_value=WINDOW)
-    def test_x11_active_property_failure_can_recover_with_verified_focus(self, win, run):
+    def test_private_display_uses_only_scoped_focus(self, win, run, isolated):
         def reply(argv, **kwargs):
-            if argv[:2] == ["xdotool", "getactivewindow"]:
-                raise PolicyError("_NET_ACTIVE_WINDOW unavailable")
             if argv[:2] == ["xdotool", "getwindowfocus"]:
                 return "60817413"
             return ""
@@ -89,15 +89,16 @@ class DesktopGuiTests(unittest.TestCase):
         self.assertTrue(result["actionSent"])
         self.assertTrue(any(x.args[0][:2] == ["xdotool", "windowfocus"]
                             for x in run.call_args_list))
+        self.assertFalse(any(x.args[0][:2] == ["xdotool", "windowactivate"]
+                             for x in run.call_args_list))
 
+    @patch("ccer.desktop_gui.require_private_input")
     @patch("ccer.desktop_gui._run")
     @patch("ccer.desktop_gui._window", return_value=WINDOW)
-    def test_x11_fallback_refuses_focus_in_other_application(self, win, run):
+    def test_private_focus_refuses_other_window(self, win, run, isolated):
         def reply(argv, **kwargs):
-            if argv[:2] == ["xdotool", "getactivewindow"]:
-                raise PolicyError("_NET_ACTIVE_WINDOW unavailable")
             if argv[:2] == ["xdotool", "getwindowfocus"]:
-                return "2000"   # Different application window
+                return "2000"   # Different window
             return ""
         run.side_effect = reply
         with self.assertRaisesRegex(PolicyError, "not the focused window"):
@@ -105,6 +106,14 @@ class DesktopGuiTests(unittest.TestCase):
                      confirm_action=True, x=100, y=100, with_capture=False)
         self.assertFalse(any(x.args[0][:2] == ["xdotool", "click"]
                              for x in run.call_args_list))
+
+    @patch("ccer.desktop_gui._run")
+    @patch("ccer.desktop_gui._window", return_value=WINDOW)
+    def test_human_desktop_gui_input_denied_before_any_xdotool(self, window, commands):
+        with self.assertRaisesRegex(PolicyError, "FOCUS_ISOLATION_REQUIRED"):
+            interact(expected_window_id="0x3a00005", action="key",
+                     confirm_action=True, key="Escape", with_capture=False)
+        commands.assert_not_called()
 
     @patch("ccer.desktop_gui._run")
     def test_verified_media_import_dialog_can_be_selected(self, run):

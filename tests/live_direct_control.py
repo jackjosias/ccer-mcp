@@ -44,11 +44,28 @@ def main():
         info = request("tools/call", {"name": "ccer_desktop_status", "arguments": {}})
         if info.get("isError"):
             raise RuntimeError("Concat Desktop was not detected")
-        window_id = info["structuredContent"]["window"]["windowId"]
+        state = info["structuredContent"]
+        window_id = state["window"]["windowId"]
         before = request("tools/call", {"name": "ccer_desktop_capture",
                                         "arguments": {"maxWidth": 640}})
         if before.get("isError") or not any(b.get("type") == "image" for b in before["content"]):
             raise RuntimeError("Missing mandatory pre-action screenshot")
+        if not state.get("inputReady", False):
+            refused_key = request("tools/call", {"name": "ccer_desktop_act",
+                "arguments": {"expectedWindowId": window_id, "action": "key",
+                              "key": "Escape", "confirm": True, "withCapture": True}})
+            if not refused_key.get("isError"):
+                raise RuntimeError("A shared-desktop keyboard command was accepted!")
+            reason = str(refused_key.get("content", []))
+            if "FOCUS_ISOLATION_REQUIRED" not in reason:
+                raise RuntimeError("Unexpected focus isolation failure: " + reason[:400])
+            print(json.dumps({"tools": len(tools), "guiFirstEnforced": True,
+                  "headlessProjectCreationDenied": True,
+                  "sharedDisplayInputDenied": True,
+                  "readOnlyCaptureSucceeded": True,
+                  "isolatedConcatControl": "NOT_YET_AVAILABLE",
+                  "wcerInExecution": False}, indent=2))
+            return
         acted = request("tools/call", {"name": "ccer_desktop_act", "arguments": {
             "expectedWindowId": window_id, "action": "key",
             "key": "Escape", "confirm": True, "withCapture": True}})
