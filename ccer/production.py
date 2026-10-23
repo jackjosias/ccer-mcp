@@ -65,6 +65,9 @@ TOOLS = {
     "ccer_beat_candidates": schema("Find candidate audio impulses and tentative tempo without promising accurate BPM", {"file": PATH, "seconds": NUMBER, "sensitivity": NUMBER}, ["file"]),
     "ccer_cut_plan": schema("Propose timeline cut times near supplied onsets; never change projects", {"duration": NUMBER, "onsets": {"type": "array", "items": NUMBER}, "targetShot": NUMBER, "minShot": NUMBER, "maxShot": NUMBER, "maxCuts": {"type": "integer"}}, ["duration"]),
     "ccer_caption_timing_hint": schema("Estimate phrase timing from nonquiet audio regions, not word-level forced alignment", {"cues": {"type": "array", "items": {"type": "object"}}, "silenceReport": {"type": "object"}}, ["cues", "silenceReport"]),
+    "ccer_color_report": schema("Measure frame luminance/saturation via FFmpeg; no subjective or certified grading", {"file": PATH, "seconds": NUMBER, "sampleInterval": NUMBER}, ["file"]),
+    "ccer_reframe_export": schema("Export video with non-distorting cover crop or contain padding and optional focus", {"file": PATH, "output": PATH, "profile": STRING, "mode": STRING, "focusX": NUMBER, "focusY": NUMBER}, ["file", "output"]),
+    "ccer_transition_export": schema("Produce new two-shot MP4 with FFmpeg xfade transition; source audio not preserved", {"first": PATH, "second": PATH, "output": PATH, "profile": STRING, "sceneSeconds": NUMBER, "overlapSeconds": NUMBER, "kind": STRING, "music": PATH}, ["first", "second", "output"]),
 }
 
 
@@ -111,6 +114,23 @@ class Production:
             return self._dispatch(name, args)
 
     def _dispatch(self, name, a):
+        if name == "ccer_color_report":
+            from .visual_edit import color_report
+            return color_report(self.path(a["file"], must_exist=True),
+                                seconds=a.get("seconds", 30),
+                                interval=a.get("sampleInterval", 1))
+        if name == "ccer_reframe_export":
+            from .visual_edit import reframe
+            return reframe(self, a["file"], a["output"], profile=a.get("profile", "vertical-preview"),
+                           mode=a.get("mode", "cover"), focus_x=a.get("focusX", .5),
+                           focus_y=a.get("focusY", .5))
+        if name == "ccer_transition_export":
+            from .visual_edit import transition
+            return transition(self, a["first"], a["second"], a["output"],
+                              profile=a.get("profile", "landscape-preview"),
+                              scene_seconds=a.get("sceneSeconds", 2),
+                              overlap_seconds=a.get("overlapSeconds", .5),
+                              kind=a.get("kind", "fade"), music=a.get("music"))
         if name == "ccer_silence_map":
             from .rhythm import silence_map
             return silence_map(self.path(a["file"], must_exist=True),

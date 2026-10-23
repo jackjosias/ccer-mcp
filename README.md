@@ -5,7 +5,7 @@ A guarded, **local-first** MCP gateway for **Concat Desktop** on Linux, macOS an
 ## Implemented
 
 - Dynamically exposes every native Concat MCP tool (42 in the tested Concat 0.2.8).
-- Adds 33 CCER tools: governed editing, creative planning, local audio/video inspection, subtitle preparation, offline English speech, directed rendering, and complete studio production: preflight, project inspection, checkpoints, rollback, timeline QA, transactional batch editing, media probe, audio QA, export QA, mission status, safe recovery and tamper-evident audit.
+- Adds 36 CCER tools: governed editing, creative planning, local audio/video inspection, subtitle preparation, offline English speech, directed rendering, and complete studio production: preflight, project inspection, checkpoints, rollback, timeline QA, transactional batch editing, media probe, audio QA, export QA, mission status, safe recovery and tamper-evident audit.
 - Uses the **same native Concat engine** over MCP stdio; does not attempt to edit Concat's open on-screen project (upstream v0.2.8 constraint).
 - Explicit `window` or `headless` mode, no silent fallback, sandboxed write paths, bounded subprocess waits.
 - No Python runtime dependencies beyond the standard library. FFmpeg and FFprobe are optional for media QA.
@@ -98,6 +98,17 @@ then reuses `ccer_directed_render` to output an isolated MP4.
 
 `python3 -m tests.live_rhythm` certifies these steps on a synthetic 120 BPM audio
 track under `~/Videos/CCER`, never on a user's existing production project.
+
+## Visual editing and verification (78 MCP tools total)
+
+- `ccer_color_report`: sampled FFmpeg signalstats luminance, saturation and U/V metrics.
+- `ccer_reframe_export`: padded "contain" or non-distorting "cover" crop with focus.
+- `ccer_transition_export`: new two-clip MP4 with a fade, wipe or slide.
+  Original source audio is **not** mixed by this function; optional external soundtrack only.
+- `python3 -m tests.live_visual` generates two isolated colored videos, exports
+  a vertical crop and a crossfade, and verifies the resulting MP4 files.
+- Every rendering tool rejects output overwrites and verifies delivered duration
+  and frame dimensions. These controls are not a substitute for artistic review.
 
 ## Scope and roadmap
 
