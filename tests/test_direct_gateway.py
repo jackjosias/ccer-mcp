@@ -48,14 +48,66 @@ class DirectGatewayTests(unittest.TestCase):
             self.assertEqual(g.invoke("concat_version", {})["structuredContent"]["concat"], "0.2.8")
             self.assertEqual(backend.calls, ["concat_version"])
 
-    def test_control_preserves_native_gateway(self):
+    def test_control_is_visually_scoped_and_blocks_backend_writes(self):
         with tempfile.TemporaryDirectory() as root:
             backend = FakeConcat()
             g = DirectGateway(backend, root, access="control")
-            self.assertEqual(len(g.catalogue), len(Gateway(FakeConcat(), root).catalogue))
-            self.assertIn("ccer_desktop_act", {item["name"] for item in g.catalogue})
-            g.invoke("project_create", {})
-            self.assertEqual(backend.calls, ["project_create"])
+            full = Gateway(FakeConcat(), root)
+            names = {item["name"] for item in g.catalogue}
+            self.assertLess(len(names), len(full.catalogue))
+            self.assertIn("ccer_desktop_act", names)
+            self.assertIn("ccer_desktop_capture", names)
+            self.assertNotIn("project_create", names)
+            self.assertNotIn("ccer_produce", names)
+            self.assertNotIn("ccer_media_match_render", names)
+            for mutation in ("project_create", "edit_apply", "ccer_produce",
+                             "export_start", "title_add", "ccer_media_match_render"):
+                with self.subTest(mutation=mutation):
+                    with self.assertRaises(PolicyError):
+                        g.invoke(mutation, {})
+            result = g.handle({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+                               "params": {"name": "project_create", "arguments": {}}})
+            self.assertTrue(result["result"]["isError"])
+            self.assertEqual(backend.calls, [])
+
+    def test_capture_gate_requires_new_before_image_for_every_action(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as root:
+            g = DirectGateway(FakeConcat(), root, access="control")
+            fake = {
+                "window": {"windowId": "0xabc"},
+                "sha256": "valid-image", "mimeType": "image/jpeg",
+                "imageBase64": "aGVsbG8=", "imageWidth": 640,
+            }
+            arguments = {"expectedWindowId": "0xabc", "action": "key",
+                         "key": "Escape", "confirm": True}
+            with patch.object(g.production, "run", return_value=fake) as process:
+                with self.assertRaises(PolicyError):
+                    g.invoke("ccer_desktop_act", arguments)
+                first = g.invoke("ccer_desktop_capture", {})
+                self.assertTrue(any(c["type"] == "image" for c in first["content"]))
+                with self.assertRaises(PolicyError):
+                    g.invoke("ccer_desktop_act", dict(arguments, withCapture=False))
+                with self.assertRaises(PolicyError):
+                    g.invoke("ccer_desktop_act", dict(arguments, expectedWindowId="0xdef"))
+                result = g.invoke("ccer_desktop_act", arguments)
+                self.assertTrue(any(c["type"] == "image" for c in result["content"]))
+                with self.assertRaises(PolicyError):
+                    g.invoke("ccer_desktop_act", arguments)
+                g.invoke("ccer_desktop_capture", {})
+                g._last_visual_observation["when"] -= 3600
+                with self.assertRaises(PolicyError):
+                    g.invoke("ccer_desktop_act", arguments)
+                self.assertEqual(process.call_count, 3)
+
+    def test_direct_cli_rejects_headless_even_with_control_access(self):
+        from unittest.mock import patch
+        from ccer.direct_cli import main
+        with patch("sys.argv", ["ccer-direct", "--mode", "headless",
+                                "--access", "control"]):
+            with self.assertRaises(SystemExit) as caught:
+                main()
+            self.assertNotEqual(caught.exception.code, 0)
 
     def test_modes_fail_closed(self):
         with tempfile.TemporaryDirectory() as root:

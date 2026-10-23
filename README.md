@@ -1,5 +1,10 @@
 # CCER — Creative Engineering Runtime
 
+**RÈGLE PERMANENTE POUR CHATGPT : montage visuel manuel obligatoire.**
+Chaque action modifiant Concat exige une capture avant, un geste réel souris/clavier,
+puis une capture après. Aucune mutation headless n'est permise via le connecteur.
+Voir [CCER GUI-FIRST](docs/CCER_GUI_FIRST_CONTRACT.md).
+
 A guarded, **local-first** MCP gateway for **Concat Desktop** on Linux, macOS and Windows.
 
 ## Implemented
@@ -46,7 +51,12 @@ Place this in the MCP client's local configuration (adjust paths):
 
 `--root` scopes project creation, editing and export to a dedicated folder. Keep production source clips in that folder or explicitly import them into it first. The gateway creates the root if absent. No public network listener is opened.
 
-## Production workflow
+## Production workflow — developer-only native Gateway
+
+Ces appels automatiques sont conservés pour les tests internes. Ils sont
+**interdits dans le connecteur ChatGPT Direct**, même en mode control. Toute
+mission vidéo de l'utilisateur doit passer par la fenêtre Concat visible.
+
 
 1. Call `ccer_preflight` and inspect versions and disk capacity.
 2. Use `project_create` then `timeline_read` on a **CCER-owned** project.
@@ -130,7 +140,8 @@ X11 visual bridge without any local LLM. Three tools are implemented:
 The window must be verified by exact class/PID, all actions must carry a fresh
 window ID and `confirm=true`; this integration is **X11-only**.
 Detailed instructions and safeguards: [CCER Desktop Control](docs/CCER_DESKTOP_CONTROL.md).
-Live acceptance: `python3 -m tests.live_desktop`.
+Live acceptance: `python3 -m tests.live_direct_control`.
+Le glisser-déposer déplace réellement la souris en plusieurs étapes visibles.
 
 ## Direct ChatGPT MCP connectivity (independent of WCER)
 
@@ -139,8 +150,10 @@ MCP gateway over stdio for the official OpenAI `tunnel-client`.
 
 - `observe` (default) exposes 34 review and inspection tools, including
   real Concat screenshots. Writing commands are rejected server-side.
-- `control` exposes the full 85 tools and must be explicitly enabled on
-  the Ubuntu machine and authorized by the ChatGPT connector.
+- `control` : l'accès direct ChatGPT est **GUI-FIRST** : outils de lecture
+  et `ccer_desktop_act` seulement. Toutes les mutations MCP invisibles sont
+  refusées au niveau du serveur. Une capture avant/après chaque geste est
+  obligatoire. Le moteur natif conserve ses 85 outils pour les tests internes.
 - `python3 -m ccer.tunnel_setup --tunnel-id <real-tunnel-id>` creates a
   separate CCER profile with **no API credentials in Git**.
 - `tunnel-client doctor --profile ccer-direct` and

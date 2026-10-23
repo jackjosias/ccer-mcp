@@ -17,7 +17,7 @@ L'outil Concat reste connecté via 42 outils MCP natifs, et CCER expose à prés
    d'un bloc **MCP image**, pas seulement un chemin de fichier. Son paramètre
    `maxWidth` vaut 840 par défaut (320 à 1600).
 3. `ccer_desktop_act` envoie uniquement à cette fenêtre un clic, une touche,
-   un texte court ou un défilement. Exige `confirm=true` et
+   un texte court, un défilement ou un glisser-déposer progressif. Exige `confirm=true` et
    `expectedWindowId` récupéré via status/capture. Une nouvelle image
    MCP est renvoyée après interaction par défaut.
 
@@ -34,6 +34,10 @@ Exemple pour une interaction avec approbation :
   "withCapture": true
 }
 ```
+
+**Depuis ChatGPT : une capture explicite AVANT chaque geste et une capture
+obligatoire APRÈS. Le serveur bloque toute modification headless.**
+Voir [le contrat GUI-FIRST](CCER_GUI_FIRST_CONTRACT.md).
 
 L'identifiant de fenêtre présenté est un **exemple de la séance de test**, non
 une valeur stable : il faut toujours le relire. Les coordonnées sont relatives

@@ -33,25 +33,58 @@ def main():
         child.stdin.write('{"jsonrpc":"2.0","method":"notifications/initialized"}\n')
         child.stdin.flush()
         tools = {item["name"] for item in request("tools/list")["tools"]}
-        if len(tools) != 85 or "ccer_desktop_act" not in tools:
-            raise RuntimeError("Control profile tools missing")
+        if ("ccer_desktop_act" not in tools or "ccer_desktop_capture" not in tools
+                or "project_create" in tools or "export_start" in tools
+                or "ccer_produce" in tools):
+            raise RuntimeError("GUI-first policy missing from direct MCP catalogue")
+        refused = request("tools/call", {"name": "project_create",
+                                        "arguments": {"name": "FORBIDDEN"}})
+        if not refused.get("isError"):
+            raise RuntimeError("Headless project creation was not blocked")
         info = request("tools/call", {"name": "ccer_desktop_status", "arguments": {}})
         if info.get("isError"):
             raise RuntimeError("Concat Desktop was not detected")
         window_id = info["structuredContent"]["window"]["windowId"]
+        before = request("tools/call", {"name": "ccer_desktop_capture",
+                                        "arguments": {"maxWidth": 640}})
+        if before.get("isError") or not any(b.get("type") == "image" for b in before["content"]):
+            raise RuntimeError("Missing mandatory pre-action screenshot")
         acted = request("tools/call", {"name": "ccer_desktop_act", "arguments": {
             "expectedWindowId": window_id, "action": "key",
             "key": "Escape", "confirm": True, "withCapture": True}})
         if acted.get("isError"):
-            raise RuntimeError("Scoped Escape was not accepted")
+            raise RuntimeError("Scoped Escape was not accepted: " + str(acted.get("content", []))[:900])
         meta = acted["structuredContent"]
         if meta.get("windowId") != window_id or not meta.get("actionSent"):
             raise RuntimeError("GUI action window mismatch")
         if not any(block.get("type") == "image" for block in acted["content"]):
             raise RuntimeError("No screenshot returned after action")
-        print(json.dumps({"tools": len(tools), "controlAllowed": True,
+        no_repeat = request("tools/call", {"name": "ccer_desktop_act", "arguments": {
+            "expectedWindowId": window_id, "action": "key",
+            "key": "Escape", "confirm": True}})
+        if not no_repeat.get("isError"):
+            raise RuntimeError("Another GUI action was allowed without a new screenshot")
+        # Demonstrate actual pointer movement on an EMPTY panel area.
+        # No clip, timeline or existing project content is touched.
+        next_before = request("tools/call", {"name": "ccer_desktop_capture",
+                                             "arguments": {"maxWidth": 640}})
+        if next_before.get("isError"):
+            raise RuntimeError("Fresh screenshot missing before visible drag")
+        drag = request("tools/call", {"name": "ccer_desktop_act", "arguments": {
+            "expectedWindowId": window_id, "action": "drag",
+            "x": 55, "y": 295, "targetX": 140, "targetY": 315,
+            "duration": .65, "confirm": True, "withCapture": True}})
+        if drag.get("isError") or not any(b.get("type") == "image" for b in drag["content"]):
+            raise RuntimeError("Visible GUI drag was not completed")
+        if not drag["structuredContent"].get("actionSent"):
+            raise RuntimeError("X11 pointer drag did not reach Concat")
+        print(json.dumps({"tools": len(tools), "guiFirstEnforced": True,
+                          "headlessProjectCreationDenied": True,
                           "concatWindow": window_id, "escapeSent": True,
-                          "imageReceived": True, "wcerInExecution": False}, indent=2))
+                          "beforeAndAfterImages": True,
+                          "unobservedRepeatDenied": True,
+                          "visibleDragExecuted": True,
+                          "wcerInExecution": False}, indent=2))
     finally:
         child.stdin.close()
         try:

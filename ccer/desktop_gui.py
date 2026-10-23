@@ -22,6 +22,7 @@ _ALLOWED_KEYS = frozenset({
     "Escape", "Tab", "Return", "BackSpace", "Delete",
     "Left", "Right", "Up", "Down", "Home", "End",
     "space", "ctrl+s", "ctrl+z", "ctrl+shift+z",
+    "ctrl+o", "ctrl+n", "ctrl+i", "ctrl+a",
 })
 
 
@@ -120,7 +121,8 @@ def capture(*, max_width=840):
 
 
 def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
-             button=1, key=None, text=None, scroll=None, with_capture=True):
+             button=1, key=None, text=None, scroll=None, with_capture=True,
+             target_x=None, target_y=None, duration=.7):
     confirm(confirm_action)
     if type(with_capture) is not bool:
         raise PolicyError("withCapture must be boolean")
@@ -128,14 +130,23 @@ def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
         win = _window()
         if expected_window_id != win["windowId"]:
             raise PolicyError("Stale Concat window ID; recapture before acting")
-        if action not in ("click", "key", "type", "scroll"):
-            raise PolicyError("Only click/key/type/scroll actions are supported")
-        if action in ("click", "scroll"):
+        if action not in ("click", "key", "type", "scroll", "drag"):
+            raise PolicyError("Only click/key/type/scroll/drag actions are supported")
+        if action in ("click", "scroll", "drag"):
             if (type(x) is not int or type(y) is not int or
                 not 0 <= x < win["width"] or not 0 <= y < win["height"]):
                 raise PolicyError("Coordinates must be inside Concat window bounds")
-        if action == "click" and (type(button) is not int or button not in (1,2,3)):
+        if action == "click" and (type(button) is not int or button not in (1, 2, 3)):
             raise PolicyError("Click button must be 1..3")
+        if action == "drag":
+            if type(button) is not int or button != 1:
+                raise PolicyError("Only left-button dragging is supported")
+            if (type(target_x) is not int or type(target_y) is not int or
+                    not 0 <= target_x < win["width"] or
+                    not 0 <= target_y < win["height"]):
+                raise PolicyError("Drag target must remain inside Concat")
+            if isinstance(duration, bool) or not isinstance(duration, (int, float)) or not .3 <= duration <= 3:
+                raise PolicyError("Drag duration must be 0.3..3.0 seconds")
         if action == "key" and key not in _ALLOWED_KEYS:
             raise PolicyError("Keyboard shortcut not in explicit safe allowlist")
         if action == "type" and (not isinstance(text, str) or
@@ -148,10 +159,26 @@ def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
         active = int(_run(["xdotool", "getactivewindow"]).strip())
         if active != int(win["windowId"], 16):
             raise PolicyError("Concat is not the active window; aborting input")
-        if action in ("click", "scroll"):
-            _run(["xdotool", "mousemove", "--window", str(active), str(x), str(y)])
+        if action in ("click", "scroll", "drag"):
+            _run(["xdotool", "mousemove", "--sync", "--window",
+                  str(active), str(x), str(y)])
+            time.sleep(.2)  # Make the pointer movement visible to the human.
         if action == "click":
             _run(["xdotool", "click", str(button)])
+        elif action == "drag":
+            # Drag the pointer through actual GUI positions over a visible
+            # duration, rather than editing the underlying timeline API.
+            _run(["xdotool", "mousedown", "1"])
+            try:
+                steps = 9
+                for step in range(1, steps + 1):
+                    cx = round(x + (target_x - x) * step / steps)
+                    cy = round(y + (target_y - y) * step / steps)
+                    _run(["xdotool", "mousemove", "--sync", "--window",
+                          str(active), str(cx), str(cy)])
+                    time.sleep(duration / steps)
+            finally:
+                _run(["xdotool", "mouseup", "1"])
         elif action == "key":
             _run(["xdotool", "key", "--clearmodifiers", key])
         elif action == "type":
@@ -164,5 +191,6 @@ def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
                   "actionSent": True, "visualOutcomeVerified": False,
                   "note": "Inspect returned screenshot to verify intended UI change"}
         if with_capture:
+            time.sleep(.15)  # Allow UI repaint before the post-action observation.
             result.update(capture())
         return result

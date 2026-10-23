@@ -76,7 +76,9 @@ TOOLS = {
     "ccer_desktop_capture": schema("Capture only verified Concat X11 window and return an MCP image (no other windows)", {"maxWidth": {"type": "integer", "minimum": 320, "maximum": 1600}}),
     "ccer_desktop_act": schema("Act only on verified Concat X11 window: click, key, type, scroll; requires confirm and fresh window ID", {
         "expectedWindowId": STRING, "action": STRING, "confirm": BOOL, "x": {"type": "integer"},
-        "y": {"type": "integer"}, "button": {"type": "integer"}, "key": STRING,
+        "y": {"type": "integer"}, "targetX": {"type": "integer"},
+        "targetY": {"type": "integer"}, "duration": NUMBER,
+        "button": {"type": "integer"}, "key": STRING,
         "text": STRING, "scroll": {"type": "integer"}, "withCapture": BOOL},
         ["expectedWindowId", "action", "confirm"]),
 }
@@ -137,7 +139,9 @@ class Production:
                               action=a["action"], confirm_action=a["confirm"],
                               x=a.get("x"), y=a.get("y"), button=a.get("button", 1),
                               key=a.get("key"), text=a.get("text"),
-                              scroll=a.get("scroll"), with_capture=a.get("withCapture", True))
+                              scroll=a.get("scroll"), with_capture=a.get("withCapture", True),
+                              target_x=a.get("targetX"), target_y=a.get("targetY"),
+                              duration=a.get("duration", .7))
             self.journal.append("desktop.action", {
                 "action": a["action"], "windowId": result["windowId"],
                 "sha256": result.get("sha256")})

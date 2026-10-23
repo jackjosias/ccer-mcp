@@ -13,9 +13,10 @@ public entrant et aucune dépendance à Ollama.
 - `observe` (défaut) : lecture, inspection et capture JPEG Concat. Les appels
   d'écriture sont refusés par le serveur, même s'ils ne figurent pas dans
   `tools/list`.
-- `control` : les **85 outils** Concat + CCER, y compris captures et
-  interactions X11, après activation explicite sur Ubuntu et permissions
-  adéquates dans ChatGPT.
+- `control` : **montage GUI-FIRST obligatoire**. Seuls les outils de lecture
+  et le contrôle de la fenêtre Concat sont exposés. Les 85 outils du moteur
+  existent toujours en interne, mais aucune modification headless n'est
+  autorisée via ChatGPT. Voir [le contrat permanent](CCER_GUI_FIRST_CONTRACT.md).
 
 Le contrôle de fenêtre reste borné à Concat et exige identifiant courant de
 fenêtre et confirmation explicite. Un clic envoyé n'est pas la preuve de la
@@ -76,7 +77,7 @@ Le même terminal doit avoir `CONTROL_PLANE_API_KEY` configuré. Ne jamais
 afficher ou transmettre sa valeur.
 
 Après redémarrage, **actualiser ou reconnecter** le plugin CCER dans
-ChatGPT afin qu'il redécouvre les 85 outils. Tester
+ChatGPT afin qu'il redécouvre le catalogue GUI-FIRST restreint. Tester
 `ccer_desktop_status`, `ccer_desktop_capture`, puis une action de contrôle
 inoffensive avec confirmation explicite. Certaines modifications de permissions
 peuvent nécessiter de réautoriser le plugin côté ChatGPT. Une commande distante
@@ -102,7 +103,9 @@ python3 -m tests.live_direct_control
 La première certification lance un client MCP externe indépendant depuis
 `/tmp`, vérifie une vraie capture Concat et un refus d'action en mode
 lecture. La deuxième lance le profil contrôle dans un processus indépendant,
-détecte Concat, envoie seulement `Échap` et lit une capture post-action.
+refuse une création invisible, capture Concat avant l'action, envoie
+  seulement `Échap`, lit la capture après l'action et refuse un deuxième
+  geste sans nouvelle capture.
 
 Le test du **vrai tunnel authentifié** ne peut réussir qu'une fois le nouvel
 ID, la clé runtime et les permissions ChatGPT disponibles. Ne jamais

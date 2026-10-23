@@ -45,6 +45,35 @@ class DesktopGuiTests(unittest.TestCase):
         with self.assertRaises(PolicyError):
             capture(max_width=640)
 
+    @patch("ccer.desktop_gui._window", return_value=WINDOW)
+    def test_drag_coordinates_are_bounded_before_input(self, win):
+        with self.assertRaises(PolicyError):
+            interact(expected_window_id="0x3a00005", action="drag",
+                     confirm_action=True, x=50, y=60,
+                     target_x=1500, target_y=100, duration=.7)
+        with self.assertRaises(PolicyError):
+            interact(expected_window_id="0x3a00005", action="drag",
+                     confirm_action=True, x=50, y=60,
+                     target_x=70, target_y=100, duration=20)
+        win.assert_called()
+
+    @patch("ccer.desktop_gui.time.sleep")
+    @patch("ccer.desktop_gui._run")
+    @patch("ccer.desktop_gui._window", return_value=WINDOW)
+    def test_drag_produces_actual_stepwise_pointer_motion(self, win, run, sleep):
+        def reply(argv, **kwargs):
+            return "60817413" if argv[:2] == ["xdotool", "getactivewindow"] else ""
+        run.side_effect = reply
+        result = interact(expected_window_id="0x3a00005", action="drag",
+                          confirm_action=True, x=25, y=50,
+                          target_x=125, target_y=150, duration=.6,
+                          with_capture=False)
+        calls = [c.args[0] for c in run.call_args_list]
+        self.assertTrue(any(x[:2] == ["xdotool", "mousedown"] for x in calls))
+        self.assertTrue(any(x[:2] == ["xdotool", "mouseup"] for x in calls))
+        self.assertGreaterEqual(sum(x[:2] == ["xdotool", "mousemove"] for x in calls), 10)
+        self.assertTrue(result["actionSent"])
+
     def test_gateway_returns_real_mcp_image_block_and_no_base64_in_metadata(self):
         with tempfile.TemporaryDirectory() as d:
             gateway = Gateway(FakeUpstream(), d)

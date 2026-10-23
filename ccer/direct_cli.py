@@ -18,7 +18,9 @@ def main(argv=None):
     parser.add_argument("--access", choices=("observe", "control"),
                         default=os.getenv("CCER_DIRECT_ACCESS", "observe"))
     args = parser.parse_args(argv)
-    upstream = ConcatTransport(args.concat_bin, args.mode)
+    if args.mode != "window":
+        parser.error("CCER Direct is GUI-FIRST only; headless mode is forbidden")
+    upstream = ConcatTransport(args.concat_bin, "window")
     try:
         upstream.start()
         DirectGateway(upstream, args.root, access=args.access).serve()
