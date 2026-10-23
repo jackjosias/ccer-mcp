@@ -180,8 +180,8 @@ class InAppComputerUse:
             if response.get("accepted") is not True or response.get("dispatched") is not True:
                 raise PolicyError("INAPP_DENIED: native Slint event was not accepted")
             result = self._check_frame(response.get("after"))
-            if result["frameNo"] < observation["frameNo"]:
-                raise PolicyError("INAPP_DENIED: frame counter moved backwards")
+            if result["frameNo"] <= observation["frameNo"]:
+                raise PolicyError("INAPP_DENIED: AFTER frame must advance beyond BEFORE")
             return result
 
     def _validate_gesture(self, raw: object) -> dict:

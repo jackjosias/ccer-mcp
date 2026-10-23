@@ -15,10 +15,11 @@ from ccer.inapp_protocol import InAppComputerUse, PROTOCOL
 
 
 class FakeSlintServer:
-    def __init__(self, socket_path, *, valid_frame=True, reject_action=False):
+    def __init__(self, socket_path, *, valid_frame=True, reject_action=False, stale_after=False):
         self.socket_path = Path(socket_path)
         self.valid_frame = valid_frame
         self.reject_action = reject_action
+        self.stale_after = stale_after
         self.calls = []
         self.frame_number = 0
         self.listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -55,9 +56,12 @@ class FakeSlintServer:
                     elif method == "capture":
                         result = self.frame()
                     elif method == "gesture":
+                        after = self.frame()
+                        if self.stale_after:
+                            after["frameNo"] -= 1
                         result = {"accepted":not self.reject_action,
                                   "dispatched":not self.reject_action,
-                                  "after":self.frame()}
+                                  "after":after}
                     else:
                         result = None
                     stream.write(json.dumps({"id":msg["id"],"result":result}).encode()+b"\n")
@@ -128,6 +132,16 @@ class InAppProtocolTests(unittest.TestCase):
                  confirm=True,expected_sha256=before["sha256"])
             self.assertEqual(done["frameNo"],2)
             self.assertEqual([m for m,_ in self.server.calls].count("gesture"),1)
+
+    def test_reused_after_frame_is_rejected(self):
+        with self.connect(stale_after=True) as control:
+            before = control.observe()
+            with self.assertRaisesRegex(PolicyError, "AFTER frame must advance"):
+                control.act({"type": "move", "x": 12, "y": 30},
+                            confirm=True, expected_sha256=before["sha256"])
+            with self.assertRaisesRegex(PolicyError, "BEFORE screenshot"):
+                control.act({"type": "move", "x": 12, "y": 30},
+                            confirm=True, expected_sha256=before["sha256"])
 
     def test_invalid_coordinates_keyboard_or_extra_fields_fail_without_dispatch(self):
         with self.connect() as control:
