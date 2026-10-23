@@ -5,7 +5,7 @@ A guarded, **local-first** MCP gateway for **Concat Desktop** on Linux, macOS an
 ## Implemented
 
 - Dynamically exposes every native Concat MCP tool (42 in the tested Concat 0.2.8).
-- Adds 40 CCER tools: governed editing, creative planning, local audio/video inspection, subtitle preparation, offline English speech, directed rendering, and complete studio production: preflight, project inspection, checkpoints, rollback, timeline QA, transactional batch editing, media probe, audio QA, export QA, mission status, safe recovery and tamper-evident audit.
+- Adds 43 CCER tools: governed editing, creative planning, local audio/video inspection, subtitle preparation, offline English speech, directed rendering, and complete studio production: preflight, project inspection, checkpoints, rollback, timeline QA, transactional batch editing, media probe, audio QA, export QA, mission status, safe recovery and tamper-evident audit.
 - Uses the **same native Concat engine** over MCP stdio; does not attempt to edit Concat's open on-screen project (upstream v0.2.8 constraint).
 - Explicit `window` or `headless` mode, no silent fallback, sandboxed write paths, bounded subprocess waits.
 - No Python runtime dependencies beyond the standard library. FFmpeg and FFprobe are optional for media QA.
@@ -121,9 +121,20 @@ This is metadata/annotation-based retrieval, NOT trained automatic visual recogn
 Detailed guide: docs/CCER_MEDIA_INTELLIGENCE.md.
 Reproducible live test: python3 -m tests.live_media_catalog
 
+## Direct Concat Desktop GUI control (85 MCP tools)
+
+ChatGPT GPT-6 can orchestrate the existing CCER editor plus a Concat-specific
+X11 visual bridge without any local LLM. Three tools are implemented:
+`ccer_desktop_status`, `ccer_desktop_capture` (MCP JPEG image content), and
+`ccer_desktop_act` (approved scoped click/key/type/scroll and post-action screenshot).
+The window must be verified by exact class/PID, all actions must carry a fresh
+window ID and `confirm=true`; this integration is **X11-only**.
+Detailed instructions and safeguards: [CCER Desktop Control](docs/CCER_DESKTOP_CONTROL.md).
+Live acceptance: `python3 -m tests.live_desktop`.
+
 ## Scope and roadmap
 
-This is **v0.1.0 foundation**, not an end-to-end self-directed production agent. Live on-screen editing, full color-grading intelligence, LLM-based creative direction, b-roll discovery, robust beat tracking for varied real-world music, speech forced-alignment, visual continuity understanding and distributed rendering remain subsequent features. Deterministic storyboarding, English flite voice and studio orchestration are implemented. Upstream Concat also limits what's currently possible. No claim of complete CapCut functional parity is made.
+This is **v0.1.0 foundation**, not an end-to-end self-directed production agent. Automatic understanding of all desktop UI states, full color-grading intelligence, LLM-based creative direction, b-roll discovery, robust beat tracking for varied real-world music, speech forced-alignment, visual continuity understanding and distributed rendering remain subsequent features. Deterministic storyboarding, English flite voice and studio orchestration are implemented. Upstream Concat also limits what's currently possible. No claim of complete CapCut functional parity is made.
 
 ## License
 

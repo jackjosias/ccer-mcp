@@ -22,7 +22,8 @@ class Gateway:
              "annotations": {"readOnlyHint": name in (
                 "ccer_preflight", "ccer_project_inspect", "ccer_timeline_validate",
                 "ccer_asset_analyze", "ccer_audio_validate", "ccer_export_verify",
-                "ccer_mission_status", "ccer_mission_recover", "ccer_audit_report"),
+                "ccer_mission_status", "ccer_mission_recover", "ccer_audit_report",
+                 "ccer_desktop_status", "ccer_desktop_capture"),
                 "destructiveHint": name == "ccer_checkpoint_restore"}}
             for name, config in TOOLS.items()
         ]
@@ -32,6 +33,13 @@ class Gateway:
             raise PolicyError("Arguments must be an object")
         if name in TOOLS:
             outcome = self.production.run(name, args)
+            if name in ("ccer_desktop_capture", "ccer_desktop_act") and "imageBase64" in outcome:
+                metadata = {k: v for k, v in outcome.items() if k != "imageBase64"}
+                return {"content": [
+                    {"type": "text", "text": json.dumps(metadata, ensure_ascii=False)},
+                    {"type": "image", "mimeType": outcome["mimeType"],
+                     "data": outcome["imageBase64"]}],
+                    "structuredContent": metadata, "isError": False}
             return {"content": [{"type": "text",
                      "text": json.dumps(outcome, ensure_ascii=False)}],
                     "structuredContent": outcome, "isError": False}

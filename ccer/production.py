@@ -72,6 +72,13 @@ TOOLS = {
     "ccer_media_search": schema("Query annotated footage by normalized textual tokens and return evidence, not invented image semantics", {"catalog": PATH, "text": STRING, "limit": {"type": "integer"}}, ["catalog", "text"]),
     "ccer_media_match": schema("Match an existing creative plan with annotated source shots at valid media timecodes", {"catalog": PATH, "plan": {"type": "object"}, "allowReuse": BOOL}, ["catalog", "plan"]),
     "ccer_media_match_render": schema("On explicit approval, match annotated assets then render a new MP4 via existing directed renderer; refuse missing scenes", {"catalog": PATH, "plan": {"type": "object"}, "output": PATH, "confirm": BOOL, "audio": PATH, "burnCaptions": BOOL, "preset": STRING, "allowReuse": BOOL}, ["catalog", "plan", "output", "confirm"]),
+    "ccer_desktop_status": schema("Read-only exact Concat X11 window detection, including ID and dimensions"),
+    "ccer_desktop_capture": schema("Capture only verified Concat X11 window and return an MCP image (no other windows)", {"maxWidth": {"type": "integer", "minimum": 320, "maximum": 1600}}),
+    "ccer_desktop_act": schema("Act only on verified Concat X11 window: click, key, type, scroll; requires confirm and fresh window ID", {
+        "expectedWindowId": STRING, "action": STRING, "confirm": BOOL, "x": {"type": "integer"},
+        "y": {"type": "integer"}, "button": {"type": "integer"}, "key": STRING,
+        "text": STRING, "scroll": {"type": "integer"}, "withCapture": BOOL},
+        ["expectedWindowId", "action", "confirm"]),
 }
 
 
@@ -118,6 +125,23 @@ class Production:
             return self._dispatch(name, args)
 
     def _dispatch(self, name, a):
+        if name == "ccer_desktop_status":
+            from .desktop_gui import status
+            return status()
+        if name == "ccer_desktop_capture":
+            from .desktop_gui import capture
+            return capture(max_width=a.get("maxWidth", 840))
+        if name == "ccer_desktop_act":
+            from .desktop_gui import interact
+            result = interact(expected_window_id=a["expectedWindowId"],
+                              action=a["action"], confirm_action=a["confirm"],
+                              x=a.get("x"), y=a.get("y"), button=a.get("button", 1),
+                              key=a.get("key"), text=a.get("text"),
+                              scroll=a.get("scroll"), with_capture=a.get("withCapture", True))
+            self.journal.append("desktop.action", {
+                "action": a["action"], "windowId": result["windowId"],
+                "sha256": result.get("sha256")})
+            return result
         if name == "ccer_media_index":
             from .media_catalog import build
             return build(self.root, a["items"], a["output"],
