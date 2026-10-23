@@ -10,3 +10,6 @@ build/
 *.wav
 *.mov
 *.mkv
+
+# Independent upstream Concat Rust source checkout (its own Git history).
+.upstream-concat/
