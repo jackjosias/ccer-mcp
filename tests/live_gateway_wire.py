@@ -36,7 +36,7 @@ def main():
               "ffprobe": before["ffprobe"],
               "auditValid": before["audit"]["valid"]}
     print(json.dumps(report, ensure_ascii=False, indent=2))
-    if report["server"] != "ccer-mcp" or report["toolCount"] != 78:
+    if report["server"] != "ccer-mcp" or report["toolCount"] != 82:
         raise RuntimeError("MCP gateway tools mismatch")
     if report["concatMode"] != "window":
         raise RuntimeError("MCP gateway did not use Concat Desktop window")

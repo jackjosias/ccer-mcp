@@ -5,7 +5,7 @@ A guarded, **local-first** MCP gateway for **Concat Desktop** on Linux, macOS an
 ## Implemented
 
 - Dynamically exposes every native Concat MCP tool (42 in the tested Concat 0.2.8).
-- Adds 36 CCER tools: governed editing, creative planning, local audio/video inspection, subtitle preparation, offline English speech, directed rendering, and complete studio production: preflight, project inspection, checkpoints, rollback, timeline QA, transactional batch editing, media probe, audio QA, export QA, mission status, safe recovery and tamper-evident audit.
+- Adds 40 CCER tools: governed editing, creative planning, local audio/video inspection, subtitle preparation, offline English speech, directed rendering, and complete studio production: preflight, project inspection, checkpoints, rollback, timeline QA, transactional batch editing, media probe, audio QA, export QA, mission status, safe recovery and tamper-evident audit.
 - Uses the **same native Concat engine** over MCP stdio; does not attempt to edit Concat's open on-screen project (upstream v0.2.8 constraint).
 - Explicit `window` or `headless` mode, no silent fallback, sandboxed write paths, bounded subprocess waits.
 - No Python runtime dependencies beyond the standard library. FFmpeg and FFprobe are optional for media QA.
@@ -109,6 +109,17 @@ track under `~/Videos/CCER`, never on a user's existing production project.
   a vertical crop and a crossfade, and verifies the resulting MP4 files.
 - Every rendering tool rejects output overwrites and verifies delivered duration
   and frame dimensions. These controls are not a substitute for artistic review.
+
+## Media intelligence (82 MCP tools total)
+
+- Human-annotated footage catalog with optional existing FFmpeg scene cuts.
+- Keyword search across editor-provided descriptions and tags, with provenance.
+- Match script storyboard scenes to annotated source clips (including mediaStart).
+- Execute approved matching via existing CCER renderer and export QA.
+
+This is metadata/annotation-based retrieval, NOT trained automatic visual recognition.
+Detailed guide: docs/CCER_MEDIA_INTELLIGENCE.md.
+Reproducible live test: python3 -m tests.live_media_catalog
 
 ## Scope and roadmap
 

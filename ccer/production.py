@@ -68,6 +68,10 @@ TOOLS = {
     "ccer_color_report": schema("Measure frame luminance/saturation via FFmpeg; no subjective or certified grading", {"file": PATH, "seconds": NUMBER, "sampleInterval": NUMBER}, ["file"]),
     "ccer_reframe_export": schema("Export video with non-distorting cover crop or contain padding and optional focus", {"file": PATH, "output": PATH, "profile": STRING, "mode": STRING, "focusX": NUMBER, "focusY": NUMBER}, ["file", "output"]),
     "ccer_transition_export": schema("Produce new two-shot MP4 with FFmpeg xfade transition; source audio not preserved", {"first": PATH, "second": PATH, "output": PATH, "profile": STRING, "sceneSeconds": NUMBER, "overlapSeconds": NUMBER, "kind": STRING, "music": PATH}, ["first", "second", "output"]),
+    "ccer_media_index": schema("Index explicitly supplied footage and user-annotated tags, optionally split FFmpeg scenes; immutable JSON catalog", {"items": {"type": "array", "items": {"type": "object"}}, "output": PATH, "detectScenes": BOOL, "threshold": NUMBER, "analyzeSeconds": {"type": "integer"}}, ["items", "output"]),
+    "ccer_media_search": schema("Query annotated footage by normalized textual tokens and return evidence, not invented image semantics", {"catalog": PATH, "text": STRING, "limit": {"type": "integer"}}, ["catalog", "text"]),
+    "ccer_media_match": schema("Match an existing creative plan with annotated source shots at valid media timecodes", {"catalog": PATH, "plan": {"type": "object"}, "allowReuse": BOOL}, ["catalog", "plan"]),
+    "ccer_media_match_render": schema("On explicit approval, match annotated assets then render a new MP4 via existing directed renderer; refuse missing scenes", {"catalog": PATH, "plan": {"type": "object"}, "output": PATH, "confirm": BOOL, "audio": PATH, "burnCaptions": BOOL, "preset": STRING, "allowReuse": BOOL}, ["catalog", "plan", "output", "confirm"]),
 }
 
 
@@ -114,6 +118,40 @@ class Production:
             return self._dispatch(name, args)
 
     def _dispatch(self, name, a):
+        if name == "ccer_media_index":
+            from .media_catalog import build
+            return build(self.root, a["items"], a["output"],
+                         detect_scenes=a.get("detectScenes", False),
+                         threshold=a.get("threshold", .32),
+                         analyze_seconds=a.get("analyzeSeconds", 120))
+        if name == "ccer_media_search":
+            from .media_catalog import query
+            return query(self.root, a["catalog"], a["text"], limit=a.get("limit", 12))
+        if name == "ccer_media_match":
+            from .media_catalog import match_storyboard
+            return match_storyboard(self.root, a["catalog"], a["plan"],
+                                    allow_reuse=a.get("allowReuse", True))
+        if name == "ccer_media_match_render":
+            from .media_catalog import match_storyboard
+            from .director_render import render
+            confirm(a["confirm"])
+            match = match_storyboard(self.root, a["catalog"], a["plan"],
+                                     allow_reuse=a.get("allowReuse", True))
+            if not match["ready"]:
+                raise PolicyError("Missing annotated footage: " + str(match["missing"]))
+            video = render(self, match["plan"], a["output"], audio=a.get("audio"),
+                           burn_captions=a.get("burnCaptions", True),
+                           preset=a.get("preset", "veryfast"))
+            qualified = self._dispatch("ccer_export_verify", {
+                "file": video["file"], "width": video["width"],
+                "height": video["height"],
+                "minDuration": max(0, video["duration"] - .5),
+                "maxDuration": video["duration"] + .5})
+            if not qualified["passed"]:
+                raise PolicyError("Matched export did not pass video QA")
+            return {"render": video, "match": match["matched"],
+                    "provenance": match["plan"]["mediaMatchProvenance"],
+                    "technicalQA": qualified["passed"], "editorialReviewRequired": True}
         if name == "ccer_color_report":
             from .visual_edit import color_report
             return color_report(self.path(a["file"], must_exist=True),

@@ -65,6 +65,20 @@ def render(engine, plan: dict, output: str, *, audio: str | None = None,
         metadata = media_probe(source)
         if not any(s.get("codec_type") == "video" for s in metadata["streams"]):
             raise PolicyError("Scene source has no video stream")
+        offset = item.get("mediaStart", 0)
+        if isinstance(offset, bool) or not isinstance(offset, (int, float)) or not math.isfinite(offset) or offset < 0:
+            raise PolicyError(f"Invalid mediaStart at scene {index}")
+        if source.suffix.lower() in IMAGE_EXT:
+            if offset != 0:
+                raise PolicyError("Still images have no timecode seek")
+        elif offset > 0:
+            try:
+                source_duration = float(metadata["format"]["duration"])
+            except (ValueError, TypeError) as exc:
+                raise PolicyError("Media duration unavailable for timecoded scene") from exc
+            if not math.isfinite(source_duration) or offset + float(duration) > source_duration + .025:
+                raise PolicyError(f"Scene {index} extends beyond source media")
+        # A zero-offset video keeps the legacy loop behavior for short sources.
         sources.append(source)
         total += float(duration)
     if total > 1800:
@@ -92,7 +106,11 @@ def render(engine, plan: dict, output: str, *, audio: str | None = None,
                 if source.suffix.lower() in IMAGE_EXT:
                     commands.extend(["-loop", "1", "-i", str(source)])
                 else:
-                    commands.extend(["-stream_loop", "-1", "-i", str(source)])
+                    offset = float(item.get("mediaStart", 0))
+                    if offset > 0:
+                        commands.extend(["-ss", f"{offset:.5f}", "-i", str(source)])
+                    else:
+                        commands.extend(["-stream_loop", "-1", "-i", str(source)])
                 duration = float(item["duration"])
                 # Output is constant-frame-rate. Videos shorter than a panel loop.
                 segments.append(

@@ -3,10 +3,10 @@
 ## État réel validé (Ubuntu, 23 octobre 2026)
 
 - Concat Desktop 0.2.8, mode MCP `window`
-- 42 outils natifs + 36 outils CCER = **78 outils MCP**
+- 42 outils natifs + 40 outils CCER = **82 outils MCP**
 - FFmpeg / FFprobe présents, FFmpeg `flite` utilisable pour voix **anglaise**
 - Pipeline testé : brief → scénario fourni → storyboard → voix anglaise → scènes vidéo → sous-titres → MP4 → FFprobe et visual scan
-- 29 tests unitaires et qualification de l'export visuel réel vérifiés lors du palier V3
+- 32 tests unitaires et qualification de l'export visuel réel et du catalogue Media Intelligence lors du palier V4
 - Aucune modification directe du projet actuellement affiché à l'écran dans Concat 0.2.8
 
 ## Les outils principaux
@@ -26,6 +26,7 @@
 `ccer_color_report` : mesure YUV échantillonnée, sans prétention d'étalonnage automatique.
 `ccer_reframe_export` : recadrage cover ou contain, positionnement du point focal.
 `ccer_transition_export` : fondu, glissement ou balayage de deux plans, avec bande-son externe facultative.
+`ccer_media_index`, `ccer_media_search`, `ccer_media_match`, `ccer_media_match_render` : catalogues annotés et sélection de rushes pour scénarios. Guide : docs/CCER_MEDIA_INTELLIGENCE.md.
 
 ## Exemples de cas d'usage professionnels
 
@@ -84,6 +85,7 @@ python3 -m tests.live_director
 python3 -m tests.live_v2_studio
 python3 -m tests.live_rhythm
 python3 -m tests.live_visual
+python3 -m tests.live_media_catalog
 ```
 
 Tous les tests `live_*` réalisent des opérations réelles : le serveur Concat doit rester ouvert avec l'automatisation activée. Ils créent des fichiers uniques sous `~/Videos/CCER`; ils ne doivent jamais être exécutés sur des projets de production non sauvegardés.
