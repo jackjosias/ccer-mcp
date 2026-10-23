@@ -50,9 +50,43 @@ def _environment():
     return display
 
 
+def _visible_x11_windows():
+    """Constrained discovery without EWMH (private Xvfb has no window manager).
+
+    wmctrl is preferred on normal desktops. On a bare Xvfb, fall back to
+    xdotool *read-only* discovery, then require exact X11 WM_CLASS, WM_NAME
+    and PID verification in the existing _concat_window/_media_import_dialog.
+    """
+    try:
+        return _run(["wmctrl", "-lx"], timeout=8)
+    except PolicyError as exc:
+        if "Cannot get client list properties" not in str(exc):
+            raise
+    # Xvfb without a window manager has no _NET_CLIENT_LIST; window tree
+    # enumeration is still available through the X server itself. xdotool
+    # search --onlyvisible is unreliable for these unmanaged top-level windows.
+    tree = _run(["xwininfo", "-root", "-tree"], timeout=8)
+    lines = []
+    for match in re.finditer(
+        r'^\s*(0x[0-9a-fA-F]+)\s+"([^"]+)":\s+\("([^"]*)"\s+"([^"]+)"\)',
+        tree, flags=re.M
+    ):
+        raw, title, instance, cls = match.groups()
+        if not ((instance == "" and cls == "concat" and title.startswith("Concat"))
+                or (instance == "xdg-desktop-portal-gtk" and
+                    cls == "Xdg-desktop-portal-gtk" and title == "Importer des médias")):
+            continue
+        props = _run(["xprop", "-id", raw, "WM_CLASS", "WM_NAME"], timeout=6)
+        if (f'WM_CLASS(STRING) = "{instance}", "{cls}"' not in props or
+                f'WM_NAME(STRING) = "{title}"' not in props):
+            continue
+        lines.append(f"{raw.lower()} 0 {instance}.{cls} private {title}")
+    return "\n".join(lines)
+
+
 def _concat_window():
     display = _environment()
-    listing = _run(["wmctrl", "-lx"], timeout=8)
+    listing = _visible_x11_windows()
     matches = []
     for line in listing.splitlines():
         pieces = line.split(maxsplit=4)
@@ -96,7 +130,7 @@ def _media_import_dialog(main):
     type in addition to a verified live Concat window. Other portal dialogs
     are never controllable with this bridge.
     """
-    listing = _run(["wmctrl", "-lx"], timeout=8)
+    listing = _visible_x11_windows()
     candidates = []
     for line in listing.splitlines():
         pieces = line.split(maxsplit=4)
@@ -234,7 +268,7 @@ def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
         if active != target_window:
             raise PolicyError("Concat is not the focused window; aborting input")
         if action in ("click", "scroll", "drag"):
-            _run(["xdotool", "mousemove", "--sync", "--window",
+            _run(["xdotool", "mousemove", "--window",
                   str(active), str(x), str(y)])
             time.sleep(.2)  # Make the pointer movement visible to the human.
         if action == "click":
@@ -248,7 +282,7 @@ def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
                 for step in range(1, steps + 1):
                     cx = round(x + (target_x - x) * step / steps)
                     cy = round(y + (target_y - y) * step / steps)
-                    _run(["xdotool", "mousemove", "--sync", "--window",
+                    _run(["xdotool", "mousemove", "--window",
                           str(active), str(cx), str(cy)])
                     time.sleep(duration / steps)
             finally:

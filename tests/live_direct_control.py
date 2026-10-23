@@ -22,7 +22,12 @@ def main():
         child.stdin.flush()
         line = child.stdout.readline()
         if not line:
-            raise RuntimeError("CCER Direct stopped unexpectedly")
+            try:
+                child.wait(timeout=4)
+            except subprocess.TimeoutExpired:
+                pass
+            details = child.stderr.read()[-2500:] if child.poll() is not None else "process hung with closed stdout"
+            raise RuntimeError("CCER Direct stopped unexpectedly: " + details)
         message = json.loads(line)
         if message.get("id") != counter or message.get("error"):
             raise RuntimeError("MCP protocol failure: " + str(message)[:400])

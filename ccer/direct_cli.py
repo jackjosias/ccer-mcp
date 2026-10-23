@@ -4,6 +4,8 @@ import os
 import sys
 from pathlib import Path
 from .direct_gateway import DirectGateway
+from .isolated_session import bind_direct_process
+from .controls import PolicyError
 from .transport import ConcatTransport, TransportError
 
 
@@ -20,15 +22,21 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.mode != "window":
         parser.error("CCER Direct is GUI-FIRST only; headless mode is forbidden")
-    upstream = ConcatTransport(args.concat_bin, "window")
     try:
+        private = bind_direct_process()
+        # Both the backend transport and GUI actions use a single verified
+        # isolated X display, never the user's foreground session.
+        if private:
+            print("CCER Direct: attached to private Concat GUI", file=sys.stderr)
+        upstream = ConcatTransport(args.concat_bin, "window")
         upstream.start()
         DirectGateway(upstream, args.root, access=args.access).serve()
-    except (TransportError, OSError, ValueError) as exc:
+    except (TransportError, PolicyError, OSError, ValueError) as exc:
         print("CCER Direct startup failed: " + str(exc), file=sys.stderr)
         raise SystemExit(1) from exc
     finally:
-        upstream.close()
+        if "upstream" in locals():
+            upstream.close()
 
 
 if __name__ == "__main__":
