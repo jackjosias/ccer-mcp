@@ -132,6 +132,26 @@ window ID and `confirm=true`; this integration is **X11-only**.
 Detailed instructions and safeguards: [CCER Desktop Control](docs/CCER_DESKTOP_CONTROL.md).
 Live acceptance: `python3 -m tests.live_desktop`.
 
+## Direct ChatGPT MCP connectivity (independent of WCER)
+
+The standalone entrypoint `ccer_direct_stdio.py` serves the existing CCER
+MCP gateway over stdio for the official OpenAI `tunnel-client`.
+
+- `observe` (default) exposes 34 review and inspection tools, including
+  real Concat screenshots. Writing commands are rejected server-side.
+- `control` exposes the full 85 tools and must be explicitly enabled on
+  the Ubuntu machine and authorized by the ChatGPT connector.
+- `python3 -m ccer.tunnel_setup --tunnel-id <real-tunnel-id>` creates a
+  separate CCER profile with **no API credentials in Git**.
+- `tunnel-client doctor --profile ccer-direct` and
+  `tunnel-client run --profile ccer-direct` authenticate that profile.
+
+See [CCER Direct setup](docs/CCER_DIRECT_TUNNEL.md). Verify locally with
+`python3 -m tests.live_direct_stdio` (observe) and
+`python3 -m tests.live_direct_control` (full control).
+The remote ChatGPT app must still be registered and authorized before any
+claim of direct ChatGPT operation.
+
 ## Scope and roadmap
 
 This is **v0.1.0 foundation**, not an end-to-end self-directed production agent. Automatic understanding of all desktop UI states, full color-grading intelligence, LLM-based creative direction, b-roll discovery, robust beat tracking for varied real-world music, speech forced-alignment, visual continuity understanding and distributed rendering remain subsequent features. Deterministic storyboarding, English flite voice and studio orchestration are implemented. Upstream Concat also limits what's currently possible. No claim of complete CapCut functional parity is made.

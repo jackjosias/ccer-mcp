@@ -10,6 +10,8 @@ dependencies=[]
 
 [project.scripts]
 ccer-mcp="ccer.cli:main"
+ccer-direct-mcp="ccer.direct_cli:main"
+ccer-tunnel-setup="ccer.tunnel_setup:main"
 
 [tool.setuptools.packages.find]
 include=["ccer*"]
