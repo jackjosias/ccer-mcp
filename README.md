@@ -5,7 +5,7 @@ A guarded, **local-first** MCP gateway for **Concat Desktop** on Linux, macOS an
 ## Implemented
 
 - Dynamically exposes every native Concat MCP tool (42 in the tested Concat 0.2.8).
-- Adds 29 CCER tools: governed editing, creative planning, local audio/video inspection, subtitle preparation, offline English speech, directed rendering, and complete studio production: preflight, project inspection, checkpoints, rollback, timeline QA, transactional batch editing, media probe, audio QA, export QA, mission status, safe recovery and tamper-evident audit.
+- Adds 33 CCER tools: governed editing, creative planning, local audio/video inspection, subtitle preparation, offline English speech, directed rendering, and complete studio production: preflight, project inspection, checkpoints, rollback, timeline QA, transactional batch editing, media probe, audio QA, export QA, mission status, safe recovery and tamper-evident audit.
 - Uses the **same native Concat engine** over MCP stdio; does not attempt to edit Concat's open on-screen project (upstream v0.2.8 constraint).
 - Explicit `window` or `headless` mode, no silent fallback, sandboxed write paths, bounded subprocess waits.
 - No Python runtime dependencies beyond the standard library. FFmpeg and FFprobe are optional for media QA.
@@ -85,9 +85,23 @@ Do not pretend English `flite` can narrate French naturally. Audio/text alignmen
 is currently estimated, not forced-aligned to speech. The studio renderer uses
 FFmpeg as a complementary engine; Concat Desktop stays accessible through MCP.
 
+## Rhythm and subtitle timing (75 MCP tools total)
+
+- `ccer_silence_map`: find quiet/nonquiet passages with FFmpeg.
+- `ccer_beat_candidates`: identify rhythmic audio impulses, tentative BPM and confidence.
+- `ccer_cut_plan`: propose shot boundaries near supplied impulses. This changes **no project**.
+- `ccer_caption_timing_hint`: allocate supplied phrases to nonsilent intervals. This is
+  **not** a transcript, word-level alignment, or a substitute for listening review.
+
+The tested workflow uses `ccer_cut_plan` to construct a reviewed storyboard,
+then reuses `ccer_directed_render` to output an isolated MP4.
+
+`python3 -m tests.live_rhythm` certifies these steps on a synthetic 120 BPM audio
+track under `~/Videos/CCER`, never on a user's existing production project.
+
 ## Scope and roadmap
 
-This is **v0.1.0 foundation**, not an end-to-end self-directed production agent. Live on-screen editing, full color-grading intelligence, LLM-based creative direction, b-roll discovery, automatic beat synchronization, speech forced-alignment, visual continuity understanding and distributed rendering remain subsequent features. Deterministic storyboarding, English flite voice and studio orchestration are implemented. Upstream Concat also limits what's currently possible. No claim of complete CapCut functional parity is made.
+This is **v0.1.0 foundation**, not an end-to-end self-directed production agent. Live on-screen editing, full color-grading intelligence, LLM-based creative direction, b-roll discovery, robust beat tracking for varied real-world music, speech forced-alignment, visual continuity understanding and distributed rendering remain subsequent features. Deterministic storyboarding, English flite voice and studio orchestration are implemented. Upstream Concat also limits what's currently possible. No claim of complete CapCut functional parity is made.
 
 ## License
 

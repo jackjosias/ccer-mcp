@@ -3,10 +3,10 @@
 ## État réel validé (Ubuntu, 23 octobre 2026)
 
 - Concat Desktop 0.2.8, mode MCP `window`
-- 42 outils natifs + 29 outils CCER = **71 outils MCP**
+- 42 outils natifs + 33 outils CCER = **75 outils MCP**
 - FFmpeg / FFprobe présents, FFmpeg `flite` utilisable pour voix **anglaise**
 - Pipeline testé : brief → scénario fourni → storyboard → voix anglaise → scènes vidéo → sous-titres → MP4 → FFprobe et visual scan
-- Tests unitaires : 21 réussis, test d'export réel réussi
+- 24 tests unitaires validés avant la dernière campagne de robustesse, plus export de test musical 120 BPM vérifié
 - Aucune modification directe du projet actuellement affiché à l'écran dans Concat 0.2.8
 
 ## Les outils principaux
@@ -20,6 +20,9 @@
 `ccer_directed_render` : assemblage de plans avec durées fixées, audio et sous-titres.
 `ccer_studio_produce` : orchestre les modules précédents dans un projet isolé, avec rapport JSON.
 `ccer_export_verify`, `ccer_visual_scan` : contrôle technique du fichier réel.
+`ccer_silence_map`, `ccer_beat_candidates` : détection des silences et transitoires musicales.
+`ccer_cut_plan` : propositions de coupes, sans modification automatique du projet.
+`ccer_caption_timing_hint` : estimation temporelle des phrases, sans reconnaissance vocale.
 
 ## Exemples de cas d'usage professionnels
 
@@ -31,7 +34,7 @@
 | Podcasts vidéo | Tracks Concat, normalisation audio et MP4 | Détection des intervenants et multicam automatique |
 | Publicité / marque | Titres, effets Concat, versions 9:16/16:9/1:1 | Brand kits, motion design avancé automatique |
 | Interviews | Coupures Concat, sous-titres, traitement sonore | Diarisation, multicam, suppression intelligente des hésitations |
-| Clips musicaux | Timeline, effets, keyframes natifs Concat | Analyse des beats et synchronisation musicale intelligente |
+| Clips musicaux | Timeline, keyframes, détection de pulsations et montage dirigé sur les coupes | Beat tracking robuste en musique réelle, esthétique et transitions synchronisées |
 | Vidéos e-commerce | Templates natifs, textes, exports | Détourage/reframing IA et catalogue produit intégré |
 | Films créatifs | Keyframes et composition contrôlée | Étalonnage avancé et direction photo automatisée |
 | Éditions en lot | Recettes, checkpoints, audits et variantes de ratio | Rendu distribué et reprise transactionnelle multi-machine |
@@ -76,6 +79,7 @@ python3 -m tests.live_gateway_wire
 python3 -m tests.live_studio
 python3 -m tests.live_director
 python3 -m tests.live_v2_studio
+python3 -m tests.live_rhythm
 ```
 
 Tous les tests `live_*` réalisent des opérations réelles : le serveur Concat doit rester ouvert avec l'automatisation activée. Ils créent des fichiers uniques sous `~/Videos/CCER`; ils ne doivent jamais être exécutés sur des projets de production non sauvegardés.
@@ -93,4 +97,4 @@ Tous les tests `live_*` réalisent des opérations réelles : le serveur Concat 
 
 ## Prochain palier technique
 
-Transcription et alignement français hors ligne, vraie classification sémantique des plans, beat-sync, détection et correction de cadrage, QA colorimétrique, agent autonome avec validation de décisions créatives et support multicam. **Non encore certifiés comme implémentés.**
+Transcription et alignement français mot à mot, vraie classification sémantique des plans, synchronisation musicale robuste sur de vraies productions, détection et correction de cadrage, QA colorimétrique, agent autonome avec validation de décisions créatives et support multicam. **Non encore certifiés comme implémentés.**

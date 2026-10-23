@@ -61,6 +61,10 @@ TOOLS = {
     "ccer_directed_render": schema("Frame-timed multi-scene FFmpeg composition with optional spoken audio and burned subtitles", {"plan": {"type": "object"}, "file": PATH, "audio": PATH, "burnCaptions": BOOL, "preset": STRING}, ["plan", "file"]),
     "ccer_voice_flite": schema("Generate local English speech WAV with optional FFmpeg libflite", {"text": STRING, "file": PATH, "language": STRING, "speaker": STRING}, ["text", "file"]),
     "ccer_studio_produce": schema("Produce full local editorial plan, narration, subtitles, music mix, directed video, export QA", {"name": STRING, "brief": {"type": "object"}, "video": {"type": "object"}, "narrationFile": PATH, "generateEnglishVoice": BOOL, "musicFile": PATH, "musicGain": NUMBER, "targetLufs": NUMBER, "burnCaptions": BOOL, "preset": STRING}, ["name", "brief"]),
+    "ccer_silence_map": schema("Detect quiet and nonquiet intervals from a local audio or video file, not speech recognition", {"file": PATH, "seconds": NUMBER, "thresholdDb": NUMBER, "minSilence": NUMBER}, ["file"]),
+    "ccer_beat_candidates": schema("Find candidate audio impulses and tentative tempo without promising accurate BPM", {"file": PATH, "seconds": NUMBER, "sensitivity": NUMBER}, ["file"]),
+    "ccer_cut_plan": schema("Propose timeline cut times near supplied onsets; never change projects", {"duration": NUMBER, "onsets": {"type": "array", "items": NUMBER}, "targetShot": NUMBER, "minShot": NUMBER, "maxShot": NUMBER, "maxCuts": {"type": "integer"}}, ["duration"]),
+    "ccer_caption_timing_hint": schema("Estimate phrase timing from nonquiet audio regions, not word-level forced alignment", {"cues": {"type": "array", "items": {"type": "object"}}, "silenceReport": {"type": "object"}}, ["cues", "silenceReport"]),
 }
 
 
@@ -107,6 +111,27 @@ class Production:
             return self._dispatch(name, args)
 
     def _dispatch(self, name, a):
+        if name == "ccer_silence_map":
+            from .rhythm import silence_map
+            return silence_map(self.path(a["file"], must_exist=True),
+                               seconds=a.get("seconds", 90),
+                               threshold_db=a.get("thresholdDb", -38),
+                               min_silence=a.get("minSilence", .25))
+        if name == "ccer_beat_candidates":
+            from .rhythm import beat_candidates
+            return beat_candidates(self.path(a["file"], must_exist=True),
+                                   seconds=a.get("seconds", 90),
+                                   sensitivity=a.get("sensitivity", 1.8))
+        if name == "ccer_cut_plan":
+            from .rhythm import cut_plan
+            return cut_plan(duration=a["duration"], onsets=a.get("onsets"),
+                            target_shot=a.get("targetShot", 2),
+                            min_shot=a.get("minShot", .5),
+                            max_shot=a.get("maxShot", 4),
+                            max_cuts=a.get("maxCuts", 150))
+        if name == "ccer_caption_timing_hint":
+            from .rhythm import subtitle_timing_hint
+            return subtitle_timing_hint(a["cues"], a["silenceReport"])
         if name == "ccer_voice_flite":
             from .voice_extensions import synthesize_flite
             return synthesize_flite(a["text"], self.path(a["file"]),
