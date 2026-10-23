@@ -5,7 +5,7 @@ A guarded, **local-first** MCP gateway for **Concat Desktop** on Linux, macOS an
 ## Implemented
 
 - Dynamically exposes every native Concat MCP tool (42 in the tested Concat 0.2.8).
-- Adds sixteen CCER tools (including declarative production, caption QA, visual scanning and multi-format delivery): preflight, project inspection, checkpoints, rollback, timeline QA, transactional batch editing, media probe, audio QA, export QA, mission status, safe recovery and tamper-evident audit.
+- Adds 29 CCER tools: governed editing, creative planning, local audio/video inspection, subtitle preparation, offline English speech, directed rendering, and complete studio production: preflight, project inspection, checkpoints, rollback, timeline QA, transactional batch editing, media probe, audio QA, export QA, mission status, safe recovery and tamper-evident audit.
 - Uses the **same native Concat engine** over MCP stdio; does not attempt to edit Concat's open on-screen project (upstream v0.2.8 constraint).
 - Explicit `window` or `headless` mode, no silent fallback, sandboxed write paths, bounded subprocess waits.
 - No Python runtime dependencies beyond the standard library. FFmpeg and FFprobe are optional for media QA.
@@ -71,9 +71,23 @@ Place this in the MCP client's local configuration (adjust paths):
     python3 -m compileall -q ccer
     python3 -m unittest discover -s tests -v
 
+## Creative studio V2
+
+Documentation détaillée : [CCER V2 Studio](docs/CCER_V2_STUDIO.md).
+
+New MCP tools: `ccer_voice_flite` (English-only offline FFmpeg speech) and
+`ccer_studio_produce` (reviewable script/storyboard, optional real narration,
+music ducking, frame-timed rendering, SRT subtitles and technical QA).
+Start with `ccer_tts_status` to verify whether `ffmpeg-flite` is available.
+
+For French, use a prerecorded French narration through `narrationFile`.
+Do not pretend English `flite` can narrate French naturally. Audio/text alignment
+is currently estimated, not forced-aligned to speech. The studio renderer uses
+FFmpeg as a complementary engine; Concat Desktop stays accessible through MCP.
+
 ## Scope and roadmap
 
-This is **v0.1.0 foundation**, not an end-to-end self-directed production agent. Live on-screen editing, color grading intelligence, auto-storyboarding, voice synthesis orchestration, b-roll search, beat synchronization, captions accuracy scoring, visual continuity scoring, multi-export variants, render farm and creative direction are subsequent features. Upstream Concat also limits what's currently possible. No claim of complete CapCut functional parity is made.
+This is **v0.1.0 foundation**, not an end-to-end self-directed production agent. Live on-screen editing, full color-grading intelligence, LLM-based creative direction, b-roll discovery, automatic beat synchronization, speech forced-alignment, visual continuity understanding and distributed rendering remain subsequent features. Deterministic storyboarding, English flite voice and studio orchestration are implemented. Upstream Concat also limits what's currently possible. No claim of complete CapCut functional parity is made.
 
 ## License
 

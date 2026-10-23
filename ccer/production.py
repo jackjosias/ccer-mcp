@@ -59,6 +59,8 @@ TOOLS = {
     "ccer_scene_detect": schema("FFmpeg cut/scene change detection", {"file": PATH, "threshold": NUMBER, "seconds": {"type": "integer"}}, ["file"]),
     "ccer_contact_sheet": schema("Create 3x3 PNG shot overview", {"file": PATH, "output": PATH, "interval": NUMBER}, ["file", "output"]),
     "ccer_directed_render": schema("Frame-timed multi-scene FFmpeg composition with optional spoken audio and burned subtitles", {"plan": {"type": "object"}, "file": PATH, "audio": PATH, "burnCaptions": BOOL, "preset": STRING}, ["plan", "file"]),
+    "ccer_voice_flite": schema("Generate local English speech WAV with optional FFmpeg libflite", {"text": STRING, "file": PATH, "language": STRING, "speaker": STRING}, ["text", "file"]),
+    "ccer_studio_produce": schema("Produce full local editorial plan, narration, subtitles, music mix, directed video, export QA", {"name": STRING, "brief": {"type": "object"}, "video": {"type": "object"}, "narrationFile": PATH, "generateEnglishVoice": BOOL, "musicFile": PATH, "musicGain": NUMBER, "targetLufs": NUMBER, "burnCaptions": BOOL, "preset": STRING}, ["name", "brief"]),
 }
 
 
@@ -105,6 +107,14 @@ class Production:
             return self._dispatch(name, args)
 
     def _dispatch(self, name, a):
+        if name == "ccer_voice_flite":
+            from .voice_extensions import synthesize_flite
+            return synthesize_flite(a["text"], self.path(a["file"]),
+                                    language=a.get("language", "en"),
+                                    speaker=a.get("speaker", "kal"))
+        if name == "ccer_studio_produce":
+            from .studio_pipeline import produce_studio
+            return produce_studio(self, a)
         if name == "ccer_directed_render":
             from .director_render import render
             return render(self, a["plan"], a["file"], audio=a.get("audio"),
@@ -123,7 +133,8 @@ class Production:
             return save(self.root, a["file"], to_srt(a["cues"]))
         if name == "ccer_tts_status":
             from .audio_studio import engines
-            return engines()
+            from .voice_extensions import flite_available
+            return {**engines(), "ffmpeg-flite": flite_available()}
         if name == "ccer_voice_synthesize":
             from .audio_studio import voice
             return voice(a["text"], self.path(a["file"]), language=a.get("language", "fr"),
