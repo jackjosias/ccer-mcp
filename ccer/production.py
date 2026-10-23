@@ -1,0 +1,277 @@
+"""CCER high-level, guarded editing workflows built on Concat's native tools."""
+import hashlib
+import json
+import os
+import shutil
+import threading
+import time
+import uuid
+from pathlib import Path
+
+from .controls import Journal, PolicyError, atomic_json, audio_analyze, confirm, inside, media_probe
+from .transport import structured
+
+
+def schema(description, properties=None, required=None):
+    return {"type": "object", "description": description,
+            "properties": properties or {}, "required": required or [],
+            "additionalProperties": False}
+
+
+STRING = {"type": "string"}
+BOOL = {"type": "boolean"}
+NUMBER = {"type": "number"}
+PATH = {"type": "string", "description": "Absolute path inside CCER_ROOT"}
+TOOLS = {
+    "ccer_preflight": schema("Check editing runtime, media tools and available storage"),
+    "ccer_project_inspect": schema("Full project inspection", {"path": PATH}, ["path"]),
+    "ccer_checkpoint_create": schema("Save, then snapshot the open Concat project", {"path": PATH}, ["path"]),
+    "ccer_checkpoint_restore": schema("Restore a snapshot OFFLINE (project must be closed); explicit approval required",
+        {"checkpointId": STRING, "confirm": BOOL}, ["checkpointId", "confirm"]),
+    "ccer_timeline_validate": schema("Find gaps, overlaps and invalid clips", {
+        "path": PATH, "gapThresholdSeconds": NUMBER}, ["path"]),
+    "ccer_batch_edit": schema("Single Concat atomic undoable batch with read-after-write validation", {
+        "path": PATH, "commands": {"type": "array", "items": {"type": "object"}, "minItems": 1, "maxItems": 200},
+        "save": BOOL, "expectedClipDelta": {"type": "integer"}},
+        ["path", "commands"]),
+    "ccer_asset_analyze": schema("Read video/audio metadata via FFprobe", {"file": PATH}, ["file"]),
+    "ccer_audio_validate": schema("Scan sample for loudness and silence via FFmpeg", {
+        "file": PATH, "seconds": {"type": "integer", "minimum": 1, "maximum": 300}}, ["file"]),
+    "ccer_export_verify": schema("Inspect exported file and compare expected media properties", {
+        "file": PATH, "width": {"type": "integer"}, "height": {"type": "integer"},
+        "minDuration": NUMBER, "maxDuration": NUMBER}, ["file"]),
+    "ccer_mission_status": schema("Find an operation's recorded state", {"missionId": STRING}, ["missionId"]),
+    "ccer_mission_recover": schema("Get safe recovery guidance without blindly replaying edits", {
+        "missionId": STRING}, ["missionId"]),
+    "ccer_audit_report": schema("Verify the hash-linked audit journal"),
+    "ccer_produce": schema("Create, assemble, title, caption and optionally export a complete video from a declarative plan", {"name": STRING, "profile": STRING, "shots": {"type": "array", "items": PATH}, "music": {"type": "array", "items": PATH}, "titles": {"type": "array", "items": {"type": "object"}}, "captions": {"type": "array", "items": {"type": "object"}}, "video": {"type": "object"}, "export": BOOL, "fast": BOOL}, ["name", "shots"]),
+    "ccer_caption_validate": schema("Professional subtitle reading speed, safe layout, timing and overlaps", {"cues": {"type": "array", "items": {"type": "object"}}}, ["cues"]),
+    "ccer_visual_scan": schema("FFmpeg detection of black frames and frozen scenes", {"file": PATH, "seconds": {"type": "integer", "minimum": 1, "maximum": 300}}, ["file"]),
+    "ccer_delivery_transcode": schema("Safe verified video transcode to common platform aspect ratios", {"file": PATH, "output": PATH, "profile": STRING}, ["file", "output", "profile"]),
+}
+
+
+class Production:
+    def __init__(self, upstream, root):
+        self.upstream = upstream
+        self.root = Path(root).expanduser().resolve()
+        self.root.mkdir(parents=True, exist_ok=True)
+        self.meta = self.root / ".ccer"
+        self.journal = Journal(self.root)
+        self.lock = threading.RLock()
+
+    def path(self, raw, *, must_exist=False):
+        return inside(self.root, raw, must_exist=must_exist)
+
+    def _mission(self, kind, data):
+        ident = uuid.uuid4().hex
+        value = {"id": ident, "kind": kind, "state": "running",
+                 "started": time.time(), "data": data}
+        atomic_json(self.meta / "missions" / (ident + ".json"), value)
+        return value
+
+    def _finish(self, mission, state, **fields):
+        mission.update(state=state, ended=time.time(), **fields)
+        atomic_json(self.meta / "missions" / (mission["id"] + ".json"), mission)
+        self.journal.append("mission." + state, {"id": mission["id"], "kind": mission["kind"]})
+
+    def _read(self, path):
+        return structured(self.upstream.tool("timeline_read", {"path": str(path)}))
+
+    def run(self, name, args):
+        if name not in TOOLS:
+            raise PolicyError("Unknown CCER tool")
+        args = args or {}
+        if not isinstance(args, dict):
+            raise PolicyError("Arguments must be object")
+        allowed = set(TOOLS[name]["properties"])
+        if any(k not in allowed for k in args):
+            raise PolicyError("Unexpected argument for " + name)
+        for k in TOOLS[name]["required"]:
+            if k not in args:
+                raise PolicyError("Missing required argument: " + k)
+        with self.lock:
+            return self._dispatch(name, args)
+
+    def _dispatch(self, name, a):
+        if name == "ccer_caption_validate":
+            from .quality import captions_check
+            return captions_check(a["cues"])
+        if name == "ccer_visual_scan":
+            from .quality import visual_scan
+            return visual_scan(self.path(a["file"], must_exist=True), a.get("seconds", 60))
+        if name == "ccer_delivery_transcode":
+            from .quality import transcode
+            source = self.path(a["file"], must_exist=True)
+            dest = self.path(a["output"])
+            mission = self._mission("delivery", {"source": str(source), "profile": a["profile"]})
+            try:
+                result = transcode(source, dest, a["profile"])
+                self._finish(mission, "completed", output=str(dest))
+                return {**result, "missionId": mission["id"]}
+            except BaseException as error:
+                self._finish(mission, "unknown", errorType=type(error).__name__)
+                raise
+        if name == "ccer_produce":
+            from .recipes import produce
+            return produce(self, a)
+        if name == "ccer_preflight":
+            return {
+                "root": str(self.root), "rootWritable": os.access(self.root, os.W_OK),
+                "concat": structured(self.upstream.tool("concat_version")),
+                "ffmpeg": bool(shutil.which("ffmpeg")),
+                "ffprobe": bool(shutil.which("ffprobe")),
+                "diskFreeBytes": shutil.disk_usage(self.root).free,
+                "audit": self.journal.verify(),
+            }
+        if name == "ccer_project_inspect":
+            path = self.path(a["path"], must_exist=True)
+            return structured(self.upstream.tool("project_get", {"path": str(path)}))
+        if name == "ccer_checkpoint_create":
+            path = self.path(a["path"], must_exist=True)
+            if not (path / "concat.json").is_file():
+                raise PolicyError("Not a saved Concat project directory")
+            self.upstream.tool("project_save", {"path": str(path)})
+            ident = uuid.uuid4().hex
+            target = self.meta / "checkpoints" / ident / "project"
+            target.parent.mkdir(parents=True, exist_ok=False)
+            try:
+                self._copy_project(path, target)
+                checksum = hashlib.sha256((target / "concat.json").read_bytes()).hexdigest()
+                record = {"id": ident, "project": str(path),
+                          "created": time.time(), "sha256": checksum}
+                atomic_json(target.parent / "metadata.json", record)
+            except BaseException:
+                shutil.rmtree(target.parent, ignore_errors=True)
+                raise
+            self.journal.append("checkpoint.created", {"id": ident, "project": str(path)})
+            return record
+        if name == "ccer_checkpoint_restore":
+            confirm(a["confirm"])
+            ident = a["checkpointId"]
+            if not isinstance(ident, str) or not ident.isalnum() or len(ident) != 32:
+                raise PolicyError("Invalid checkpoint ID")
+            location = self.meta / "checkpoints" / ident
+            record = json.loads((location / "metadata.json").read_text(encoding="utf-8"))
+            destination = self.path(record["project"])
+            if (destination / "concat.lock").exists():
+                raise PolicyError("Project lock exists; close all Concat sessions first")
+            saved = location / "project"
+            if hashlib.sha256((saved / "concat.json").read_bytes()).hexdigest() != record["sha256"]:
+                raise PolicyError("Checkpoint integrity mismatch")
+            stage = destination.with_name(destination.name + ".ccer-restore-" + ident[:8])
+            if stage.exists():
+                raise PolicyError("Restore staging path already exists")
+            self._copy_project(saved, stage)
+            backup = self.meta / "restore-backups" / (ident + "-" + uuid.uuid4().hex[:6])
+            backup.parent.mkdir(parents=True, exist_ok=True)
+            moved = False
+            try:
+                if destination.exists():
+                    destination.rename(backup)
+                    moved = True
+                stage.rename(destination)
+            except BaseException:
+                if moved and not destination.exists():
+                    backup.rename(destination)
+                if stage.exists():
+                    shutil.rmtree(stage)
+                raise
+            self.journal.append("checkpoint.restored",
+                                {"id": ident, "project": str(destination), "backup": str(backup) if moved else None})
+            return {"restored": str(destination), "backup": str(backup) if moved else None}
+        if name == "ccer_timeline_validate":
+            timeline = self._read(self.path(a["path"], must_exist=True)).get("timeline", {})
+            clips = timeline.get("clips", [])
+            threshold = max(0.0, float(a.get("gapThresholdSeconds", 0.15)))
+            issues, by_track = [], {}
+            for clip in clips:
+                start, duration = float(clip.get("start", 0)), float(clip.get("duration", 0))
+                ident = clip.get("id")
+                if start < 0 or duration <= 0:
+                    issues.append({"kind": "invalid_clip", "id": ident})
+                track = str(clip.get("trackId", clip.get("track", "unknown")))
+                by_track.setdefault(track, []).append((start, start + duration, ident))
+            for track, positions in by_track.items():
+                positions.sort()
+                for prev, cur in zip(positions, positions[1:]):
+                    diff = cur[0] - prev[1]
+                    if diff < -0.0001:
+                        issues.append({"kind": "overlap", "track": track, "clips": [prev[2], cur[2]], "seconds": -diff})
+                    elif diff > threshold:
+                        issues.append({"kind": "gap", "track": track, "seconds": diff, "after": prev[2]})
+            return {"valid": not any(i["kind"] in ("invalid_clip", "overlap") for i in issues),
+                    "clipCount": len(clips), "issues": issues}
+        if name == "ccer_batch_edit":
+            path = self.path(a["path"], must_exist=True)
+            commands = a["commands"]
+            if not isinstance(commands, list) or not 1 <= len(commands) <= 200:
+                raise PolicyError("commands must contain 1..200 operations")
+            for cmd in commands:
+                if not isinstance(cmd, dict) or "op" not in cmd:
+                    raise PolicyError("Each command must specify op")
+            mission = self._mission("batch_edit", {"project": str(path), "count": len(commands)})
+            before = self._read(path)
+            try:
+                response = structured(self.upstream.tool("edit_apply",
+                    {"path": str(path), "command": {"op": "batch", "commands": commands}}, timeout=120))
+                after = self._read(path)
+                old_n = len(before.get("timeline", {}).get("clips", []))
+                new_n = len(after.get("timeline", {}).get("clips", []))
+                delta = new_n - old_n
+                verified = a.get("expectedClipDelta") is None or delta == a["expectedClipDelta"]
+                if a.get("save", False) and verified:
+                    self.upstream.tool("project_save", {"path": str(path)})
+                self._finish(mission, "completed" if verified else "attention",
+                    verification={"expectedDelta": a.get("expectedClipDelta"), "actualDelta": delta})
+                return {"missionId": mission["id"], "verified": verified,
+                        "clipDelta": delta, "saved": bool(a.get("save", False) and verified),
+                        "editingResult": response}
+            except BaseException as error:
+                self._finish(mission, "unknown", reason=type(error).__name__)
+                raise
+        if name == "ccer_asset_analyze":
+            return media_probe(self.path(a["file"], must_exist=True))
+        if name == "ccer_audio_validate":
+            return audio_analyze(self.path(a["file"], must_exist=True), a.get("seconds", 40))
+        if name == "ccer_export_verify":
+            report = media_probe(self.path(a["file"], must_exist=True))
+            video = next((s for s in report["streams"] if s.get("codec_type") == "video"), {})
+            errors = []
+            for key in ("width", "height"):
+                if key in a and video.get(key) != a[key]:
+                    errors.append(f"{key} expected {a[key]}, got {video.get(key)}")
+            try:
+                duration = float(report["format"]["duration"])
+            except (TypeError, ValueError):
+                duration = None
+                errors.append("Duration unavailable")
+            if duration is not None:
+                if duration < float(a.get("minDuration", 0)):
+                    errors.append("Video shorter than expected")
+                if duration > float(a.get("maxDuration", float("inf"))):
+                    errors.append("Video longer than expected")
+            result = {"passed": not errors, "errors": errors, "probe": report}
+            self.journal.append("export.verified", {"file": str(report["file"]), "passed": result["passed"]})
+            return result
+        if name in ("ccer_mission_status", "ccer_mission_recover"):
+            ident = a["missionId"]
+            if not isinstance(ident, str) or len(ident) != 32 or not ident.isalnum():
+                raise PolicyError("Invalid mission ID")
+            file = self.meta / "missions" / (ident + ".json")
+            value = json.loads(file.read_text(encoding="utf-8"))
+            if name == "ccer_mission_recover":
+                value["recovery"] = ("Inspect the Concat timeline and audit manually. "
+                    "Do not automatically replay edits with unknown commit outcome.")
+            return value
+        if name == "ccer_audit_report":
+            return self.journal.verify()
+        raise PolicyError("Unknown tool")
+
+    @staticmethod
+    def _copy_project(src, dest):
+        for path in src.rglob("*"):
+            if path.is_symlink():
+                raise PolicyError("Symlink in project snapshot refused")
+        shutil.copytree(src, dest, symlinks=False,
+                        ignore=shutil.ignore_patterns("concat.lock", ".ccer"))
