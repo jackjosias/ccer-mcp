@@ -22,7 +22,7 @@ _ALLOWED_KEYS = frozenset({
     "Escape", "Tab", "Return", "BackSpace", "Delete",
     "Left", "Right", "Up", "Down", "Home", "End",
     "space", "ctrl+s", "ctrl+z", "ctrl+shift+z",
-    "ctrl+o", "ctrl+n", "ctrl+i", "ctrl+a",
+    "ctrl+o", "ctrl+n", "ctrl+i", "ctrl+a", "ctrl+l",
 })
 
 
@@ -49,7 +49,7 @@ def _environment():
     return display
 
 
-def _window():
+def _concat_window():
     display = _environment()
     listing = _run(["wmctrl", "-lx"], timeout=8)
     matches = []
@@ -87,18 +87,75 @@ def _window():
     return matches[0]
 
 
+def _media_import_dialog(main):
+    """Strictly scoped GTK file chooser spawned for Concat's visible Import UI.
+
+    The portal does not advertise WM_TRANSIENT_FOR. We therefore require a
+    unique exact media-import title, GTK portal class/process and X11 dialog
+    type in addition to a verified live Concat window. Other portal dialogs
+    are never controllable with this bridge.
+    """
+    listing = _run(["wmctrl", "-lx"], timeout=8)
+    candidates = []
+    for line in listing.splitlines():
+        pieces = line.split(maxsplit=4)
+        if len(pieces) < 5:
+            continue
+        raw, _, wmclass, _, title = pieces
+        if title != "Importer des médias":
+            continue
+        if wmclass != "xdg-desktop-portal-gtk.Xdg-desktop-portal-gtk":
+            raise PolicyError("Media dialog has unexpected X11 window class")
+        if not re.fullmatch(r"0x[0-9a-fA-F]+", raw):
+            raise PolicyError("Media dialog window ID is invalid")
+        properties = _run(["xprop", "-id", raw, "WM_CLASS",
+                           "WM_NAME", "_NET_WM_WINDOW_TYPE", "_NET_WM_PID"], timeout=6)
+        if ('WM_CLASS(STRING) = "xdg-desktop-portal-gtk", "Xdg-desktop-portal-gtk"'
+                not in properties
+                or 'WM_NAME(STRING) = "Importer des médias"' not in properties
+                or "_NET_WM_WINDOW_TYPE_DIALOG" not in properties):
+            raise PolicyError("Media dialog identity cannot be verified")
+        pid_match = re.search(r"_NET_WM_PID\(CARDINAL\)\s*=\s*(\d+)", properties)
+        if not pid_match:
+            raise PolicyError("Media dialog process ID is missing")
+        args = _run(["ps", "-p", pid_match.group(1), "-o", "args="], timeout=6).strip()
+        if not args or args.split()[0].rsplit("/", 1)[-1] != "xdg-desktop-portal-gtk":
+            raise PolicyError("Media dialog executable cannot be verified")
+        geometry = _run(["xwininfo", "-id", raw], timeout=6)
+        width = re.search(r"^\s*Width:\s*(\d+)", geometry, re.M)
+        height = re.search(r"^\s*Height:\s*(\d+)", geometry, re.M)
+        if not width or not height or "Map State: IsViewable" not in geometry:
+            raise PolicyError("Media dialog is not a visible X11 window")
+        ww, hh = int(width.group(1)), int(height.group(1))
+        if not (200 <= ww <= 7680 and 200 <= hh <= 4320):
+            raise PolicyError("Media dialog dimensions out of range")
+        candidates.append({"windowId": raw.lower(), "pid": int(pid_match.group(1)),
+                           "title": "Importer des médias", "width": ww, "height": hh,
+                           "display": main["display"], "role": "concat_media_import_dialog",
+                           "parentConcatWindowId": main["windowId"]})
+    if len(candidates) > 1:
+        raise PolicyError("Multiple matching media import dialogs; refusing input")
+    return candidates[0] if candidates else None
+
+
+def _window():
+    main = _concat_window()
+    dialog = _media_import_dialog(main)
+    return dialog if dialog else main
+
+
 def status():
     """Read-only; no desktop activation."""
     with _GUI_LOCK:
         return {"available": True, "window": _window(),
-                "captureScope": "Concat X11 window_id, not whole desktop",
-                "controlScope": "window-ID-guarded xdotool, activation verified",
+                "captureScope": "verified Concat X11 window or exact media-import portal dialog only",
+                "controlScope": "verified target window-ID, xdotool focus checked",
                 "requiresActionConfirmation": True,
                 "otherAppsAccessible": False}
 
 
 def capture(*, max_width=840):
-    """Capture only the currently verified Concat window, for the AI reviewer."""
+    """Capture verified Concat UI or its narrowly allowlisted Import dialog."""
     if type(max_width) is not int or not 320 <= max_width <= 1600:
         raise PolicyError("maxWidth must be integer 320..1600")
     with _GUI_LOCK:
@@ -129,7 +186,7 @@ def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
     with _GUI_LOCK:
         win = _window()
         if expected_window_id != win["windowId"]:
-            raise PolicyError("Stale Concat window ID; recapture before acting")
+            raise PolicyError("Stale verified Concat/dialog window ID; recapture before acting")
         if action not in ("click", "key", "type", "scroll", "drag"):
             raise PolicyError("Only click/key/type/scroll/drag actions are supported")
         if action in ("click", "scroll", "drag"):
@@ -155,10 +212,23 @@ def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
             raise PolicyError("Type supports only up to 500 printable characters")
         if action == "scroll" and (type(scroll) is not int or not -8 <= scroll <= 8 or scroll == 0):
             raise PolicyError("Scroll must be an integer between -8 and +8, excluding zero")
-        _run(["xdotool", "windowactivate", "--sync", str(int(win["windowId"], 16))])
-        active = int(_run(["xdotool", "getactivewindow"]).strip())
-        if active != int(win["windowId"], 16):
-            raise PolicyError("Concat is not the active window; aborting input")
+        target_window = int(win["windowId"], 16)
+        _run(["xdotool", "windowactivate", "--sync", str(target_window)])
+        # Some X11 window-manager states expose _NET_ACTIVE_WINDOW=0 or do
+        # not support that property. Recover by explicitly requesting input
+        # focus, but NEVER assume success without verifying the exact window.
+        try:
+            active = int(_run(["xdotool", "getactivewindow"]).strip())
+        except (PolicyError, ValueError):
+            active = None
+        if active != target_window:
+            _run(["xdotool", "windowfocus", "--sync", str(target_window)])
+            try:
+                active = int(_run(["xdotool", "getwindowfocus"]).strip())
+            except (PolicyError, ValueError) as exc:
+                raise PolicyError("Concat input focus could not be verified") from exc
+        if active != target_window:
+            raise PolicyError("Concat is not the focused window; aborting input")
         if action in ("click", "scroll", "drag"):
             _run(["xdotool", "mousemove", "--sync", "--window",
                   str(active), str(x), str(y)])

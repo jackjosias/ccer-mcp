@@ -142,6 +142,8 @@ window ID and `confirm=true`; this integration is **X11-only**.
 Detailed instructions and safeguards: [CCER Desktop Control](docs/CCER_DESKTOP_CONTROL.md).
 Live acceptance: `python3 -m tests.live_direct_control`.
 Le glisser-déposer déplace réellement la souris en plusieurs étapes visibles.
+Le dialogue GTK « Importer des médias » est pris en charge après vérification
+stricte de sa classe, de son titre et de son processus (aucune autre fenêtre).
 
 ## Direct ChatGPT MCP connectivity (independent of WCER)
 

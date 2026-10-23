@@ -11,8 +11,9 @@ L'outil Concat reste connecté via 42 outils MCP natifs, et CCER expose à prés
 
 ### Contrôle visuel Concat : trois nouveaux outils
 
-1. `ccer_desktop_status` détecte uniquement la fenêtre X11 Concat ; renvoie
-   son identifiant courant, les dimensions et son PID.
+1. `ccer_desktop_status` identifie la fenêtre X11 Concat **ou son dialogue GTK
+   « Importer des médias » vérifié**, puis renvoie l'identifiant, les dimensions
+   et le PID de la cible courante.
 2. `ccer_desktop_capture` renvoie une image JPEG de cette fenêtre sous forme
    d'un bloc **MCP image**, pas seulement un chemin de fichier. Son paramètre
    `maxWidth` vaut 840 par défaut (320 à 1600).
@@ -52,7 +53,8 @@ de coordonnées.
 - La classe X11 doit être exactement `.concat`, le processus affiché
   doit être `AppRun` ou `Concat` et il doit y avoir une seule fenêtre.
 - Les captures utilisent `ffmpeg -f x11grab -window_id` ciblé sur Concat,
-  pas une capture de tout le bureau ni des autres applications.
+  ou sur son sélecteur de médias GTK dont la classe, le PID, le titre exact et le
+  type de fenêtre sont vérifiés. Aucune capture générale du bureau n'est permise.
 - Les actions demandent un `windowId` récent et une confirmation explicite.
   Si la cible est absente ou différente, l'interaction est refusée.
 - Le clavier autorise seulement une liste bornée de touches/commandes. Le
@@ -75,6 +77,10 @@ python3 -m unittest discover -s tests -v
 python3 -m tests.live_gateway_wire
 python3 -m tests.live_desktop
 ```
+
+Le test supplémentaire `python3 -m tests.live_portal_capture` vérifie
+le dialogue « Importer des médias » lorsqu'il est ouvert, **sans sélectionner
+ni modifier de fichier**. Le pont refuse les autres sélecteurs GTK.
 
 Le test GUI capture la fenêtre Concat, clique le menu `Fichier`, envoie
 `Échap`, obtient une seconde capture, et vérifie l'identifiant de la

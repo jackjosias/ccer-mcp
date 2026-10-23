@@ -44,8 +44,9 @@ Ne jamais basculer silencieusement sur le moteur headless.
 - `drag` déplace la souris physiquement en plusieurs petites étapes,
   sur une durée visible. Les clics ont aussi une courte pause de stabilisation.
 - Les images sont des **captures successives**, et non un flux vidéo continu.
-  Les actions souris sont visibles localement, mais Concat ne garantit pas
-  que chaque boîte de dialogue système soit contrôlable dans la même fenêtre.
+  Les sélecteurs « Importer des médias » de GTK sont désormais pris en charge
+  **uniquement** après vérification stricte de leur classe, titre, PID et type.
+  Les autres dialogues système non vérifiés demeurent interdits.
 - `actionSent=true` prouve uniquement l'envoi à la bonne fenêtre ; vérifier
   ensuite l'interface et le projet, sans prétendre à une réussite artistique.
 - Le contrat CCER ne dépend pas de WCER ni d'Ollama ; WCER sert uniquement à

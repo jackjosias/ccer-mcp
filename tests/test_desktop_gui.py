@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import patch
 
 from ccer.controls import PolicyError
-from ccer.desktop_gui import interact, capture
+from ccer.desktop_gui import interact, capture, _media_import_dialog
 from ccer.server import Gateway
 
 
@@ -73,6 +73,76 @@ class DesktopGuiTests(unittest.TestCase):
         self.assertTrue(any(x[:2] == ["xdotool", "mouseup"] for x in calls))
         self.assertGreaterEqual(sum(x[:2] == ["xdotool", "mousemove"] for x in calls), 10)
         self.assertTrue(result["actionSent"])
+
+    @patch("ccer.desktop_gui._run")
+    @patch("ccer.desktop_gui._window", return_value=WINDOW)
+    def test_x11_active_property_failure_can_recover_with_verified_focus(self, win, run):
+        def reply(argv, **kwargs):
+            if argv[:2] == ["xdotool", "getactivewindow"]:
+                raise PolicyError("_NET_ACTIVE_WINDOW unavailable")
+            if argv[:2] == ["xdotool", "getwindowfocus"]:
+                return "60817413"
+            return ""
+        run.side_effect = reply
+        result = interact(expected_window_id="0x3a00005", action="key",
+                          confirm_action=True, key="Escape", with_capture=False)
+        self.assertTrue(result["actionSent"])
+        self.assertTrue(any(x.args[0][:2] == ["xdotool", "windowfocus"]
+                            for x in run.call_args_list))
+
+    @patch("ccer.desktop_gui._run")
+    @patch("ccer.desktop_gui._window", return_value=WINDOW)
+    def test_x11_fallback_refuses_focus_in_other_application(self, win, run):
+        def reply(argv, **kwargs):
+            if argv[:2] == ["xdotool", "getactivewindow"]:
+                raise PolicyError("_NET_ACTIVE_WINDOW unavailable")
+            if argv[:2] == ["xdotool", "getwindowfocus"]:
+                return "2000"   # Different application window
+            return ""
+        run.side_effect = reply
+        with self.assertRaisesRegex(PolicyError, "not the focused window"):
+            interact(expected_window_id="0x3a00005", action="click",
+                     confirm_action=True, x=100, y=100, with_capture=False)
+        self.assertFalse(any(x.args[0][:2] == ["xdotool", "click"]
+                             for x in run.call_args_list))
+
+    @patch("ccer.desktop_gui._run")
+    def test_verified_media_import_dialog_can_be_selected(self, run):
+        def reply(argv, **kwargs):
+            if argv[:2] == ["wmctrl", "-lx"]:
+                return ("0x0320160b 0 "
+                        "xdg-desktop-portal-gtk.Xdg-desktop-portal-gtk "
+                        "host Importer des médias")
+            if argv[:2] == ["xprop", "-id"]:
+                return ('WM_CLASS(STRING) = "xdg-desktop-portal-gtk", '
+                        '"Xdg-desktop-portal-gtk"\\n'
+                        'WM_NAME(STRING) = "Importer des médias"\\n'
+                        '_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\\n'
+                        '_NET_WM_PID(CARDINAL) = 7545')
+            if argv[:3] == ["ps", "-p", "7545"]:
+                return "/usr/libexec/xdg-desktop-portal-gtk"
+            if argv[:2] == ["xwininfo", "-id"]:
+                return "  Width: 1460" + chr(10) + "  Height: 765" + chr(10) + "  Map State: IsViewable"
+            raise AssertionError(f"Unexpected command: {argv}")
+        run.side_effect = reply
+        dialog = _media_import_dialog(WINDOW)
+        self.assertEqual(dialog["windowId"], "0x0320160b")
+        self.assertEqual(dialog["role"], "concat_media_import_dialog")
+        self.assertEqual(dialog["parentConcatWindowId"], WINDOW["windowId"])
+
+    @patch("ccer.desktop_gui._run")
+    def test_unrelated_gtk_dialog_is_not_controllable(self, run):
+        run.return_value = ("0x0320160b 0 "
+                            "xdg-desktop-portal-gtk.Xdg-desktop-portal-gtk "
+                            "host Ouvrir les secrets")
+        self.assertIsNone(_media_import_dialog(WINDOW))
+
+    @patch("ccer.desktop_gui._run")
+    def test_mismatched_media_dialog_identity_fails_closed(self, run):
+        run.return_value = ("0x0320160b 0 firefox.Firefox "
+                            "host Importer des médias")
+        with self.assertRaises(PolicyError):
+            _media_import_dialog(WINDOW)
 
     def test_gateway_returns_real_mcp_image_block_and_no_base64_in_metadata(self):
         with tempfile.TemporaryDirectory() as d:
