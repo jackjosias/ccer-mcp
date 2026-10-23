@@ -45,10 +45,42 @@ n'existe pas déjà, via le modèle officiel `sample_mcp_stdio_local`. Il
 référence la clé en `env:CONTROL_PLANE_API_KEY` et lie le panneau de santé
 à l'interface locale `127.0.0.1`.
 
-Pour autoriser ensuite le montage, configurer un profil **distinct** avec
-`--access control` après avoir passé les essais en mode lecture et contrôlé
-les autorisations du connecteur. Une commande distante ne peut pas augmenter
-les droits du profil observe.
+## Activation du contrôle sur un tunnel CCER déjà connecté
+
+Quand le plugin `ccer-mcp` existe déjà et expose les 34 outils de lecture,
+**ne pas recréer de tunnel**. Sur l'Ubuntu où réside le profil existant :
+
+```bash
+cd ~/WORKSPACE-LOGICIEL/concat/ccer-mcp
+python3 -m ccer.profile_access --access control
+python3 -m ccer.profile_access --access control --apply
+```
+
+La première commande est un aperçu sans écriture. La deuxième ne change
+que `--access observe` en `--access control` dans
+`~/.config/tunnel-client/ccer-direct.yaml`. Elle conserve l'identifiant
+de tunnel, la référence de clé et les autres options. Elle refuse les liens
+symboliques, profils inattendus, modifications concurrentes et écrasements
+non intentionnels. La bascule est réversible avec
+`python3 -m ccer.profile_access --access observe --apply`.
+
+IMPORTANT : un `tunnel-client run` déjà actif conserve sa configuration
+précédente. Dans **son terminal existant**, effectuer `Ctrl+C`, puis :
+
+```bash
+tunnel-client doctor --profile ccer-direct
+tunnel-client run --profile ccer-direct
+```
+
+Le même terminal doit avoir `CONTROL_PLANE_API_KEY` configuré. Ne jamais
+afficher ou transmettre sa valeur.
+
+Après redémarrage, **actualiser ou reconnecter** le plugin CCER dans
+ChatGPT afin qu'il redécouvre les 85 outils. Tester
+`ccer_desktop_status`, `ccer_desktop_capture`, puis une action de contrôle
+inoffensive avec confirmation explicite. Certaines modifications de permissions
+peuvent nécessiter de réautoriser le plugin côté ChatGPT. Une commande distante
+ne peut pas augmenter les droits d'un processus qui tourne encore en observe.
 
 4. Dans un espace ChatGPT autorisé : Plugins → Ajouter un serveur MCP
    personnalisé → Tunnel → sélectionner le tunnel CCER → examiner les outils,

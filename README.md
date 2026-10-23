@@ -146,6 +146,8 @@ MCP gateway over stdio for the official OpenAI `tunnel-client`.
 - `tunnel-client doctor --profile ccer-direct` and
   `tunnel-client run --profile ccer-direct` authenticate that profile.
 
+For an **existing** observe tunnel, use `python3 -m ccer.profile_access --access control --apply`, then restart only the `ccer-direct` process in its original terminal and refresh ChatGPT's connector. Do not recreate the tunnel or disclose secrets.
+
 See [CCER Direct setup](docs/CCER_DIRECT_TUNNEL.md). Verify locally with
 `python3 -m tests.live_direct_stdio` (observe) and
 `python3 -m tests.live_direct_control` (full control).
