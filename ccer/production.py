@@ -48,6 +48,17 @@ TOOLS = {
     "ccer_caption_validate": schema("Professional subtitle reading speed, safe layout, timing and overlaps", {"cues": {"type": "array", "items": {"type": "object"}}}, ["cues"]),
     "ccer_visual_scan": schema("FFmpeg detection of black frames and frozen scenes", {"file": PATH, "seconds": {"type": "integer", "minimum": 1, "maximum": 300}}, ["file"]),
     "ccer_delivery_transcode": schema("Safe verified video transcode to common platform aspect ratios", {"file": PATH, "output": PATH, "profile": STRING}, ["file", "output", "profile"]),
+    "ccer_creative_plan": schema("Reviewable story structure built from user-supplied script", {"brief": {"type": "object"}}, ["brief"]),
+    "ccer_storyboard": schema("Shot list and visual intent for planned scenes", {"plan": {"type": "object"}}, ["plan"]),
+    "ccer_plan_save": schema("Write new creative plan JSON", {"plan": {"type": "object"}, "file": PATH}, ["plan", "file"]),
+    "ccer_subtitles_write": schema("Write validated timed SRT subtitles", {"cues": {"type": "array", "items": {"type": "object"}}, "file": PATH}, ["cues", "file"]),
+    "ccer_tts_status": schema("Check installed offline voice synthesis engines"),
+    "ccer_voice_synthesize": schema("Offline narration via installed eSpeak", {"text": STRING, "file": PATH, "language": STRING, "rate": {"type": "integer"}, "engine": STRING}, ["text", "file"]),
+    "ccer_audio_mix": schema("Normalize voice and duck background music with measured integrated loudness", {"voice": PATH, "music": PATH, "file": PATH, "musicGain": NUMBER, "targetLufs": NUMBER}, ["voice", "file"]),
+    "ccer_shot_inspect": schema("Technical shot ranking from codec, resolution, duration", {"files": {"type": "array", "items": PATH}}, ["files"]),
+    "ccer_scene_detect": schema("FFmpeg cut/scene change detection", {"file": PATH, "threshold": NUMBER, "seconds": {"type": "integer"}}, ["file"]),
+    "ccer_contact_sheet": schema("Create 3x3 PNG shot overview", {"file": PATH, "output": PATH, "interval": NUMBER}, ["file", "output"]),
+    "ccer_directed_render": schema("Frame-timed multi-scene FFmpeg composition with optional spoken audio and burned subtitles", {"plan": {"type": "object"}, "file": PATH, "audio": PATH, "burnCaptions": BOOL, "preset": STRING}, ["plan", "file"]),
 }
 
 
@@ -94,6 +105,46 @@ class Production:
             return self._dispatch(name, args)
 
     def _dispatch(self, name, a):
+        if name == "ccer_directed_render":
+            from .director_render import render
+            return render(self, a["plan"], a["file"], audio=a.get("audio"),
+                          burn_captions=a.get("burnCaptions", True), preset=a.get("preset", "veryfast"))
+        if name == "ccer_creative_plan":
+            from .creative import plan
+            return plan(a["brief"])
+        if name == "ccer_storyboard":
+            from .creative import storyboard
+            return storyboard(a["plan"])
+        if name == "ccer_plan_save":
+            from .creative import save
+            return save(self.root, a["file"], json.dumps(a["plan"], indent=2, ensure_ascii=False) + "\n")
+        if name == "ccer_subtitles_write":
+            from .creative import save, to_srt
+            return save(self.root, a["file"], to_srt(a["cues"]))
+        if name == "ccer_tts_status":
+            from .audio_studio import engines
+            return engines()
+        if name == "ccer_voice_synthesize":
+            from .audio_studio import voice
+            return voice(a["text"], self.path(a["file"]), language=a.get("language", "fr"),
+                         rate=a.get("rate", 150), engine=a.get("engine", "auto"))
+        if name == "ccer_audio_mix":
+            from .audio_studio import mix
+            return mix(self.path(a["voice"], must_exist=True),
+                       self.path(a["music"], must_exist=True) if a.get("music") else None,
+                       self.path(a["file"]), music_gain=a.get("musicGain", 0.18),
+                       target_lufs=a.get("targetLufs", -16.0))
+        if name == "ccer_shot_inspect":
+            from .shot_intelligence import inspect_shots
+            return inspect_shots([str(self.path(p, must_exist=True)) for p in a["files"]])
+        if name == "ccer_scene_detect":
+            from .shot_intelligence import scene_cuts
+            return scene_cuts(self.path(a["file"], must_exist=True),
+                              a.get("threshold", 0.32), a.get("seconds", 120))
+        if name == "ccer_contact_sheet":
+            from .shot_intelligence import contact_sheet
+            return contact_sheet(self.path(a["file"], must_exist=True), self.path(a["output"]),
+                                 interval=a.get("interval", 2))
         if name == "ccer_caption_validate":
             from .quality import captions_check
             return captions_check(a["cues"])
