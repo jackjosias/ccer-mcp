@@ -16,6 +16,7 @@ import time
 
 from .controls import PolicyError, confirm
 from .focus_isolation import require_private_input
+from . import native_desktop
 
 
 _GUI_LOCK = threading.RLock()
@@ -181,6 +182,8 @@ def _window():
 
 def status():
     """Read-only; no desktop activation."""
+    if native_desktop.enabled():
+        return native_desktop.status()
     with _GUI_LOCK:
         try:
             isolation = require_private_input()
@@ -198,6 +201,8 @@ def status():
 
 def capture(*, max_width=840):
     """Capture verified Concat UI or its narrowly allowlisted Import dialog."""
+    if native_desktop.enabled():
+        return native_desktop.capture(max_width=max_width)
     if type(max_width) is not int or not 320 <= max_width <= 1600:
         raise PolicyError("maxWidth must be integer 320..1600")
     with _GUI_LOCK:
@@ -222,6 +227,12 @@ def capture(*, max_width=840):
 def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
              button=1, key=None, text=None, scroll=None, with_capture=True,
              target_x=None, target_y=None, duration=.7):
+    if native_desktop.enabled():
+        return native_desktop.interact(
+            expected_window_id=expected_window_id, action=action,
+            confirm_action=confirm_action, x=x, y=y, button=button,
+            key=key, text=text, scroll=scroll, with_capture=with_capture,
+            target_x=target_x, target_y=target_y, duration=duration)
     confirm(confirm_action)
     if type(with_capture) is not bool:
         raise PolicyError("withCapture must be boolean")

@@ -1,4 +1,4 @@
-# CCER Native Computer Use — Slint (23 octobre 2026)
+# CCER Native Computer Use — Slint (24 octobre 2026)
 
 ## Contexte vérifié
 
@@ -11,24 +11,24 @@ Slint 1.18 offre `Window::dispatch_event_with_result(WindowEvent)` pour les év�
 ## Réalisations
 
 - `ccer/inapp_protocol.py` : client Unix local avec permissions, `SO_PEERCRED`, preuve d'autorisation, fenêtres et frames liées, hash SHA-256 du JPEG et capture AVANT/APRÈS chaque geste. Aucun fallback X11/headless.
-- `tests/test_inapp_protocol.py` : 9 tests réussis **avec serveur simulé uniquement**.
-- Fork Rust : `src/crates/concat/src/ccer_input.rs`, activé uniquement par le feature `ccer-inapp`. Événements Slint réels click/move/scroll/clavier sur le thread UI ; capture JPEG via `Window::take_snapshot()`. Aucun serveur, socket ou entrée physique démarrés automatiquement. Les drags sont refusés jusqu'à leur implémentation temporisée et visible.
+- `tests/test_inapp_protocol.py` et `tests/test_native_desktop.py` : **76/76 tests Python réussis**, dont un essai via une vraie socket Unix vers un simulateur Slint (et non une fenêtre Concat réelle).
+- Fork Rust : `ccer_input.rs` (événements Slint, JPEG) et `ccer_server.rs` (socket Unix privée, SO_PEERCRED, preuve SHA-256, session, compteur d'image). Déclaré dans `lib.rs` uniquement sous le feature `ccer-inapp` et démarré uniquement avec une configuration explicite. La compilation et les gestes sur vraie fenêtre ne sont PAS encore certifiés ; le drag temporisé reste refusé.
 - Copie source Git isolée (environ 64 Mo) ignorée par le dépôt CCER.
 
-## À réaliser avant certification native
+## Certification encore indispensable
 
-1. Compiler le feature `ccer-inapp` contre **les dépendances verrouillées** de Concat et tester les événements sur une fenêtre réelle.
-2. Ajouter dans Concat un listener UNIX local, désactivé par défaut, avec activation volontaire, permissions 0600, contrôle client UID/PID et secret de session.
-3. Relier le listener à `slint::invoke_from_event_loop` et `Shell::with` ; envoyer des captures réelles avec compteur de frame, identité de fenêtre/session et réponses au protocole Python.
-4. Ajouter curseur fantôme Slint, glisser-déposer temporisé avec captures intermédiaires, annulation et vérification de l'état du projet.
-5. Certifier dix gestes réels, import, montage, sauvegarde et export sur projet jetable, sans événement focus/souris imputable à CCER, puis reconnexion et redémarrage du tunnel.
+1. Obtenir un code de sortie **0** du `cargo check --features ccer-inapp`, corriger les diagnostics Rust, puis compiler un binaire séparé de l'AppImage officielle.
+2. Démarrer ce binaire avec une socket `~/.local/state/ccer-inapp/*.sock` et une autorisation aléatoire de 32 caractères minimum ; contrôler les permissions 0700/0600 et l'identité UID/PID.
+3. Capturer de **vrais pixels Slint** et tester les clics, le défilement, les touches, la capture avant/après, les images périmées et l'absence de contrôle du pointeur physique X11.
+4. Implémenter et tester le curseur fantôme et le glisser-déposer temporisé : les drags sont actuellement refusés, sans repli.
+5. Certifier import, montage, sauvegarde, export vidéo et reconnexion sur un projet jetable dans une véritable fenêtre.
 
 ## Contraintes de compilation
 
-Ubuntu : ~21 Go libres, disque 95 % utilisé, `rustc 1.95.0` et `cargo 1.95.0`. `cargo metadata --offline --no-deps` réussit. `cargo check --offline --locked -p concat --lib --features ccer-inapp` reste bloqué avant compilation car le cache Rust possède `log 0.4.29` mais le lock officiel exige `log 0.4.34`. Ne pas modifier le lockfile ni déclencher un build massif sans mesurer sa taille.
+Ubuntu : 17 Go libres au dernier contrôle, disque 96 % utilisé et swap fortement sollicité. Cargo a récupéré ses dépendances. Les fichiers de développement Linux ont été extraits sans sudo sous `/tmp/ccer-build-deps`. Une archive **FFmpeg 7.1.5 partagée** (SHA-256 `df7e15a2d2fe0ee15ae36e0e3b83596dd088ee0a0767874241d9a54380df0add`) est isolée dans `.upstream-concat/.ccer-ffmpeg7`, sélectionnée par le script `.upstream-concat/.ccer-cargo-check.sh`. Le verrou Cargo a été actualisé hors ligne pour les dépendances optionnelles. Un `cargo check` a atteint 936/937 et était actif au dernier contrôle : résultat définitif non attesté.
 
 ## Reproductibilité du fork
 
 Le fork Rust a été commité localement en `3a63096` sur `feat/ccer-inapp-slint-20261023`. Le patch exporté est versionné avec CCER sous `docs/native-patches/0001-feat-concat-stage-opt-in-Slint-computer-use-events-a.patch` : il peut être appliqué sur une copie propre du tag officiel `v0.2.8` avec `git apply /chemin/vers/ce/patch`. Le dépôt imbriqué `.upstream-concat/` reste volontairement ignoré par Git CCER pour éviter les sources dupliquées.
 
-**État honnête :** transport Python simulé validé et socle Rust préparé ; aucune compilation Rust complète ni Computer Use natif end-to-end certifié à ce stade. Garder Xvfb+Lavapipe comme contrôle GUI de référence.
+**État honnête (24 octobre 2026) :** routage Python natif explicite `ccer/native_desktop.py` raccordé à `desktop_gui.py`, 76/76 tests réussis avec simulateur, socket réelle côté tests Python. Serveur Rust écrit et raccordé mais pas encore compilé avec succès ni testé sur une véritable fenêtre. Drags et saisie libre sont refusés, sans repli X11. AppImage officielle intacte ; Xvfb/Lavapipe reste un mode GUI distinct.
