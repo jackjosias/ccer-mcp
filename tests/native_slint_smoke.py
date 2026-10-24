@@ -1,6 +1,7 @@
 """Run against the real Slint Concat, no physical X11 input."""
 import os
 import secrets
+import stat
 import subprocess
 import tempfile
 import time
@@ -38,6 +39,9 @@ def main():
                     time.sleep(.25)
                 if not sock.is_socket():
                     raise RuntimeError("Native socket not available")
+                permissions = stat.S_IMODE(sock.stat().st_mode)
+                if permissions != 0o600:
+                    raise RuntimeError(f"Private Slint socket has unsafe permissions: {permissions:o}")
                 with InAppComputerUse(str(sock),credential,expected_pid=child.pid,timeout=15) as ui:
                     a=ui.observe()
                     x,y=ui._width//2,ui._height//2
@@ -47,7 +51,18 @@ def main():
                     d=ui.act({"type":"drag","x":x,"y":y,"targetX":x+10,"targetY":y+10,"duration":.25},
                              confirm=True,expected_sha256=c["sha256"])
                     assert d["frameNo"]>c["frameNo"]
-                    print("PASS actual Slint JPEG and timed native drag",ui._width,ui._height)
+                    actions = [
+                        {"type": "click", "x": x, "y": y},
+                        {"type": "scroll", "x": x, "y": y, "deltaY": 15},
+                        {"type": "key", "key": "Escape"},
+                    ]
+                    for gesture in actions:
+                        observed = ui.observe()
+                        current = ui.act(gesture, confirm=True,
+                                         expected_sha256=observed["sha256"])
+                        assert current["frameNo"] > observed["frameNo"]
+                    print("PASS native Slint: JPEG, move, paced drag, click, scroll, Escape",
+                          ui._width, ui._height)
             finally:
                 if child.poll() is None:
                     child.terminate()
