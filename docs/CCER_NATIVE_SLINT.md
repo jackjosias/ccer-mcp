@@ -21,7 +21,7 @@ Slint 1.18 offre `Window::dispatch_event_with_result(WindowEvent)` pour les év�
 2. Démarrer ce binaire avec une socket `~/.local/state/ccer-inapp/*.sock` et une autorisation aléatoire de 32 caractères minimum ; contrôler les permissions 0700/0600 et l'identité UID/PID.
 3. Capturer de **vrais pixels Slint** et tester les clics, le défilement, les touches, la capture avant/après, les images périmées et l'absence de contrôle du pointeur physique X11.
 4. Le drag temporisé est ajouté (timer Slint de 50 ms), sans certification réelle. Le curseur fantôme indépendant et les captures de frames intermédiaires restent à implémenter ; aucun repli X11.
-5. Certifier import, montage, sauvegarde, export vidéo et reconnexion sur un projet jetable dans une véritable fenêtre.
+5. Certifier import, montage, sauvegarde, export vidéo et reconnexion sur un projet jetable dans une véritable fenêtre. `bash tests/create_native_smoke_fixture.sh` crée un MP4 H.264/AAC de 2 s dans `.runtime/ccer-smoke/source.mp4`; ce média a été vérifié par `ffprobe` (2.000 s, 437676 octets). L'export **par Concat** n'a pas encore été réalisé.
 
 ## Contraintes de compilation
 
