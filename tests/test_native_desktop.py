@@ -57,6 +57,23 @@ class NativeDesktopTests(unittest.TestCase):
         self.assertGreater(after["frameNo"], before["frameNo"])
         self.assertEqual([({"type": "click", "x": 20, "y": 30},
                            True, before["sha256"])], self.client.actions)
+    def test_timed_drag_routes_to_native_session(self):
+        before = desktop_gui.capture()
+        after = desktop_gui.interact(
+            expected_window_id="concat-main", action="drag",
+            confirm_action=True, x=120, y=200,
+            target_x=300, target_y=240, duration=0.55)
+        self.assertGreater(after["frameNo"], before["frameNo"])
+        self.assertEqual(({"type": "drag", "x": 120, "y": 200,
+                           "targetX": 300, "targetY": 240, "duration": 0.55},
+                          True, before["sha256"]), self.client.actions[0])
+
+    def test_pointer_move_stays_in_slint(self):
+        desktop_gui.capture()
+        desktop_gui.interact(expected_window_id="concat-main", action="move",
+                             confirm_action=True, x=150, y=110)
+        self.assertEqual("move", self.client.actions[0][0]["type"])
+
     def test_action_without_observation_denied(self):
         with self.assertRaisesRegex(PolicyError, "fresh BEFORE"):
             desktop_gui.interact(expected_window_id="concat-main", action="click",

@@ -99,6 +99,12 @@ def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
                 raise PolicyError("INAPP_DENIED: wrong native window")
             if action == "click" and button == 1:
                 gesture = {"type": "click", "x": x, "y": y}
+            elif action == "move":
+                gesture = {"type": "move", "x": x, "y": y}
+            elif action == "drag" and button == 1:
+                gesture = {"type": "drag", "x": x, "y": y,
+                           "targetX": target_x, "targetY": target_y,
+                           "duration": duration}
             elif action == "key":
                 gesture = {"type": "key", "key": key}
             elif action == "scroll" and type(scroll) is int and 0 < abs(scroll) <= 8:
