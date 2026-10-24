@@ -25,7 +25,7 @@ Slint 1.18 offre `Window::dispatch_event_with_result(WindowEvent)` pour les év�
 
 ## Contraintes de compilation
 
-Ubuntu : 17 Go libres au dernier contrôle, disque 96 % utilisé et swap fortement sollicité. Cargo a récupéré ses dépendances. Les fichiers de développement Linux ont été extraits sans sudo sous `/tmp/ccer-build-deps`. Une archive **FFmpeg 7.1.5 partagée** (SHA-256 `df7e15a2d2fe0ee15ae36e0e3b83596dd088ee0a0767874241d9a54380df0add`) est isolée dans `.upstream-concat/.ccer-ffmpeg7`, sélectionnée par le script `.upstream-concat/.ccer-cargo-check.sh`. Le verrou Cargo a été actualisé hors ligne pour les dépendances optionnelles. Un `cargo check` a atteint 936/937 et était actif au dernier contrôle : résultat définitif non attesté.
+Ubuntu : 17 Go libres au dernier contrôle, disque 96 % utilisé et swap fortement sollicité. Cargo a récupéré ses dépendances. Les fichiers de développement Linux ont été extraits sans sudo dans le répertoire persistant `.upstream-concat/.ccer-build-deps/root` (exclu de Git). Une archive **FFmpeg 7.1.5 partagée** (SHA-256 `df7e15a2d2fe0ee15ae36e0e3b83596dd088ee0a0767874241d9a54380df0add`) est isolée dans `.upstream-concat/.ccer-ffmpeg7`, sélectionnée par le script `.upstream-concat/.ccer-cargo-check.sh`. Le verrou Cargo a été actualisé hors ligne pour les dépendances optionnelles et le contrôle rétablit `--offline --locked`. Le script de téléchargement `.upstream-concat/.ccer-fetch-build-deps.sh` reconstruit cet environnement en cas de besoin. Un `cargo check` a atteint 936/937 et était actif au dernier contrôle : résultat définitif non attesté.
 
 ## Reproductibilité du fork
 
