@@ -72,9 +72,9 @@ TOOLS = {
     "ccer_media_search": schema("Query annotated footage by normalized textual tokens and return evidence, not invented image semantics", {"catalog": PATH, "text": STRING, "limit": {"type": "integer"}}, ["catalog", "text"]),
     "ccer_media_match": schema("Match an existing creative plan with annotated source shots at valid media timecodes", {"catalog": PATH, "plan": {"type": "object"}, "allowReuse": BOOL}, ["catalog", "plan"]),
     "ccer_media_match_render": schema("On explicit approval, match annotated assets then render a new MP4 via existing directed renderer; refuse missing scenes", {"catalog": PATH, "plan": {"type": "object"}, "output": PATH, "confirm": BOOL, "audio": PATH, "burnCaptions": BOOL, "preset": STRING, "allowReuse": BOOL}, ["catalog", "plan", "output", "confirm"]),
-    "ccer_desktop_status": schema("Read-only exact Concat X11 window detection, including ID and dimensions"),
-    "ccer_desktop_capture": schema("Capture only verified Concat X11 window and return an MCP image (no other windows)", {"maxWidth": {"type": "integer", "minimum": 320, "maximum": 1600}}),
-    "ccer_desktop_act": schema("Act only on verified Concat X11 window: click, key, type, scroll; requires confirm and fresh window ID", {
+    "ccer_desktop_status": schema("Read the active Concat GUI window identity and size (private Slint if enabled; otherwise isolated X11)"),
+    "ccer_desktop_capture": schema("Capture the verified Concat window using the active GUI transport; never capture other applications", {"maxWidth": {"type": "integer", "minimum": 320, "maximum": 1600}}),
+    "ccer_desktop_act": schema("Confirmed single GUI gesture with required fresh BEFORE/AFTER images: native Slint supports click, move, paced drag, key and scroll; unsupported actions fail closed with no X11 fallback", {
         "expectedWindowId": STRING, "action": STRING, "confirm": BOOL, "x": {"type": "integer"},
         "y": {"type": "integer"}, "targetX": {"type": "integer"},
         "targetY": {"type": "integer"}, "duration": NUMBER,
