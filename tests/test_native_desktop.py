@@ -74,6 +74,72 @@ class NativeDesktopTests(unittest.TestCase):
                              confirm_action=True, x=150, y=110)
         self.assertEqual("move", self.client.actions[0][0]["type"])
 
+    def test_approved_file_drop_routes_to_existing_gui(self):
+        with tempfile.TemporaryDirectory() as folder:
+            media = Path(folder) / "test.mp4"
+            media.write_bytes(b"sample")
+            with patch.dict(os.environ, {"CCER_INAPP_MEDIA_ROOT": folder}):
+                before = desktop_gui.capture()
+                after = desktop_gui.interact(
+                    expected_window_id="concat-main", action="file_drop",
+                    text=str(media), confirm_action=True)
+                self.assertGreater(after["frameNo"], before["frameNo"])
+                self.assertEqual({"type": "file_drop", "path": str(media)},
+                                 self.client.actions[0][0])
+
+    def test_file_drop_rejects_outside_root_symlink_and_unsafe_type(self):
+        from ccer.inapp_protocol import InAppComputerUse
+        adapter = object.__new__(InAppComputerUse)
+        with tempfile.TemporaryDirectory() as folder:
+            base = Path(folder)
+            approved = base / "approved"
+            approved.mkdir()
+            inside = approved / "clip.mp4"
+            inside.write_bytes(b"test")
+            outside = base / "outside.mp4"
+            outside.write_bytes(b"test")
+            link = approved / "linked.mp4"
+            link.symlink_to(outside)
+            wrong = approved / "report.txt"
+            wrong.write_text("not media")
+            with patch.dict(os.environ, {"CCER_INAPP_MEDIA_ROOT": str(approved)}):
+                self.assertEqual(
+                    {"type": "file_drop", "path": str(inside)},
+                    adapter._validate_gesture({"type": "file_drop", "path": str(inside)}))
+                for candidate in (outside, link, wrong):
+                    with self.subTest(candidate=candidate):
+                        with self.assertRaises(PolicyError):
+                            adapter._validate_gesture(
+                                {"type": "file_drop", "path": str(candidate)})
+
+    def test_selected_export_directory_routes_to_concat_gui(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.dict(os.environ, {"CCER_INAPP_EXPORT_ROOT": folder}):
+                before = desktop_gui.capture()
+                after = desktop_gui.interact(
+                    expected_window_id="concat-main",
+                    action="select_export_folder", confirm_action=True)
+                self.assertGreater(after["frameNo"], before["frameNo"])
+                self.assertEqual({"type": "select_export_folder"},
+                                 self.client.actions[0][0])
+
+    def test_export_directory_must_be_real_approved_directory(self):
+        from ccer.inapp_protocol import InAppComputerUse
+        adapter = object.__new__(InAppComputerUse)
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            approved = root / "exports"
+            approved.mkdir()
+            alias = root / "alias"
+            alias.symlink_to(approved, target_is_directory=True)
+            with patch.dict(os.environ, {"CCER_INAPP_EXPORT_ROOT": str(approved)}):
+                self.assertEqual({"type": "select_export_folder"},
+                                 adapter._validate_gesture({"type": "select_export_folder"}))
+            for configured in ("", str(alias), str(root / "missing")):
+                with patch.dict(os.environ, {"CCER_INAPP_EXPORT_ROOT": configured}):
+                    with self.assertRaises(PolicyError):
+                        adapter._validate_gesture({"type": "select_export_folder"})
+
     def test_action_without_observation_denied(self):
         with self.assertRaisesRegex(PolicyError, "fresh BEFORE"):
             desktop_gui.interact(expected_window_id="concat-main", action="click",

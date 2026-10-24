@@ -188,7 +188,7 @@ class InAppComputerUse:
         if not isinstance(raw, dict):
             raise PolicyError("INAPP_DENIED: malformed gesture")
         kind = raw.get("type")
-        if kind not in ("click", "move", "drag", "scroll", "key"):
+        if kind not in ("click", "move", "drag", "scroll", "key", "file_drop", "select_export_folder"):
             raise PolicyError("INAPP_DENIED: unsupported gesture")
         allowed = {
             "click": {"type", "x", "y"},
@@ -196,10 +196,35 @@ class InAppComputerUse:
             "drag": {"type", "x", "y", "targetX", "targetY", "duration"},
             "scroll": {"type", "x", "y", "deltaY"},
             "key": {"type", "key"},
+            "file_drop": {"type", "path"},
+            "select_export_folder": {"type"},
         }[kind]
         if set(raw) != allowed:
             raise PolicyError("INAPP_DENIED: unexpected or missing gesture field")
-        if kind == "key":
+        if kind == "select_export_folder":
+            configured = os.environ.get("CCER_INAPP_EXPORT_ROOT", "")
+            folder = Path(configured)
+            if (not configured or not folder.is_absolute()
+                    or folder.is_symlink() or not folder.is_dir()):
+                raise PolicyError("INAPP_DENIED: approved export directory required")
+        elif kind == "file_drop":
+            supplied = raw["path"]
+            configured = os.environ.get("CCER_INAPP_MEDIA_ROOT", "")
+            if not isinstance(supplied, str) or not 0 < len(supplied) <= 4096 or not configured:
+                raise PolicyError("INAPP_DENIED: approved media file required")
+            path, root = Path(supplied), Path(configured)
+            if (not path.is_absolute() or not root.is_absolute()
+                    or path.is_symlink() or root.is_symlink()
+                    or not path.is_file() or not root.is_dir()
+                    or not path.resolve().is_relative_to(root.resolve())):
+                raise PolicyError("INAPP_DENIED: media outside approved directory")
+            if path.suffix.lower() not in {
+                ".mp4", ".mov", ".mkv", ".webm", ".avi", ".m4v",
+                ".mp3", ".wav", ".aac", ".m4a", ".flac", ".ogg",
+                ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff",
+            }:
+                raise PolicyError("INAPP_DENIED: unsupported media extension")
+        elif kind == "key":
             if raw["key"] not in ("Escape", "Left", "Right", "Up", "Down"):
                 raise PolicyError("INAPP_DENIED: keyboard whitelist violated")
         else:

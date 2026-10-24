@@ -1,4 +1,5 @@
 """Run against the real Slint Concat, no physical X11 input."""
+import base64
 import os
 import secrets
 import stat
@@ -6,14 +7,20 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
+from unittest.mock import patch
 from ccer.inapp_protocol import InAppComputerUse, PRIVATE_ROOT
 
 def main():
     base=Path.cwd()
     executable=base/".upstream-concat/src/target/debug/concat"
     ffmpeg=base/".upstream-concat/.ccer-ffmpeg7/lib"
+    media=base/".runtime/ccer-smoke/source.mp4"
+    if not media.is_file():
+        raise RuntimeError("Approved smoke fixture missing: run tests/create_native_smoke_fixture.sh")
     if not executable.is_file() or not ffmpeg.is_dir():
         raise RuntimeError("Native binary or FFmpeg unavailable")
+    export_dir=base/".runtime/ccer-smoke/exports"
+    export_dir.mkdir(parents=True, exist_ok=True)
     PRIVATE_ROOT.mkdir(parents=True,exist_ok=True,mode=0o700)
     os.chmod(PRIVATE_ROOT,0o700)
     sock=PRIVATE_ROOT/("smoke-"+secrets.token_hex(8)+".sock")
@@ -22,6 +29,8 @@ def main():
         scratch=Path(tmp)
         env=os.environ.copy()
         env.update({"CCER_INAPP_SOCKET":str(sock),
+                    "CCER_INAPP_MEDIA_ROOT":str(media.parent.resolve()),
+                    "CCER_INAPP_EXPORT_ROOT":str(export_dir.resolve()),
                     "XDG_CONFIG_HOME":str(scratch/"config"),
                     "XDG_DATA_HOME":str(scratch/"data"),
                     "XDG_CACHE_HOME":str(scratch/"cache"),
@@ -61,8 +70,21 @@ def main():
                         current = ui.act(gesture, confirm=True,
                                          expected_sha256=observed["sha256"])
                         assert current["frameNo"] > observed["frameNo"]
-                    print("PASS native Slint: JPEG, move, paced drag, click, scroll, Escape",
-                          ui._width, ui._height)
+                    with patch.dict(os.environ, {"CCER_INAPP_MEDIA_ROOT": str(media.parent.resolve())}):
+                        observed = ui.observe()
+                        result = ui.act({"type": "file_drop", "path": str(media.resolve())},
+                                        confirm=True, expected_sha256=observed["sha256"])
+                        assert result["frameNo"] > observed["frameNo"]
+                    with patch.dict(os.environ, {"CCER_INAPP_EXPORT_ROOT": str(export_dir.resolve())}):
+                        observed=ui.observe()
+                        result=ui.act({"type": "select_export_folder"},
+                                      confirm=True, expected_sha256=observed["sha256"])
+                        assert result["frameNo"] > observed["frameNo"]
+                    evidence = base/".runtime/ccer-smoke/import_after.jpg"
+                    evidence.write_bytes(base64.b64decode(result["imageBase64"]))
+                    print("PASS native Slint transport: JPEG, move, paced drag, click, scroll, Escape, approved file drop",
+                          ui._width, ui._height, "evidence:", evidence)
+                    print("Import/export-folder outcomes need visual inspection; no export is claimed")
             finally:
                 if child.poll() is None:
                     child.terminate()
