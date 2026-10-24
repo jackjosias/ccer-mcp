@@ -53,6 +53,8 @@ def main():
                     raise RuntimeError(f"Private Slint socket has unsafe permissions: {permissions:o}")
                 with InAppComputerUse(str(sock),credential,expected_pid=child.pid,timeout=15) as ui:
                     a=ui.observe()
+                    evidence_dir = base / ".runtime/ccer-smoke"
+                    (evidence_dir / "before.jpg").write_bytes(base64.b64decode(a["imageBase64"]))
                     x,y=ui._width//2,ui._height//2
                     b=ui.act({"type":"move","x":x,"y":y},confirm=True,expected_sha256=a["sha256"])
                     assert b["frameNo"]>a["frameNo"]
@@ -75,15 +77,17 @@ def main():
                         result = ui.act({"type": "file_drop", "path": str(media.resolve())},
                                         confirm=True, expected_sha256=observed["sha256"])
                         assert result["frameNo"] > observed["frameNo"]
+                    (evidence_dir / "import_after.jpg").write_bytes(
+                        base64.b64decode(result["imageBase64"]))
                     with patch.dict(os.environ, {"CCER_INAPP_EXPORT_ROOT": str(export_dir.resolve())}):
                         observed=ui.observe()
                         result=ui.act({"type": "select_export_folder"},
                                       confirm=True, expected_sha256=observed["sha256"])
                         assert result["frameNo"] > observed["frameNo"]
-                    evidence = base/".runtime/ccer-smoke/import_after.jpg"
+                    evidence = evidence_dir / "export_folder_after.jpg"
                     evidence.write_bytes(base64.b64decode(result["imageBase64"]))
                     print("PASS native Slint transport: JPEG, move, paced drag, click, scroll, Escape, approved file drop",
-                          ui._width, ui._height, "evidence:", evidence)
+                          ui._width, ui._height, "evidence:", evidence_dir)
                     print("Import/export-folder outcomes need visual inspection; no export is claimed")
             except Exception:
                 # Capture a bounded diagnostic before TemporaryDirectory removes it.
