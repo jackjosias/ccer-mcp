@@ -85,6 +85,15 @@ def main():
                     print("PASS native Slint transport: JPEG, move, paced drag, click, scroll, Escape, approved file drop",
                           ui._width, ui._height, "evidence:", evidence)
                     print("Import/export-folder outcomes need visual inspection; no export is claimed")
+            except Exception:
+                # Capture a bounded diagnostic before TemporaryDirectory removes it.
+                # Do not print environment variables or the private session secret.
+                try:
+                    details = (scratch / "logs.txt").read_text(errors="replace")[-2500:]
+                    print("Native Concat startup/action diagnostic:", details)
+                except OSError:
+                    pass
+                raise
             finally:
                 if child.poll() is None:
                     child.terminate()
