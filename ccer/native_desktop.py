@@ -11,6 +11,8 @@ _LOCK = threading.RLock()
 _SESSION = None
 _FINGERPRINT = None
 _BEFORE = None
+_SESSION_STARTED = None
+# Reconnect before the native 15-second idle timeout, without retriggering gestures.
 
 
 def _visible_config():
@@ -30,15 +32,15 @@ def enabled():
 
 
 def _close():
-    global _SESSION, _FINGERPRINT, _BEFORE
+    global _SESSION, _FINGERPRINT, _BEFORE, _SESSION_STARTED
     previous = _SESSION
-    _SESSION, _FINGERPRINT, _BEFORE = None, None, None
+    _SESSION, _FINGERPRINT, _BEFORE, _SESSION_STARTED = None, None, None, None
     if previous is not None:
         previous.close()
 
 
 def _session():
-    global _SESSION, _FINGERPRINT
+    global _SESSION, _FINGERPRINT, _SESSION_STARTED
     if "CCER_INAPP_SOCKET" in os.environ:
         path = os.environ.get("CCER_INAPP_SOCKET", "")
         key = "".join(("CCER", "_INAPP", "_TOKEN"))
@@ -54,11 +56,13 @@ def _session():
             raise PolicyError("INAPP_UNAVAILABLE: no trusted visible Concat Slint session")
         path, credential, pid = observed
     config = (path, hashlib.sha256(credential.encode()).hexdigest(), pid)
-    if _SESSION is not None and config != _FINGERPRINT:
+    if _SESSION is not None and (config != _FINGERPRINT or _SESSION_STARTED is None
+            or time.monotonic() - _SESSION_STARTED > 8):
         _close()
     if _SESSION is None:
         _SESSION = InAppComputerUse(path, credential, expected_pid=pid).__enter__()
         _FINGERPRINT = config
+        _SESSION_STARTED = time.monotonic()
     return _SESSION
 
 
@@ -88,6 +92,7 @@ def capture(*, max_width=840):
         raise PolicyError("maxWidth must be integer 320..1600")
     with _LOCK:
         try:
+            # _session() reconnects if the cached Slint socket is too old.
             client = _session()
             frame = client.observe()
             _BEFORE = dict(frame, observedAt=time.monotonic())

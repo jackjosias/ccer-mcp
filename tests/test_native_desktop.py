@@ -3,6 +3,7 @@ import base64
 import hashlib
 import os
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from tests.test_inapp_protocol import FakeSlintServer
@@ -57,6 +58,18 @@ class NativeDesktopTests(unittest.TestCase):
         self.assertGreater(after["frameNo"], before["frameNo"])
         self.assertEqual([({"type": "click", "x": 20, "y": 30},
                            True, before["sha256"])], self.client.actions)
+    def test_idle_native_connection_is_refreshed_without_x11(self):
+        desktop_gui.status()
+        old_client = self.client
+        new_client = FakeClient()
+        self.factory.side_effect = [new_client]
+        native_desktop._SESSION_STARTED = time.monotonic() - 20
+        result = desktop_gui.capture()
+        self.assertEqual("concat-main", result["window"]["windowId"])
+        self.assertEqual(2, self.factory.call_count)
+        self.assertTrue(old_client.closed)
+        self.assertFalse(new_client.closed)
+
     def test_timed_drag_routes_to_native_session(self):
         before = desktop_gui.capture()
         after = desktop_gui.interact(
