@@ -13,8 +13,20 @@ _FINGERPRINT = None
 _BEFORE = None
 
 
+def _visible_config():
+    # The local owner-only desktop receipt is the same secure Slint transport,
+    # not an X11 pointer-control fallback or a second editing engine.
+    from .visible_desktop import _file_state, _live
+    receipt = _file_state()
+    if receipt is not None and _live(receipt):
+        return receipt["socket"], receipt["proof"], receipt["pid"]
+    return None
+
+
 def enabled():
-    return "CCER_INAPP_SOCKET" in os.environ
+    if "CCER_INAPP_SOCKET" in os.environ:
+        return True
+    return _visible_config() is not None
 
 
 def _close():
@@ -27,14 +39,20 @@ def _close():
 
 def _session():
     global _SESSION, _FINGERPRINT
-    path = os.environ.get("CCER_INAPP_SOCKET", "")
-    key = "".join(("CCER", "_INAPP", "_TOKEN"))
-    credential = os.environ.get(key, "")
-    raw_pid = os.environ.get("CCER_INAPP_PID", "")
-    try:
-        pid = int(raw_pid) if raw_pid else None
-    except ValueError as error:
-        raise PolicyError("INAPP_DENIED: invalid PID") from error
+    if "CCER_INAPP_SOCKET" in os.environ:
+        path = os.environ.get("CCER_INAPP_SOCKET", "")
+        key = "".join(("CCER", "_INAPP", "_TOKEN"))
+        credential = os.environ.get(key, "")
+        raw_pid = os.environ.get("CCER_INAPP_PID", "")
+        try:
+            pid = int(raw_pid) if raw_pid else None
+        except ValueError as error:
+            raise PolicyError("INAPP_DENIED: invalid PID") from error
+    else:
+        observed = _visible_config()
+        if observed is None:
+            raise PolicyError("INAPP_UNAVAILABLE: no trusted visible Concat Slint session")
+        path, credential, pid = observed
     config = (path, hashlib.sha256(credential.encode()).hexdigest(), pid)
     if _SESSION is not None and config != _FINGERPRINT:
         _close()
