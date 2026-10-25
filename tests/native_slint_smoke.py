@@ -178,6 +178,14 @@ def main():
                         print("Menu Add Selected dispatched; actual clip placement and export require proof")
                     else:
                         print("Import/export-folder outcomes need visual inspection; no export is claimed")
+                    if "--stay" in sys.argv:
+                        if "--watch" not in sys.argv:
+                            raise RuntimeError("Long-running native session requires private watch")
+                        print("CCER NATIVE WATCH SESSION LIVE; stop its owning service to close", flush=True)
+                        while child.poll() is None:
+                            time.sleep(1.5)
+                            ui.observe()
+                        raise RuntimeError("Native Concat stopped during live viewing")
             except Exception:
                 # Capture a bounded diagnostic before TemporaryDirectory removes it.
                 # Do not print environment variables or the private session secret.
