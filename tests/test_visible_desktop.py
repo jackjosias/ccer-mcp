@@ -1,8 +1,13 @@
 """Visible Concat integration: real desktop detection and non-intrusive gating."""
+import base64
+import json
 import os
+import tempfile
+import time
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from ccer import visible_desktop as desktop
 from ccer import native_desktop
@@ -59,6 +64,31 @@ class VisibleDesktopTests(unittest.TestCase):
                     factory.assert_called_once_with("/private/desktop.sock", "proof-value",
                                                     expected_pid=635319)
         native_desktop._close()
+
+    def test_delayed_slint_action_is_observed_but_never_repeated(self):
+        with tempfile.TemporaryDirectory() as folder:
+            where = Path(folder)
+            (where / "before-test.json").write_text(json.dumps({
+                "pid": 733454, "sha256": "before", "observedAt": time.time()}))
+            first = MagicMock()
+            first.__enter__.return_value.observe.return_value = {"sha256": "before"}
+            first.__enter__.return_value.act.side_effect = PolicyError(
+                "INAPP_DENIED: native adapter rejected: CCER: UI timeout")
+            second = MagicMock()
+            second.__enter__.return_value.observe.return_value = {
+                "sha256": "after", "imageBase64": base64.b64encode(b"jpeg evidence").decode()}
+            with (patch.object(desktop, "EVIDENCE", where),
+                  patch.object(desktop, "_file_state", return_value={"pid": 733454}),
+                  patch.object(desktop, "_client", side_effect=[first, second]) as factory):
+                result = desktop.act(SimpleNamespace(
+                    confirm=True, receipt="test", type="click", x=200, y=250))
+            self.assertEqual("UNKNOWN_DISPATCH", result["state"])
+            self.assertTrue(result["uiChanged"])
+            self.assertFalse((where / "before-test.json").exists())
+            self.assertTrue((where / "after-test.jpg").exists())
+            first.__enter__.return_value.act.assert_called_once()
+            second.__enter__.return_value.act.assert_not_called()
+            self.assertEqual(2, factory.call_count)
 
     def test_native_route_rejects_tampered_visible_state(self):
         with patch.dict(os.environ, {}, clear=True):

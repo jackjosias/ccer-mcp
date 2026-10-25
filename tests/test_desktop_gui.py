@@ -18,6 +18,13 @@ class FakeUpstream:
 
 
 class DesktopGuiTests(unittest.TestCase):
+    def setUp(self):
+        # These mock the legacy private-Xvfb transport. An actual visible Concat
+        # must never be selected by the test runner just because it is running.
+        isolated = patch("ccer.desktop_gui.native_desktop.enabled", return_value=False)
+        isolated.start()
+        self.addCleanup(isolated.stop)
+
     def test_action_requires_explicit_confirmation(self):
         with self.assertRaises(PolicyError):
             interact(expected_window_id="0x3a00005",

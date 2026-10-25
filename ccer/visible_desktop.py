@@ -223,13 +223,35 @@ def act(args):
         gesture = {"type": "select_export_folder"}
     else:
         raise PolicyError("CCER: unknown gesture")
+    uncertain = None
     with _client(value) as client:
         before_frame = client.observe()
         if before_frame["sha256"] != state["sha256"]:
             raise PolicyError("CCER: desktop changed; recapture before acting")
-        after = client.act(gesture, confirm=True, expected_sha256=state["sha256"])
+        try:
+            after = client.act(gesture, confirm=True, expected_sha256=state["sha256"])
+        except PolicyError as exc:
+            if not any(s in str(exc) for s in ("CCER: UI timeout", "CCER: application action timed out")):
+                raise
+            # The Slint event may execute *after* its RPC acknowledgement times out.
+            # NEVER send a second gesture on this ambiguous outcome.
+            uncertain = str(exc)
+            after = None
+    before.unlink()  # A gesture was attempted; never reuse its receipt.
+    if uncertain is not None:
+        try:
+            with _client(value) as checker:
+                observed = checker.observe()
+            output = _write_image("after-" + args.receipt + ".jpg", observed)
+            return {"state": "UNKNOWN_DISPATCH", "pid": value["pid"],
+                    "uiChanged": observed["sha256"] != state["sha256"],
+                    "afterImage": output, "nativeEvent": args.type,
+                    "warning": "Slint RPC timed out; no automatic retry", "visualOutcomeRequiresReview": True}
+        except (OSError, RuntimeError, PolicyError) as exc:
+            return {"state": "UNKNOWN_DISPATCH", "pid": value["pid"],
+                    "warning": "Slint RPC timed out; no automatic retry",
+                    "verificationFailure": type(exc).__name__}
     output = _write_image("after-" + args.receipt + ".jpg", after)
-    before.unlink()
     return {"sent": True, "pid": value["pid"], "frameNo": after["frameNo"],
             "afterImage": output, "nativeEvent": args.type,
             "visualOutcomeRequiresReview": True}
