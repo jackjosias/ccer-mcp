@@ -106,7 +106,7 @@ def frame(env, win):
     return result
 
 
-def viewer(env, win, access):
+def viewer(env, win, access, *, frame_provider=None):
     cache = {"when": 0, "data": b""}
     lock = threading.Lock()
 
@@ -136,7 +136,12 @@ paint();setInterval(paint,2500);</script>""").encode("utf-8")
                 try:
                     with lock:
                         if time.monotonic() - cache["when"] >= 2 or not cache["data"]:
-                            cache.update(when=time.monotonic(), data=frame(env, win))
+                            pixels = (frame_provider() if frame_provider is not None
+                                      else frame(env, win))
+                            if (not isinstance(pixels, bytes) or len(pixels) < 400
+                                    or not pixels.startswith(bytes.fromhex("ffd8"))):
+                                raise RuntimeError("Private screenshot invalid")
+                            cache.update(when=time.monotonic(), data=pixels)
                         body = cache["data"]
                 except (OSError, RuntimeError, subprocess.TimeoutExpired):
                     self.send_response(503)

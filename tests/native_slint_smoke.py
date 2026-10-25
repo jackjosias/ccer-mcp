@@ -3,12 +3,32 @@ import base64
 import os
 import secrets
 import stat
+import sys
 import subprocess
 import tempfile
+import threading
 import time
 from pathlib import Path
 from unittest.mock import patch
 from ccer.inapp_protocol import InAppComputerUse
+from ccer.isolated_session import terminate, viewer
+
+
+class WatchingClient(InAppComputerUse):
+    """Publish already-verified Slint frames without a second UI connection."""
+    frame_sink = None
+
+    def _publish(self, result):
+        if self.frame_sink is not None:
+            self.frame_sink(base64.b64decode(result["imageBase64"]))
+        return result
+
+    def observe(self):
+        return self._publish(super().observe())
+
+    def act(self, *args, **kwargs):
+        return self._publish(super().act(*args, **kwargs))
+
 
 def main():
     base=Path.cwd()
@@ -43,7 +63,9 @@ def main():
         env.setdefault("SLINT_BACKEND","winit-software")
         with (scratch/"logs.txt").open("wb") as logs:
             child=subprocess.Popen([str(executable)],cwd=scratch,env=env,
-                                   stdin=subprocess.DEVNULL,stdout=logs,stderr=logs)
+                                   stdin=subprocess.DEVNULL,stdout=logs,stderr=logs,
+                                   start_new_session=True)
+            observer = None
             try:
                 deadline=time.monotonic()+60
                 while not sock.is_socket() and time.monotonic()<deadline:
@@ -55,8 +77,31 @@ def main():
                 permissions = stat.S_IMODE(sock.stat().st_mode)
                 if permissions != 0o600:
                     raise RuntimeError(f"Private Slint socket has unsafe permissions: {permissions:o}")
-                with patch("ccer.inapp_protocol.PRIVATE_ROOT", private_root), InAppComputerUse(str(sock),credential,expected_pid=child.pid,timeout=15) as ui:
+                with patch("ccer.inapp_protocol.PRIVATE_ROOT", private_root), WatchingClient(str(sock),credential,expected_pid=child.pid,timeout=15) as ui:
+                    mirrored = {"jpeg": b""}
+                    if "--watch" in sys.argv:
+                        ui.frame_sink = lambda pixels: mirrored.__setitem__("jpeg", pixels)
                     a=ui.observe()
+                    if "--watch" in sys.argv:
+                        access = secrets.token_hex(24)
+                        observer = viewer(env, None, access,
+                                          frame_provider=lambda: mirrored["jpeg"])
+                        threading.Thread(target=observer.serve_forever, daemon=True).start()
+                        from urllib import error, request
+                        local = "http://127.0.0.1:" + str(observer.server_address[1])
+                        with request.urlopen(local + "/image?pass=" + access, timeout=10) as response:
+                            picture = response.read(2_000_000)
+                            if response.status != 200 or not picture.startswith(bytes.fromhex("ffd8")):
+                                raise RuntimeError("Private Slint JPEG viewer failed")
+                        try:
+                            request.urlopen(local + "/image?pass=invalid", timeout=5)
+                            raise RuntimeError("Private viewer accepted an invalid token")
+                        except error.HTTPError as rejected:
+                            if rejected.code != 403:
+                                raise
+                        print("CCER PRIVATE WATCH VERIFIED: HTTP 200 JPEG; invalid token 403", flush=True)
+                        print("CCER PRIVATE WATCH (read-only): http://127.0.0.1:"
+                              + str(observer.server_address[1]) + "/?pass=" + access, flush=True)
                     evidence_dir = base / ".runtime/ccer-smoke"
                     (evidence_dir / "before.jpg").write_bytes(base64.b64decode(a["imageBase64"]))
                     x,y=ui._width//2,ui._height//2
@@ -92,7 +137,47 @@ def main():
                     evidence.write_bytes(base64.b64decode(result["imageBase64"]))
                     print("PASS native Slint transport: JPEG, move, paced drag, click, scroll, Escape, approved file drop",
                           ui._width, ui._height, "evidence:", evidence_dir)
-                    print("Import/export-folder outcomes need visual inspection; no export is claimed")
+                    if "--project" in sys.argv:
+                        project_root = (scratch / "Desktop" / "Concat").resolve()
+                        if not project_root.is_relative_to(scratch.resolve()):
+                            raise RuntimeError("Project root escaped disposable HOME")
+                        observed = ui.observe()
+                        created = ui.act({"type": "click", "x": 200, "y": 487},
+                                         confirm=True, expected_sha256=observed["sha256"])
+                        (evidence_dir / "project_create_after.jpg").write_bytes(
+                            base64.b64decode(created["imageBase64"]))
+                        deadline = time.monotonic() + 20
+                        while not (project_root.is_dir() and any(project_root.iterdir())) and time.monotonic() < deadline:
+                            time.sleep(.25)
+                        if not project_root.is_dir() or not any(project_root.iterdir()):
+                            raise RuntimeError("Concat did not create a disposable project")
+                        time.sleep(4)
+                        final_frame = ui.observe()
+                        (evidence_dir / "project_import_after.jpg").write_bytes(
+                            base64.b64decode(final_frame["imageBase64"]))
+                        print("PASS: Concat created project inside disposable HOME:", project_root)
+                        selected_before = ui.observe()
+                        selected = ui.act({"type": "click", "x": 164, "y": 166},
+                                          confirm=True, expected_sha256=selected_before["sha256"])
+                        (evidence_dir / "project_selected_media.jpg").write_bytes(
+                            base64.b64decode(selected["imageBase64"]))
+                        menu_before = ui.observe()
+                        menu = ui.act({"type": "click", "x": 25, "y": 13},
+                                      confirm=True, expected_sha256=menu_before["sha256"])
+                        (evidence_dir / "project_file_menu.jpg").write_bytes(
+                            base64.b64decode(menu["imageBase64"]))
+                        chosen_before = ui.observe()
+                        chosen = ui.act({"type": "click", "x": 91, "y": 49},
+                                        confirm=True, expected_sha256=chosen_before["sha256"])
+                        (evidence_dir / "project_menu_add_after.jpg").write_bytes(
+                            base64.b64decode(chosen["imageBase64"]))
+                        time.sleep(2)
+                        menu_result = ui.observe()
+                        (evidence_dir / "project_menu_add_settled.jpg").write_bytes(
+                            base64.b64decode(menu_result["imageBase64"]))
+                        print("Menu Add Selected dispatched; actual clip placement and export require proof")
+                    else:
+                        print("Import/export-folder outcomes need visual inspection; no export is claimed")
             except Exception:
                 # Capture a bounded diagnostic before TemporaryDirectory removes it.
                 # Do not print environment variables or the private session secret.
@@ -103,12 +188,10 @@ def main():
                     pass
                 raise
             finally:
-                if child.poll() is None:
-                    child.terminate()
-                    try: child.wait(timeout=8)
-                    except subprocess.TimeoutExpired:
-                        child.kill()
-                        child.wait(timeout=8)
+                if observer is not None:
+                    observer.shutdown()
+                    observer.server_close()
+                terminate(child)
                 if sock.exists() or sock.is_symlink(): sock.unlink()
 
 if __name__=="__main__": main()
