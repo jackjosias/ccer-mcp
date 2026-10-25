@@ -8,7 +8,7 @@ import tempfile
 import time
 from pathlib import Path
 from unittest.mock import patch
-from ccer.inapp_protocol import InAppComputerUse, PRIVATE_ROOT
+from ccer.inapp_protocol import InAppComputerUse
 
 def main():
     base=Path.cwd()
@@ -21,14 +21,18 @@ def main():
         raise RuntimeError("Native binary or FFmpeg unavailable")
     export_dir=base/".runtime/ccer-smoke/exports"
     export_dir.mkdir(parents=True, exist_ok=True)
-    PRIVATE_ROOT.mkdir(parents=True,exist_ok=True,mode=0o700)
-    os.chmod(PRIVATE_ROOT,0o700)
-    sock=PRIVATE_ROOT/("smoke-"+secrets.token_hex(8)+".sock")
-    credential=secrets.token_hex(32)
     with tempfile.TemporaryDirectory(prefix="ccer-native-") as tmp:
         scratch=Path(tmp)
+        private_root=scratch/".local/state/ccer-inapp"
+        private_root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        os.chmod(private_root,0o700)
+        sock=private_root/("smoke-"+secrets.token_hex(8)+".sock")
+        credential=secrets.token_hex(32)
+        (scratch / "Desktop").mkdir()
         env=os.environ.copy()
-        env.update({"CCER_INAPP_SOCKET":str(sock),
+        env.update({"HOME":str(scratch),
+                    "XDG_DESKTOP_DIR":str(scratch / "Desktop"),
+                    "CCER_INAPP_SOCKET":str(sock),
                     "CCER_INAPP_MEDIA_ROOT":str(media.parent.resolve()),
                     "CCER_INAPP_EXPORT_ROOT":str(export_dir.resolve()),
                     "XDG_CONFIG_HOME":str(scratch/"config"),
@@ -51,7 +55,7 @@ def main():
                 permissions = stat.S_IMODE(sock.stat().st_mode)
                 if permissions != 0o600:
                     raise RuntimeError(f"Private Slint socket has unsafe permissions: {permissions:o}")
-                with InAppComputerUse(str(sock),credential,expected_pid=child.pid,timeout=15) as ui:
+                with patch("ccer.inapp_protocol.PRIVATE_ROOT", private_root), InAppComputerUse(str(sock),credential,expected_pid=child.pid,timeout=15) as ui:
                     a=ui.observe()
                     evidence_dir = base / ".runtime/ccer-smoke"
                     (evidence_dir / "before.jpg").write_bytes(base64.b64decode(a["imageBase64"]))
