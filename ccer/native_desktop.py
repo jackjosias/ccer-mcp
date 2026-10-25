@@ -117,8 +117,10 @@ def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
         try:
             if before is None or time.monotonic() - before["observedAt"] > 75:
                 raise PolicyError("INAPP_DENIED: fresh BEFORE image mandatory")
-            client = _SESSION
-            if client is None or client._window != expected_window_id:
+            # Revalidate the socket lifecycle before any gesture. Rust closes
+            # inactive sockets; reconnect is safe only BEFORE dispatch.
+            client = _session()
+            if client._window != expected_window_id:
                 raise PolicyError("INAPP_DENIED: wrong native window")
             if action == "click" and button == 1:
                 gesture = {"type": "click", "x": x, "y": y}
@@ -138,7 +140,12 @@ def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
                 gesture = {"type": "scroll", "x": x, "y": y, "deltaY": scroll * 15}
             else:
                 raise PolicyError("INAPP_DENIED: unsupported native gesture, no X11 fallback")
-            after = client.act(gesture, confirm=True, expected_sha256=before["sha256"])
+            # Re-observe on the current authenticated connection, even if
+            # the previous socket was rotated. Fail closed if the UI changed.
+            current = client.observe()
+            if current["sha256"] != before["sha256"]:
+                raise PolicyError("INAPP_DENIED: Concat changed since BEFORE image; recapture")
+            after = client.act(gesture, confirm=True, expected_sha256=current["sha256"])
             return {"action": action, "windowId": client._window, "window": _window(client),
                     "verifiedTarget": True, "actionSent": True,
                     "visualOutcomeVerified": False,

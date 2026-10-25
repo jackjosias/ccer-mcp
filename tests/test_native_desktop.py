@@ -70,6 +70,37 @@ class NativeDesktopTests(unittest.TestCase):
         self.assertTrue(old_client.closed)
         self.assertFalse(new_client.closed)
 
+    def test_stale_socket_reconnects_and_revalidates_before_click(self):
+        before = desktop_gui.capture()
+        old_client = self.client
+        fresh_client = FakeClient()
+        self.factory.side_effect = [fresh_client]
+        native_desktop._SESSION_STARTED = time.monotonic() - 20
+        result = desktop_gui.interact(
+            expected_window_id="concat-main", action="click",
+            confirm_action=True, x=20, y=30)
+        self.assertEqual(2, self.factory.call_count)
+        self.assertTrue(old_client.closed)
+        self.assertEqual(before["sha256"], fresh_client.actions[0][2])
+        self.assertEqual("click", result["action"])
+        self.assertEqual([], old_client.actions)
+
+    def test_changed_screen_rejects_click_after_reconnect(self):
+        desktop_gui.capture()
+        fresh_client = FakeClient()
+        original_observe = fresh_client.observe
+        def changed_observe():
+            frame = original_observe()
+            frame["sha256"] = "f" * 64
+            return frame
+        fresh_client.observe = changed_observe
+        self.factory.side_effect = [fresh_client]
+        native_desktop._SESSION_STARTED = time.monotonic() - 20
+        with self.assertRaisesRegex(PolicyError, "changed since BEFORE"):
+            desktop_gui.interact(expected_window_id="concat-main",
+                                 action="click", confirm_action=True, x=20, y=30)
+        self.assertEqual([], fresh_client.actions)
+
     def test_timed_drag_routes_to_native_session(self):
         before = desktop_gui.capture()
         after = desktop_gui.interact(
@@ -190,7 +221,7 @@ class NativeUnixWireTests(unittest.TestCase):
                             expected_window_id=status["window"]["windowId"],
                             action="click", confirm_action=True, x=25, y=70)
                         self.assertGreater(after["frameNo"], before["frameNo"])
-                        self.assertEqual(["hello", "capture", "gesture"],
+                        self.assertEqual(["hello", "capture", "capture", "gesture"],
                                          [method for method, _ in server.calls])
                 finally:
                     native_desktop._close()
