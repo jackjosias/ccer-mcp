@@ -23,6 +23,7 @@ class Gateway:
                 "ccer_preflight", "ccer_project_inspect", "ccer_timeline_validate",
                 "ccer_asset_analyze", "ccer_audio_validate", "ccer_export_verify",
                 "ccer_mission_status", "ccer_mission_recover", "ccer_audit_report",
+                  "ccer_timecoded_review",
                  "ccer_desktop_status", "ccer_desktop_capture"),
                 "destructiveHint": name == "ccer_checkpoint_restore"}}
             for name, config in TOOLS.items()
@@ -33,6 +34,20 @@ class Gateway:
             raise PolicyError("Arguments must be an object")
         if name in TOOLS:
             outcome = self.production.run(name, args)
+            if name == "ccer_timecoded_review":
+                # Preserve real images as MCP image content, not a multi-MB JSON
+                # string. A vision-capable agent can inspect each sampled frame.
+                frames = outcome.pop("frames")
+                summary = {**outcome, "frames": [
+                    {"timeSeconds": frame["timeSeconds"], "mimeType": frame["mimeType"]}
+                    for frame in frames]}
+                content = [{"type": "text", "text": json.dumps(summary, ensure_ascii=False)}]
+                for frame in frames:
+                    content.append({"type": "text", "text":
+                                    f"Video frame at {frame['timeSeconds']:.3f}s"})
+                    content.append({"type": "image", "mimeType": "image/jpeg",
+                                    "data": frame["imageBase64"]})
+                return {"content": content, "structuredContent": summary, "isError": False}
             if name in ("ccer_desktop_capture", "ccer_desktop_act") and "imageBase64" in outcome:
                 metadata = {k: v for k, v in outcome.items() if k != "imageBase64"}
                 return {"content": [

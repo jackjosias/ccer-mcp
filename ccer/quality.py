@@ -7,6 +7,7 @@ import uuid
 from pathlib import Path
 
 from .controls import PolicyError, media_probe
+from .temporal_seek import start_args, absolute
 
 
 FORMATS = {
@@ -57,7 +58,7 @@ def captions_check(cues):
             "count": len(cues), "issues": issues}
 
 
-def visual_scan(path, seconds=60):
+def visual_scan(path, seconds=60, *, start_seconds=0):
     path = Path(path)
     if not path.is_file() or not shutil.which("ffmpeg"):
         raise PolicyError("Media file or ffmpeg missing")
@@ -65,19 +66,20 @@ def visual_scan(path, seconds=60):
     if not any(s.get("codec_type") == "video" for s in meta["streams"]):
         raise PolicyError("Media contains no video stream")
     seconds = min(300, max(1, int(seconds)))
+    seek, start = start_args(start_seconds)
     p = subprocess.run([
-        "ffmpeg", "-nostdin", "-hide_banner", "-i", str(path),
+        "ffmpeg", "-nostdin", "-hide_banner", *seek, "-i", str(path),
         "-t", str(seconds), "-vf",
-        "blackdetect=d=0.3:pix_th=0.1,freezedetect=n=-50dB:d=1.5",
+        "setpts=PTS-STARTPTS,blackdetect=d=0.3:pix_th=0.1,freezedetect=n=-50dB:d=1.5",
         "-an", "-f", "null", "-",
     ], text=True, capture_output=True, timeout=seconds * 3 + 40)
     if p.returncode != 0:
         raise PolicyError("Video analysis failed: " + p.stderr[-350:])
-    blacks = [{"start": float(a), "end": float(b)}
+    blacks = [{"start": absolute(a, start), "end": absolute(b, start)}
               for a,b in re.findall(r"black_start:([\d.]+)\s+black_end:([\d.]+)", p.stderr)]
-    freezes = [{"start": float(x)} for x in re.findall(
+    freezes = [{"start": absolute(x, start)} for x in re.findall(
         r"freeze_start:\s*([\d.]+)", p.stderr)]
-    return {"analyzedSeconds": seconds, "blackIntervals": blacks,
+    return {"analyzedSeconds": seconds, "startSeconds": start, "blackIntervals": blacks,
             "freezeStarts": freezes, "needsHumanReview": bool(blacks or freezes)}
 
 

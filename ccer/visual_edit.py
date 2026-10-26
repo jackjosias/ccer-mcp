@@ -11,6 +11,7 @@ from pathlib import Path
 
 from .controls import PolicyError, media_probe
 from .quality import FORMATS, transcode
+from .temporal_seek import start_args
 
 
 def _finite(value, label, lo, hi):
@@ -66,18 +67,21 @@ def _render(arguments, output, expected, *, timeout=240):
                 "verified": True}
 
 
-def color_report(source, *, seconds=30, interval=1):
+def color_report(source, *, seconds=30, interval=1, start_seconds=0):
     seconds = _finite(seconds, "seconds", 1, 300)
     interval = _finite(interval, "interval", .2, 10)
     path, metadata = _video(source)
+    seek, start = start_args(start_seconds)
     try:
-        length = min(seconds, float(metadata["format"]["duration"]))
+        length = min(seconds, float(metadata["format"]["duration"]) - start)
     except (ValueError, TypeError) as exc:
         raise PolicyError("Unknown source duration") from exc
+    if length <= 0:
+        raise PolicyError("Requested color window starts beyond media duration")
     sample = max(interval, length / 35)
     proc = subprocess.run(
         ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "info",
-         "-i", str(path), "-t", str(length),
+         *seek, "-i", str(path), "-t", str(length),
          "-vf", f"fps=1/{sample:.6f},signalstats,metadata=mode=print",
          "-frames:v", "35", "-an", "-f", "null", "-"],
         text=True, capture_output=True, timeout=max(40, int(length * 4)))
@@ -95,7 +99,7 @@ def color_report(source, *, seconds=30, interval=1):
     if not metrics.get("YAVG"):
         raise PolicyError("No FFmpeg signalstats frames available")
     y = metrics["YAVG"]["mean"]
-    return {"file": str(path), "sampledFrames": len(re.findall(r"lavfi\.signalstats\.YAVG=", proc.stderr)),
+    return {"file": str(path), "startSeconds": start, "sampledFrames": len(re.findall(r"lavfi\.signalstats\.YAVG=", proc.stderr)),
             "metrics": metrics, "lumaFlag": "dark" if y < 40 else "bright" if y > 215 else "normal_range",
             "colorGradingCertified": False, "requiresEditorialReview": True,
             "method": "8-bit YUV signalstats, not a perceptual quality score"}

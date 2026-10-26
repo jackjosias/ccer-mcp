@@ -8,6 +8,7 @@ import uuid
 from pathlib import Path
 
 from .controls import PolicyError, media_probe
+from .temporal_seek import start_args, absolute
 
 
 def inspect_shots(sources):
@@ -36,7 +37,7 @@ def inspect_shots(sources):
     return {"assets": results, "scoring": "technical metadata only; no semantic/aesthetic judgment"}
 
 
-def scene_cuts(source, threshold=0.32, seconds=120):
+def scene_cuts(source, threshold=0.32, seconds=120, *, start_seconds=0):
     if not shutil.which("ffmpeg"):
         raise PolicyError("FFmpeg unavailable")
     if not isinstance(threshold, (int, float)) or not 0.05 <= threshold <= 0.95:
@@ -44,15 +45,16 @@ def scene_cuts(source, threshold=0.32, seconds=120):
     if not isinstance(seconds, int) or not 1 <= seconds <= 1800:
         raise PolicyError("Analyzed time must be 1..1800 seconds")
     media_probe(source)
+    seek, start = start_args(start_seconds)
     result = subprocess.run([
-        "ffmpeg", "-nostdin", "-hide_banner", "-i", str(source),
+        "ffmpeg", "-nostdin", "-hide_banner", *seek, "-i", str(source),
         "-t", str(seconds), "-vf",
-        f"select=gt(scene\\,{threshold}),showinfo", "-an", "-f", "null", "-"],
+        f"setpts=PTS-STARTPTS,select=gt(scene\\,{threshold}),showinfo", "-an", "-f", "null", "-"],
         capture_output=True, text=True, timeout=max(60, seconds * 4))
     if result.returncode:
         raise PolicyError("Scene analysis failed: " + result.stderr[-350:])
-    stamps = [float(t) for t in re.findall(r"pts_time:([\d.]+)", result.stderr)]
-    return {"file": str(source), "threshold": threshold,
+    stamps = [absolute(t, start) for t in re.findall(r"pts_time:([\d.]+)", result.stderr)]
+    return {"file": str(source), "threshold": threshold, "startSeconds": start,
             "cutsSeconds": stamps, "count": len(stamps)}
 
 

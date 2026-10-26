@@ -17,6 +17,7 @@ from pathlib import Path
 
 from .controls import PolicyError, media_probe
 from .quality import captions_check
+from .temporal_seek import start_args, absolute
 
 
 def _duration(report):
@@ -44,18 +45,22 @@ def _audio(path, requested_seconds):
     return source, length
 
 
-def silence_map(path, *, seconds=90, threshold_db=-38.0, min_silence=0.25):
+def silence_map(path, *, seconds=90, threshold_db=-38.0, min_silence=0.25, start_seconds=0):
     """Detect silent intervals and complement speaking/music-active intervals."""
     source, length = _audio(path, seconds)
+    seek, offset = start_args(start_seconds)
+    length = min(length, _duration(media_probe(source)) - offset)
+    if length <= 0:
+        raise PolicyError("Requested audio window starts beyond media duration")
     if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v)
            for v in (threshold_db, min_silence)):
         raise PolicyError("Silence thresholds must be finite numbers")
     if not -90 <= threshold_db <= -15 or not 0.05 <= min_silence <= 3:
         raise PolicyError("Invalid silence detection threshold/duration")
     p = subprocess.run(
-        ["ffmpeg", "-nostdin", "-hide_banner", "-i", str(source),
+        ["ffmpeg", "-nostdin", "-hide_banner", *seek, "-i", str(source),
          "-t", f"{length:.6f}", "-af",
-         f"silencedetect=noise={threshold_db:.2f}dB:d={min_silence:.3f}",
+         f"asetpts=PTS-STARTPTS,silencedetect=noise={threshold_db:.2f}dB:d={min_silence:.3f}",
          "-vn", "-f", "null", "-"],
         capture_output=True, text=True, timeout=min(930, max(35, int(length * 4))))
     if p.returncode:
@@ -84,10 +89,10 @@ def silence_map(path, *, seconds=90, threshold_db=-38.0, min_silence=0.25):
         cursor = max(cursor, end)
     if length > cursor + 0.001:
         active.append([round(cursor, 3), round(length, 3)])
-    return {"file": str(source), "analyzedSeconds": round(length, 3),
+    return {"file": str(source), "analyzedSeconds": round(length, 3), "startSeconds": offset,
             "thresholdDb": threshold_db, "minimumSilenceSeconds": min_silence,
-            "silences": [{"start": a, "end": b, "duration": round(b-a, 3)} for a, b in merged],
-            "activeRegions": [{"start": a, "end": b, "duration": round(b-a, 3)} for a, b in active],
+            "silences": [{"start": absolute(a, offset), "end": absolute(b, offset), "duration": round(b-a, 3)} for a, b in merged],
+            "activeRegions": [{"start": absolute(a, offset), "end": absolute(b, offset), "duration": round(b-a, 3)} for a, b in active],
             "method": "FFmpeg silencedetect, not speech recognition"}
 
 

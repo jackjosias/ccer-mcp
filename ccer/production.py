@@ -47,6 +47,7 @@ TOOLS = {
     "ccer_produce": schema("Create, assemble, title, caption and optionally export a complete video from a declarative plan", {"name": STRING, "profile": STRING, "shots": {"type": "array", "items": PATH}, "music": {"type": "array", "items": PATH}, "titles": {"type": "array", "items": {"type": "object"}}, "captions": {"type": "array", "items": {"type": "object"}}, "video": {"type": "object"}, "export": BOOL, "fast": BOOL}, ["name", "shots"]),
     "ccer_caption_validate": schema("Professional subtitle reading speed, safe layout, timing and overlaps", {"cues": {"type": "array", "items": {"type": "object"}}}, ["cues"]),
     "ccer_visual_scan": schema("FFmpeg detection of black frames and frozen scenes", {"file": PATH, "seconds": {"type": "integer", "minimum": 1, "maximum": 300}}, ["file"]),
+    "ccer_timecoded_review": schema("Read-only video eyes: deliver 1..8 authentic timestamped JPEG frames via MCP plus cuts, black/freeze/color and audio silence candidates; not semantic recognition or full video playback", {"file": PATH, "startSeconds": NUMBER, "seconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 8}}, ["file"]),
     "ccer_delivery_transcode": schema("Safe verified video transcode to common platform aspect ratios", {"file": PATH, "output": PATH, "profile": STRING}, ["file", "output", "profile"]),
     "ccer_creative_plan": schema("Reviewable story structure built from user-supplied script", {"brief": {"type": "object"}}, ["brief"]),
     "ccer_storyboard": schema("Shot list and visual intent for planned scenes", {"plan": {"type": "object"}}, ["plan"]),
@@ -273,6 +274,11 @@ class Production:
         if name == "ccer_visual_scan":
             from .quality import visual_scan
             return visual_scan(self.path(a["file"], must_exist=True), a.get("seconds", 60))
+        if name == "ccer_timecoded_review":
+            from .timecoded_review import review
+            return review(self.path(a["file"], must_exist=True),
+                          start_seconds=a.get("startSeconds", 0),
+                          seconds=a.get("seconds", 30), frame_count=a.get("frameCount", 6))
         if name == "ccer_delivery_transcode":
             from .quality import transcode
             source = self.path(a["file"], must_exist=True)

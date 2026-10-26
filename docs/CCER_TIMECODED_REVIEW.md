@@ -1,0 +1,91 @@
+# CCER — Observation audiovisuelle horodatée (lecture seule)
+
+## Objectif
+
+Le nouveau tool MCP **`ccer_timecoded_review`** transmet à ChatGPT
+jusqu'à huit véritables images JPEG extraites d'une vidéo, avec le timecode
+de chacune. Il ne lance aucune fenêtre, ne crée aucun montage et ne
+manipule ni la souris X11 ni l'interface Concat.
+
+L'objectif est de permettre à un assistant capable d'interpréter les images
+de repérer visuellement, par exemple, une erreur de cadrage ou une transition
+mal placée à **un instant vérifiable**, avant toute suggestion d'édition.
+
+## Entrées
+
+```json
+{
+  "file": "/home/jack-josias/Videos/CCER/exemple.mp4",
+  "startSeconds": 0,
+  "seconds": 30,
+  "frameCount": 6
+}
+```
+
+- Seuls les fichiers à l'intérieur de **CCER_ROOT** sont acceptés, par
+  `Production.path(..., must_exist=True)`.
+- `startSeconds` : 0 à 86400 ; `seconds` : 0.5 à 120 ;
+  `frameCount` : 1 à 8.
+- Le tool transmet des images MCP typées `image/jpeg`, associées à
+  `timeSeconds`. Les données JPEG brutes ne sont pas recopiées dans le JSON
+  de métadonnées ni dans les journaux.
+- Chaque image est limitée à 350 Ko et ramenée à 480 pixels de large,
+  sous réserve de la disponibilité de FFmpeg/FFprobe.
+- Le calcul réutilise `quality.visual_scan`,
+  `shot_intelligence.scene_cuts`, `visual_edit.color_report` et
+  `rhythm.silence_map`. Aucune analyse de découpage n'est lancée par une
+  seconde implémentation concurrente.
+- Les fichiers source ne sont pas modifiés.
+
+## Contrat d'interprétation
+
+Une **détection technique** n'est pas une preuve de mauvais montage :
+un noir peut être voulu, un plan fixe peut être artistique et un silence peut
+être dramatique. Les intervalles détectés doivent être revus par l'agent ou
+l'humain avant toute correction. Aucun score de beauté ou qualité esthétique
+« certifiée » n'est fabriqué.
+
+Cette version fournit de vrais échantillons visuels, pas encore le visionnage
+continu de toutes les images à la cadence source ; elle ne transcrit pas la
+parole et ne prétend pas reconnaître les objets/personnes sans examen
+visuel des images retournées.
+
+## Contrôle de fonctionnement hors plugin
+
+Une commande locale **en lecture seule** permet de vérifier le décodage et
+le rapport technique, sans déverser les JPEG en base64 dans le terminal :
+
+```bash
+cd /home/jack-josias/WORKSPACE-LOGICIEL/concat/ccer-mcp
+python3 -m ccer.timecoded_review \
+  --file "$HOME/Videos/CCER/ccer-review-validation-20261026.mp4" \
+  --seconds 2.5 --frames 4
+```
+
+Les métadonnées affichent les timecodes et tailles JPEG. Les images sont
+transmises lors de l'invocation de `ccer_timecoded_review` par le MCP.
+
+## Intégration et certification
+
+- `ccer/production.py` : schéma borné et routage via CCER_ROOT.
+- `ccer/server.py` : images MCP séparées des métadonnées.
+- `ccer/direct_gateway.py` : outil accessible en mode lecture seule.
+- `tests/test_timecoded_review.py` : décodage FFmpeg réel, protection des
+  chemins, validation des limites, livraison d'images MIME correctes.
+- `tests/test_ccer.py` : catalogue mis à jour.
+- La liste des outils exposés par ChatGPT peut nécessiter le rafraîchissement
+  de la session/connecteur après un changement du schéma MCP. Vérifier
+  l'apparition effective de l'action dans le catalogue avant de prétendre
+  qu'elle est directement utilisable dans cette session.
+
+### Itération éditoriale sûre
+
+1. Lire les images et timecodes de l'export ou du média autorisé.
+2. Rédiger une hypothèse de problème ancrée dans les images observées.
+3. Vérifier les séquences voisines avec une fenêtre `startSeconds` plus étroite.
+4. Proposer un geste Concat **avec confirmation**.
+5. Contrôler l'image AVANT et APRÈS le geste via `ccer_desktop_capture`.
+6. Exporter dans Concat par son interface et vérifier le MP4 final.
+
+Ne jamais utiliser l'analyse hors écran pour appliquer une mutation
+invisible au projet : la règle GUI-FIRST reste permanente.
