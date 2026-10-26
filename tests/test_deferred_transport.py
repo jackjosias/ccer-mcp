@@ -7,6 +7,22 @@ from ccer.transport import DeferredConcatTransport, TransportError
 
 
 class DeferredTransportTests(unittest.TestCase):
+    def test_gui_first_passive_mode_never_spawns_process(self):
+        with patch("ccer.transport.ConcatTransport") as process_class:
+            bridge = DeferredConcatTransport(Path("/untrusted/concat"),
+                                            permit_launch=False, retry_seconds=0)
+            bridge.start()
+            self.assertEqual([], bridge.tools())
+            self.assertEqual([], bridge.tools())
+            with self.assertRaisesRegex(TransportError, "spawning a second Concat"):
+                bridge.tool("concat_version")
+            bridge.close()
+            process_class.assert_not_called()
+
+    def test_passive_launch_flag_rejects_non_boolean(self):
+        with self.assertRaisesRegex(ValueError, "boolean"):
+            DeferredConcatTransport(Path("/unused"), permit_launch="false")
+
     def test_offline_boot_then_reconnect_on_fresh_request(self):
         state = {"ready": False, "starts": 0, "calls": 0, "closes": 0}
 

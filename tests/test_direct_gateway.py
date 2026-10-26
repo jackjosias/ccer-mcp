@@ -245,6 +245,30 @@ class DirectGatewayTests(unittest.TestCase):
             self.assertIn("fresh Concat screenshot",
                           blocked["result"]["content"][0]["text"])
 
+    def test_direct_cli_uses_passive_backend_and_never_starts_second_concat(self):
+        from unittest.mock import ANY, patch
+        from ccer.direct_cli import main
+        with tempfile.TemporaryDirectory() as root:
+            with (patch("ccer.direct_cli.bind_direct_process", return_value=False) as binding,
+                  patch("ccer.direct_cli.DeferredConcatTransport") as backend,
+                  patch("ccer.direct_cli.DirectGateway") as gateway):
+                main(["--mode", "window", "--access", "control", "--root", root])
+                binding.assert_not_called()
+                backend.assert_called_once_with(ANY, "window", permit_launch=False)
+                backend.return_value.start.assert_called_once_with()
+                backend.return_value.close.assert_called_once_with()
+                gateway.return_value.serve.assert_called_once_with()
+
+    def test_private_session_is_explicit_opt_in_only(self):
+        from unittest.mock import patch
+        from ccer.direct_cli import main
+        with tempfile.TemporaryDirectory() as root:
+            with (patch("ccer.direct_cli.bind_direct_process", return_value=True) as binding,
+                  patch("ccer.direct_cli.DeferredConcatTransport"),
+                  patch("ccer.direct_cli.DirectGateway")):
+                main(["--isolated-session", "--mode", "window", "--root", root])
+                binding.assert_called_once_with()
+
     def test_direct_cli_rejects_headless_even_with_control_access(self):
         from unittest.mock import patch
         from ccer.direct_cli import main

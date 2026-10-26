@@ -131,7 +131,10 @@ class DeferredConcatTransport:
     dispatch is NEVER replayed automatically.
     """
 
-    def __init__(self, binary, mode="window", retry_seconds=5):
+    def __init__(self, binary, mode="window", retry_seconds=5, *, permit_launch=True):
+        if type(permit_launch) is not bool:
+            raise ValueError("permit_launch must be boolean")
+        self.permit_launch = permit_launch
         self.binary = Path(binary)
         self.mode = mode
         self.retry_seconds = retry_seconds
@@ -145,6 +148,9 @@ class DeferredConcatTransport:
             previous.close()
 
     def _ensure(self):
+        if not self.permit_launch:
+            raise TransportError(
+                "CCER single-window GUI-FIRST: spawning a second Concat process is disabled")
         if self._link is not None:
             process = self._link.process
             if process is not None and process.poll() is None:

@@ -15,6 +15,8 @@ def main(argv=None):
         "CCER_CONCAT_BIN", str(Path.home() / "WORKSPACE-LOGICIEL/concat/Concat-0.2.8-x86_64.AppImage"))))
     parser.add_argument("--mode", choices=("window", "headless"),
                         default=os.getenv("CCER_MODE", "window"))
+    parser.add_argument("--isolated-session", action="store_true",
+                        help="Opt in to a private test DISPLAY; default uses the real desktop")
     parser.add_argument("--root", type=Path, default=Path(os.getenv(
         "CCER_ROOT", str(Path.home() / "Videos/CCER"))))
     parser.add_argument("--access", choices=("observe", "control"),
@@ -23,12 +25,16 @@ def main(argv=None):
     if args.mode != "window":
         parser.error("CCER Direct is GUI-FIRST only; headless mode is forbidden")
     try:
-        private = bind_direct_process()
-        # Both the backend transport and GUI actions use a single verified
-        # isolated X display, never the user's foreground session.
+        # GUI-FIRST defaults to the user-visible desktop. A private Xvfb
+        # session may be selected only by an explicit command-line opt-in.
+        private = bind_direct_process() if args.isolated_session else False
         if private:
             print("CCER Direct: attached to private Concat GUI", file=sys.stderr)
-        upstream = DeferredConcatTransport(args.concat_bin, "window")
+        # Direct GUI-FIRST must control the existing native window, never spawn
+        # another editor just to populate native read-tool discovery.
+        # Native backend spawning remains available to other local workflows.
+        upstream = DeferredConcatTransport(
+            args.concat_bin, "window", permit_launch=False)
         upstream.start()
         DirectGateway(upstream, args.root, access=args.access).serve()
     except (TransportError, PolicyError, OSError, ValueError) as exc:
