@@ -57,6 +57,7 @@ TOOLS = {
     "ccer_plan_save": schema("Write new creative plan JSON", {"plan": {"type": "object"}, "file": PATH}, ["plan", "file"]),
     "ccer_subtitles_write": schema("Write validated timed SRT subtitles", {"cues": {"type": "array", "items": {"type": "object"}}, "file": PATH}, ["cues", "file"]),
     "ccer_tts_status": schema("Check installed offline voice synthesis engines"),
+    "ccer_asr_status": schema("Read-only installed Concat Whisper model, optional SHA-256 verification, no transcription or download", {"verifySha256": BOOL}),
     "ccer_voice_synthesize": schema("Offline narration via installed eSpeak", {"text": STRING, "file": PATH, "language": STRING, "rate": {"type": "integer"}, "engine": STRING}, ["text", "file"]),
     "ccer_audio_mix": schema("Normalize voice and duck background music with measured integrated loudness", {"voice": PATH, "music": PATH, "file": PATH, "musicGain": NUMBER, "targetLufs": NUMBER}, ["voice", "file"]),
     "ccer_shot_inspect": schema("Technical shot ranking from codec, resolution, duration", {"files": {"type": "array", "items": PATH}}, ["files"]),
@@ -246,6 +247,9 @@ class Production:
         if name == "ccer_subtitles_write":
             from .creative import save, to_srt
             return save(self.root, a["file"], to_srt(a["cues"]))
+        if name == "ccer_asr_status":
+            from .asr_readiness import status
+            return status(verify_sha256=a.get("verifySha256", False))
         if name == "ccer_tts_status":
             from .audio_studio import engines
             from .voice_extensions import flite_available

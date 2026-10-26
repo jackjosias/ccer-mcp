@@ -25,7 +25,7 @@ class Gateway:
                 "ccer_mission_status", "ccer_mission_recover", "ccer_audit_report",
                   "ccer_timecoded_review", "ccer_long_review_plan",
                    "ccer_editorial_note_review", "ccer_timed_caption_context",
-                 "ccer_desktop_status", "ccer_desktop_capture"),
+                 "ccer_desktop_status", "ccer_desktop_capture", "ccer_asr_status"),
                 "destructiveHint": name == "ccer_checkpoint_restore"}}
             for name, config in TOOLS.items()
         ]

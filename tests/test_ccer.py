@@ -67,8 +67,8 @@ class ControlsTests(unittest.TestCase):
     def test_tools_and_preflight(self):
         with tempfile.TemporaryDirectory() as td:
             g = Gateway(FakeConcat(), td)
-            self.assertEqual(len(TOOLS), 47)
-            self.assertEqual(len(g.catalogue), 53)
+            self.assertEqual(len(TOOLS), 48)
+            self.assertEqual(len(g.catalogue), 54)
             answer = g.handle({"jsonrpc": "2.0", "id": 1, "method": "initialize",
                 "params": {"protocolVersion": "2025-06-18"}})
             self.assertEqual(answer["result"]["serverInfo"]["name"], "ccer-mcp")
@@ -76,7 +76,7 @@ class ControlsTests(unittest.TestCase):
             self.assertEqual(preflight["concat"]["concat"], "0.2.8")
             output = io.StringIO()
             g.serve(io.StringIO('{"jsonrpc":"2.0","id":2,"method":"tools/list"}\n'), output)
-            self.assertEqual(len(json.loads(output.getvalue())["result"]["tools"]), 53)
+            self.assertEqual(len(json.loads(output.getvalue())["result"]["tools"]), 54)
 
     def test_batch_and_timeline(self):
         with tempfile.TemporaryDirectory() as td:
