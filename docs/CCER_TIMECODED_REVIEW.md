@@ -129,3 +129,9 @@ pas comprendre automatiquement le jugement éditorial.
 Toute correction reste soumise à une confirmation explicite et
 aux captures AVANT/APRÈS des gestes dans Concat Desktop.
 Ce module ne peut pas effacer les images déjà transmises côté cloud.
+
+## Sous-titres et preuve audio horodatée
+
+`ccer_timed_caption_context` prend une liste de sous-titres fournis (1 à 2000 cues `start`/`duration`/`text`), un fichier média dans le dossier autorisé, `startSeconds`, `seconds` (0,5 à 120), `maxCues` (1 à 100) et `includeAudioSilence` (booléen). Les timecodes absolus sont conservés et la validation des chevauchements réutilise `captions_check`. Les silences de la plage viennent du `silence_map` FFmpeg existant. Une fenêtre trop dense est refusée sans troncature silencieuse.
+
+L’outil est en lecture seule. Il ne reconnaît pas la parole, n’effectue pas d’alignement forcé mot à mot, n’installe aucun modèle et ne crée aucune image ou cache audio local.

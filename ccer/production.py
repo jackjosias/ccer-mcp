@@ -50,6 +50,7 @@ TOOLS = {
     "ccer_timecoded_review": schema("Read-only video eyes: deliver 1..8 authentic timestamped JPEG frames via MCP plus cuts, black/freeze/color and audio silence candidates; not semantic recognition or full video playback", {"file": PATH, "startSeconds": NUMBER, "seconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 8}}, ["file"]),
     "ccer_long_review_plan": schema("Read-only paginated video timecode planning without decoding or storing images; reuse ccer_timecoded_review", {"file": PATH, "windowSeconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 8}, "cursor": {"type": "integer", "minimum": 0}, "pageSize": {"type": "integer", "minimum": 1, "maximum": 24}}, ["file"]),
     "ccer_editorial_note_review": schema("Read-only video evidence around user timecode and note without editing or semantic inventions", {"file": PATH, "timeSeconds": NUMBER, "note": {"type": "string", "minLength": 1, "maxLength": 1200}, "contextSeconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 8}}, ["file", "timeSeconds", "note"]),
+    "ccer_timed_caption_context": schema("User-supplied timed subtitles with bounded FFmpeg audio silence evidence; no speech recognition", {"file": PATH, "cues": {"type": "array", "items": {"type": "object"}, "minItems": 1, "maxItems": 2000}, "startSeconds": NUMBER, "seconds": NUMBER, "maxCues": {"type": "integer", "minimum": 1, "maximum": 100}, "includeAudioSilence": BOOL}, ["file", "cues"]),
     "ccer_delivery_transcode": schema("Safe verified video transcode to common platform aspect ratios", {"file": PATH, "output": PATH, "profile": STRING}, ["file", "output", "profile"]),
     "ccer_creative_plan": schema("Reviewable story structure built from user-supplied script", {"brief": {"type": "object"}}, ["brief"]),
     "ccer_storyboard": schema("Shot list and visual intent for planned scenes", {"plan": {"type": "object"}}, ["plan"]),
@@ -283,6 +284,13 @@ class Production:
                                     window_seconds=a.get("windowSeconds", 30),
                                     frame_count=a.get("frameCount", 6),
                                     page_size=a.get("pageSize", 12))
+        if name == "ccer_timed_caption_context":
+            from .timed_caption_context import timed_caption_context
+            return timed_caption_context(self.path(a["file"], must_exist=True),
+                                         a["cues"], start_seconds=a.get("startSeconds", 0),
+                                         seconds=a.get("seconds", 30),
+                                         max_cues=a.get("maxCues", 30),
+                                         include_audio_silence=a.get("includeAudioSilence", True))
         if name == "ccer_editorial_note_review":
             from .timecoded_review import review_annotation
             return review_annotation(self.path(a["file"], must_exist=True),
