@@ -8,8 +8,7 @@ from __future__ import annotations
 import math
 import os
 import shutil
-import subprocess
-from .temp_lifecycle import managed_scratch
+from .temp_lifecycle import managed_scratch, run_bounded_encoder
 
 from .controls import PolicyError, media_probe
 from .creative import to_srt
@@ -138,10 +137,8 @@ def render(engine, plan: dict, output: str, *, audio: str | None = None,
                             "-c:v", "libx264", "-preset", preset, "-crf", "22",
                             "-pix_fmt", "yuv420p", "-movflags", "+faststart",
                             str(temp_mp4)])
-            completed = subprocess.run(command, cwd=scratch, capture_output=True, text=True,
-                                       timeout=min(3600, max(120, int(total * 12))))
-            if completed.returncode:
-                raise PolicyError("Directed FFmpeg render failed: " + completed.stderr[-650:])
+            run_bounded_encoder(command, scratch=scratch,
+                                timeout=min(3600, max(120, int(total * 12))))
             metadata = media_probe(temp_mp4)
             image = next((s for s in metadata["streams"] if s.get("codec_type") == "video"), {})
             duration = float(metadata["format"]["duration"] or 0)

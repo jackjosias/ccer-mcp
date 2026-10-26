@@ -8,6 +8,8 @@ ConditionPathExists=%h/Videos/CCER/.ccer
 Type=oneshot
 WorkingDirectory=/home/jack-josias/WORKSPACE-LOGICIEL/concat/ccer-mcp
 ExecStart=/usr/bin/python3 -m ccer.temp_lifecycle sweep --root %h/Videos/CCER --confirm
+# Reuse the existing daily timer for recognized expired desktop receipts.
+ExecStart=/usr/bin/python3 -m ccer.visible_desktop cleanup
 NoNewPrivileges=yes
 PrivateTmp=yes
 UMask=0077

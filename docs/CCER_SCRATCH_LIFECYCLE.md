@@ -50,7 +50,7 @@ séparément par `ccer/evidence_retention.py`.
 
 Deux unités sont fournies comme fichiers réutilisables sous `docs/` :
 
-* `ccer-scratch-gc.service` : uniquement `sweep --confirm` du root approuvé ;
+* `ccer-scratch-gc.service` : exécute successivement `sweep --confirm` sur le root approuvé et `ccer.visible_desktop cleanup` pour les JPEG/reçus expirés reconnus ;
 * `ccer-scratch-gc.timer` : déclenchement quotidien, `Persistent=true`,
   délai aléatoire maximum de 30 minutes.
 
@@ -72,10 +72,7 @@ du tunnel Linux Chrome et du processus Concat Desktop visible.
 2. Les JPEG d'analyse `ccer_timecoded_review` circulent déjà en mémoire
    et ne sont pas stockés systématiquement comme fichiers. Les données
    envoyées à ChatGPT suivent en revanche la politique du service distant.
-3. Un rendu FFmpeg peut encore produire des fichiers de grande taille
-   avant sa fin : la présence de 2 GiB libres au lancement n'est pas un
-   plafond d'écriture strict. Un contrôle dynamique de consommation,
-   notamment pour les productions 1–2h, reste à mettre en place.
+3. Le rendu FFmpeg est désormais supervisé toutes les 250 ms par `run_bounded_encoder` : arrêt du groupe de processus si son scratch dépasse 2 Gio, si l'espace libre descend sous 1 Gio ou si le délai autorisé est dépassé. Ces seuils sont des garde-fous contrôlés périodiquement, pas des quotas au niveau du système de fichiers : un léger dépassement est possible entre deux observations. Les productions plus longues exigent un budget dédié et des mesures de consommation.
 4. Le cache natif interne de Concat, ses projets et les rendus exportés
    ne sont pas dans le périmètre du nettoyage CCER. Ils ne doivent pas
    être effacés sans contrat de propriété distinct et vérifié.
@@ -90,6 +87,8 @@ du tunnel Linux Chrome et du processus Concat Desktop visible.
 * Refus de supprimer les jobs actifs et fichiers hors registre.
 * Refus de symlink vers un média permanent.
 * Refus d'opération quand le disque disponible est insuffisant.
+* Arrêt et attente du processus encodeur lors d'un dépassement du budget scratch ; source préservée.
+* Véritable rendu FFmpeg court : export préservé et dossier scratch entièrement nettoyé.
 
 La cible durable est **zéro accumulation involontaire de médias temporaires**,
 sans aucune promesse trompeuse d'effacement des médias déjà envoyés à un

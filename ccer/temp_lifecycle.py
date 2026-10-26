@@ -195,6 +195,82 @@ def managed_scratch(project_root: Path, *, project: str, purpose: str):
         _remove_files(folder)
 
 
+MAX_RENDER_SCRATCH_BYTES = 2 * 1024 * 1024 * 1024
+MIN_RUNTIME_FREE_BYTES = 1024 * 1024 * 1024
+
+
+def run_bounded_encoder(command, *, scratch: Path, timeout: float,
+                        max_bytes: int = MAX_RENDER_SCRATCH_BYTES,
+                        min_free_bytes: int = MIN_RUNTIME_FREE_BYTES,
+                        poll_seconds: float = 0.25):
+    """Run a single FFmpeg process with active disk limits and no RAM log buildup.
+
+    The managed scratch context owns cleanup. No output is moved or written
+    outside its private folder by this helper.
+    """
+    import signal
+    import subprocess
+
+    scratch = _user_dir(scratch)
+    _manifest(scratch)
+    if (isinstance(max_bytes, bool) or not isinstance(max_bytes, int)
+            or not 1 <= max_bytes <= 64 * 1024**3):
+        raise PolicyError("Invalid scratch budget")
+    if (isinstance(min_free_bytes, bool) or not isinstance(min_free_bytes, int)
+            or min_free_bytes < 1 or not .05 <= poll_seconds <= 5
+            or not 0 < timeout <= 86400):
+        raise PolicyError("Invalid encoder monitor settings")
+    if shutil.disk_usage(scratch).free < min_free_bytes:
+        raise PolicyError("Not enough free disk for CCER encoder")
+
+    log = scratch / "ffmpeg-stderr.log"
+    proc = None
+    reason = None
+    exit_code = None
+    try:
+        with log.open("xb") as error_log:
+            proc = subprocess.Popen(command, cwd=scratch,
+                                    stdout=subprocess.DEVNULL, stderr=error_log,
+                                    start_new_session=True)
+            started = time.monotonic()
+            while True:
+                try:
+                    exit_code = proc.wait(timeout=poll_seconds)
+                except subprocess.TimeoutExpired:
+                    pass
+
+                if time.monotonic() - started > timeout:
+                    reason = "CCER FFmpeg stopped: duration limit exceeded"
+                elif shutil.disk_usage(scratch).free < min_free_bytes:
+                    reason = "CCER FFmpeg stopped: low free disk space"
+                else:
+                    total_bytes = 0
+                    for entry in scratch.iterdir():
+                        st = entry.lstat()
+                        if not stat.S_ISREG(st.st_mode) or st.st_uid != os.getuid():
+                            raise PolicyError("Unsafe encoder scratch entry")
+                        total_bytes += st.st_size
+                    if total_bytes > max_bytes:
+                        reason = "CCER FFmpeg stopped: scratch budget exceeded"
+                if reason or exit_code is not None:
+                    break
+    finally:
+        if proc is not None and proc.poll() is None:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait()
+    if reason:
+        raise PolicyError(reason)
+    with log.open("rb") as stream:
+        stream.seek(0, os.SEEK_END)
+        stream.seek(max(0, stream.tell() - 1024))
+        error_text = stream.read().decode(errors="replace")
+    if exit_code != 0:
+        raise PolicyError("Directed FFmpeg render failed: " + error_text[-650:])
+    return {"exitCode": exit_code, "elapsedSeconds": round(time.monotonic() - started, 3)}
+
 def main(argv=None):
     import argparse
     parser = argparse.ArgumentParser(description="List/recover CCER-owned scratch only")

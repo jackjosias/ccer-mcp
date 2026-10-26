@@ -105,6 +105,66 @@ class ManagedScratchTests(unittest.TestCase):
                         pass
             self.assertEqual(b"private", original.read_bytes())
 
+    def test_encoder_enforces_growth_limit_and_preserves_sources(self):
+        import sys
+        from ccer.temp_lifecycle import run_bounded_encoder
+        with tempfile.TemporaryDirectory() as base:
+            root = Path(base)
+            original = root / "source.mp4"
+            original.write_bytes(b"source is permanent")
+            with self.assertRaisesRegex(PolicyError, "scratch budget exceeded"):
+                with managed_scratch(root, project="budget", purpose="render") as scratch:
+                    command = [sys.executable, "-c",
+                               "from pathlib import Path; import time;"
+                               "Path('oversized.bin').write_bytes(b'x'*65536);"
+                               "time.sleep(3)"]
+                    run_bounded_encoder(command, scratch=scratch, timeout=10,
+                                        max_bytes=10000, poll_seconds=.05)
+            self.assertFalse(scratch.exists())
+            self.assertEqual(b"source is permanent", original.read_bytes())
+
+    def test_encoder_success_and_nonzero_failure(self):
+        import sys
+        from ccer.temp_lifecycle import run_bounded_encoder
+        with tempfile.TemporaryDirectory() as base:
+            root = Path(base)
+            with managed_scratch(root, project="smoke", purpose="encode") as scratch:
+                outcome = run_bounded_encoder([sys.executable, "-c", "print('ok')"],
+                                              scratch=scratch, timeout=10)
+                self.assertEqual(0, outcome["exitCode"])
+            with managed_scratch(root, project="bad", purpose="encode") as scratch:
+                with self.assertRaisesRegex(PolicyError, "FFmpeg render failed"):
+                    run_bounded_encoder([sys.executable, "-c",
+                                         "import sys; sys.stderr.write('expected test error');"
+                                         "sys.exit(13)"],
+                                        scratch=scratch, timeout=10)
+
+    def test_encoder_stops_when_disk_free_falls(self):
+        import sys
+        from types import SimpleNamespace
+        from ccer.temp_lifecycle import run_bounded_encoder
+        with tempfile.TemporaryDirectory() as base:
+            root = Path(base)
+            with managed_scratch(root, project="lowdisk", purpose="encode") as scratch:
+                high = SimpleNamespace(free=5 * 1024**3)
+                low = SimpleNamespace(free=512 * 1024**2)
+                with patch("ccer.temp_lifecycle.shutil.disk_usage",
+                           side_effect=[high, low]):
+                    with self.assertRaisesRegex(PolicyError, "low free disk space"):
+                        run_bounded_encoder([sys.executable, "-c",
+                                             "import time; time.sleep(3)"],
+                                            scratch=scratch, timeout=10,
+                                            poll_seconds=.05)
+
+    def test_encoder_enforces_timeout(self):
+        import sys
+        from ccer.temp_lifecycle import run_bounded_encoder
+        with tempfile.TemporaryDirectory() as base:
+            with managed_scratch(Path(base), project="timeout", purpose="encode") as scratch:
+                with self.assertRaisesRegex(PolicyError, "duration limit exceeded"):
+                    run_bounded_encoder([sys.executable, "-c", "import time; time.sleep(3)"],
+                                        scratch=scratch, timeout=.12, poll_seconds=.05)
+
     def test_reject_user_controlled_symlink_and_invalid_labels(self):
         with tempfile.TemporaryDirectory() as base:
             root = Path(base)

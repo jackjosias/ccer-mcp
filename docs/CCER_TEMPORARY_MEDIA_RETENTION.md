@@ -48,18 +48,11 @@ préservant les médias de l'utilisateur et la sécurité des gestes Concat.
 
 ## Limitations non résolues
 
-- Le TTL actuel est opportuniste : la purge des JPEG expirés se produit
-  lors d'une nouvelle capture ou d'une invocation explicite de `cleanup`.
-  **Pas encore de service de nettoyage automatique en l'absence de toute
-  activité**, ni de rattachement fiable des anciennes captures à un projet
-  Concat particulier.
+- Le TTL des JPEG est opportuniste lors des captures, mais un timer systemd utilisateur `ccer-scratch-gc.timer` appelle aussi la purge une fois par jour, même sans nouvelles captures. La suppression peut donc survenir après les 30 minutes nominales, selon la prochaine activation du timer. Les anciennes captures ne possèdent pas encore d'identifiant fiable de projet Concat.
 - Les gestes via le MCP natif ne créent pas automatiquement ces JPEG locaux :
   ils retournent les images au client MCP, où leur rétention ne peut pas être
   commandée par le fichier local.
-- Les clips intermédiaires produits par les autres moteurs de rendu et les
-  sauvegardes Concat ne sont pas encore couverts par ce mécanisme. Un
-  gestionnaire de projet temporaire avec registre de propriété sera
-  nécessaire pour les effacer sans risque.
+- Les clips intermédiaires du rendu `director_render` utilisent maintenant `ccer.temp_lifecycle` : propriétaire et projet identifiés, suppression à la fin du job et récupération après crash. Les caches internes et sauvegardes natives de Concat, ainsi que les vieux fichiers de test `.runtime/ccer-smoke`, restent volontairement exclus de cette purge.
 - Une confirmation de fin de projet devra maintenir le **projet, les médias
   sources et les exports finaux** dans des répertoires permanents distincts.
   Ne pas remplacer cette étape par une purge récursive d'un chemin ambigu.
