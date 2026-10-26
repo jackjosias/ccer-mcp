@@ -15,6 +15,7 @@ import secrets
 import stat
 import subprocess
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
 from .controls import PolicyError
@@ -208,6 +209,47 @@ def observe():
     return proof
 
 
+
+@contextmanager
+def _native_launch_scope(value: dict, gesture_type: str):
+    """Restore only the media/export scope from the attested running Concat.
+
+    Every CLI action runs in a fresh Python process; no broadened root is
+    permitted and no unrelated app environment (including secrets) is logged.
+    """
+    variable = {"file_drop": "CCER_INAPP_MEDIA_ROOT",
+                "select_export_folder": "CCER_INAPP_EXPORT_ROOT"}.get(gesture_type)
+    if variable is None:
+        yield
+        return
+    if not _live(value):
+        raise PolicyError("CCER: authorized native editor is not running")
+    try:
+        data = (Path("/proc") / str(value["pid"]) / "environ").read_bytes()
+        prefix = variable.encode() + b"="
+        matches = [entry[len(prefix):] for entry in data.split(b"\x00")
+                   if entry.startswith(prefix)]
+        if len(matches) != 1 or len(matches[0]) > 4096:
+            raise ValueError("missing or ambiguous root")
+        root = Path(matches[0].decode("utf-8"))
+        if (not root.is_absolute() or root.is_symlink() or not root.is_dir()
+                or not root.resolve().is_relative_to(HOME.resolve())):
+            raise ValueError("root outside the owner's home")
+        approved = str(root.resolve())
+    except (OSError, ValueError, UnicodeError) as exc:
+        raise PolicyError("CCER: native launch media/export permission unavailable") from exc
+    old = os.environ.get(variable)
+    if old is not None and old != approved:
+        raise PolicyError("CCER: caller media/export root differs from native launch")
+    os.environ[variable] = approved
+    try:
+        yield
+    finally:
+        if old is None:
+            os.environ.pop(variable, None)
+        else:
+            os.environ[variable] = old
+
 def act(args):
     if args.confirm is not True:
         raise PolicyError("CCER: action requires --confirm")
@@ -238,7 +280,7 @@ def act(args):
     else:
         raise PolicyError("CCER: unknown gesture")
     uncertain = None
-    with _client(value) as client:
+    with _native_launch_scope(value, args.type), _client(value) as client:
         before_frame = client.observe()
         if before_frame["sha256"] != state["sha256"]:
             raise PolicyError("CCER: desktop changed; recapture before acting")

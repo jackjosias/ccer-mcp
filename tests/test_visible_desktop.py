@@ -90,6 +90,42 @@ class VisibleDesktopTests(unittest.TestCase):
             second.__enter__.return_value.act.assert_not_called()
             self.assertEqual(2, factory.call_count)
 
+
+    def test_native_launch_scope_restores_verified_media_root(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            allowed = root / "Videos"
+            allowed.mkdir()
+            data = (b"UNRELATED_SECRET=[REDACTED]" +
+                    ("CCER_INAPP_MEDIA_ROOT=" + str(allowed)).encode() + b"\x00")
+            with (patch.object(desktop, "HOME", root),
+                  patch.object(desktop, "_live", return_value=True),
+                  patch.object(desktop.Path, "read_bytes", return_value=(
+                      ("CCER_INAPP_MEDIA_ROOT=" + str(allowed)).encode() + bytes([0]))),
+                  patch.dict(os.environ, {}, clear=True)):
+                with desktop._native_launch_scope({"pid": 12345}, "file_drop"):
+                    self.assertEqual(str(allowed), os.environ["CCER_INAPP_MEDIA_ROOT"])
+                    self.assertNotIn("UNRELATED_SECRET", os.environ)
+                self.assertNotIn("CCER_INAPP_MEDIA_ROOT", os.environ)
+
+    def test_native_launch_scope_rejects_missing_or_different_permission(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            allowed = root / "Videos"
+            allowed.mkdir()
+            data = ("CCER_INAPP_MEDIA_ROOT=" + str(allowed)).encode() + b"\x00"
+            with (patch.object(desktop, "HOME", root),
+                  patch.object(desktop, "_live", return_value=True),
+                  patch.object(desktop.Path, "read_bytes", return_value=data)):
+                with patch.dict(os.environ, {"CCER_INAPP_MEDIA_ROOT": str(root)}):
+                    with self.assertRaisesRegex(PolicyError, "differs"):
+                        with desktop._native_launch_scope({"pid": 12345}, "file_drop"):
+                            pass
+                with patch.object(desktop.Path, "read_bytes", return_value=b""):
+                    with self.assertRaisesRegex(PolicyError, "permission unavailable"):
+                        with desktop._native_launch_scope({"pid": 12345}, "file_drop"):
+                            pass
+
     def test_native_route_rejects_tampered_visible_state(self):
         with patch.dict(os.environ, {}, clear=True):
             with patch.object(desktop, "_file_state", side_effect=PolicyError("unsafe state")):
