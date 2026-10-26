@@ -68,7 +68,7 @@ class VisibleDesktopTests(unittest.TestCase):
     def test_delayed_slint_action_is_observed_but_never_repeated(self):
         with tempfile.TemporaryDirectory() as folder:
             where = Path(folder)
-            (where / "before-test.json").write_text(json.dumps({
+            (where / "before-abcdef012345.json").write_text(json.dumps({
                 "pid": 733454, "sha256": "before", "observedAt": time.time()}))
             first = MagicMock()
             first.__enter__.return_value.observe.return_value = {"sha256": "before"}
@@ -81,11 +81,11 @@ class VisibleDesktopTests(unittest.TestCase):
                   patch.object(desktop, "_file_state", return_value={"pid": 733454}),
                   patch.object(desktop, "_client", side_effect=[first, second]) as factory):
                 result = desktop.act(SimpleNamespace(
-                    confirm=True, receipt="test", type="click", x=200, y=250))
+                    confirm=True, receipt="abcdef012345", type="click", x=200, y=250))
             self.assertEqual("UNKNOWN_DISPATCH", result["state"])
             self.assertTrue(result["uiChanged"])
-            self.assertFalse((where / "before-test.json").exists())
-            self.assertTrue((where / "after-test.jpg").exists())
+            self.assertFalse((where / "before-abcdef012345.json").exists())
+            self.assertTrue((where / "after-abcdef012345.jpg").exists())
             first.__enter__.return_value.act.assert_called_once()
             second.__enter__.return_value.act.assert_not_called()
             self.assertEqual(2, factory.call_count)

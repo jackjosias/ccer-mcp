@@ -170,12 +170,22 @@ def launch(media_root: Path, export_root: Path):
 
 
 def _write_image(name: str, frame: dict):
-    EVIDENCE.mkdir(parents=True, exist_ok=True)
+    from .evidence_retention import reserve
+    if not re.fullmatch(r"(?:before|after)-[0-9a-f]{12}\.jpg", name):
+        raise PolicyError("CCER: unsafe generated evidence filename")
+    image = base64.b64decode(frame["imageBase64"], validate=True)
+    reserve(EVIDENCE, len(image))  # bounded storage and TTL cleanup
     output = EVIDENCE / name
-    if output.exists() or output.is_symlink():
-        raise PolicyError("CCER: evidence file exists; no overwrite")
-    output.write_bytes(base64.b64decode(frame["imageBase64"], validate=True))
-    os.chmod(output, 0o600)
+    # Create owner-only from the first byte, never world-readable temporarily.
+    fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    try:
+        with os.fdopen(fd, "wb") as out:
+            out.write(image)
+            out.flush()
+            os.fsync(out.fileno())
+    except Exception:
+        output.unlink(missing_ok=True)
+        raise
     return str(output)
 
 
@@ -189,8 +199,12 @@ def observe():
              "frameNo": frame["frameNo"], "sha256": frame["sha256"],
              "observedAt": time.time(), "image": image_path}
     proof_path = EVIDENCE / ("before-" + stamp + ".json")
-    proof_path.write_text(json.dumps(proof))
-    os.chmod(proof_path, 0o600)
+    # Do not expose pre-action receipts even briefly under the caller\u0027s umask.
+    fd = os.open(proof_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as out:
+        json.dump(proof, out)
+        out.flush()
+        os.fsync(out.fileno())
     return proof
 
 
@@ -259,10 +273,11 @@ def act(args):
 
 def main():
     p = argparse.ArgumentParser(description="Control visible Concat Slint without X11 injection")
-    p.add_argument("command", choices=("status", "launch", "observe", "act"))
+    p.add_argument("command", choices=("status", "launch", "observe", "act", "cleanup"))
     p.add_argument("--media-root", default=str(HOME / "Videos"))
     p.add_argument("--export-root", default=str(HOME / "Videos"))
     p.add_argument("--receipt")
+    p.add_argument("--confirmed-reviewed", action="store_true")
     p.add_argument("--type", choices=("click","move","drag","scroll","key",
                                       "file_drop","select_export_folder"))
     p.add_argument("--x", type=int)
@@ -282,6 +297,11 @@ def main():
             result = launch(Path(args.media_root), Path(args.export_root))
         elif args.command == "observe":
             result = observe()
+        elif args.command == "cleanup":
+            from .evidence_retention import acknowledge, prune
+            result = (acknowledge(EVIDENCE, args.receipt,
+                                  confirmed_reviewed=args.confirmed_reviewed)
+                      if args.receipt else prune(EVIDENCE))
         else:
             result = act(args)
         print(json.dumps(result, ensure_ascii=False))
