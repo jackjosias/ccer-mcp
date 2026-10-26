@@ -75,9 +75,12 @@ class DirectGatewayTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             g = DirectGateway(FakeConcat(), root, access="control")
             fake = {
-                "window": {"windowId": "0xabc"},
+                "window": {"windowId": "0xabc", "display": "native-slint"},
                 "sha256": "valid-image", "mimeType": "image/jpeg",
                 "imageBase64": "aGVsbG8=", "imageWidth": 640,
+                "captureSource": "authenticated_native_slint",
+                "safeForClickReceipt": True, "readOnly": False,
+                "frameNo": 42,
             }
             arguments = {"expectedWindowId": "0xabc", "action": "key",
                          "key": "Escape", "confirm": True}
@@ -99,6 +102,57 @@ class DirectGatewayTests(unittest.TestCase):
                 with self.assertRaises(PolicyError):
                     g.invoke("ccer_desktop_act", arguments)
                 self.assertEqual(process.call_count, 3)
+
+
+    def test_x11_fallback_is_viewable_but_never_authorizes_a_click(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as root:
+            g = DirectGateway(FakeConcat(), root, access="control")
+            fallback = {
+                "window": {"windowId": "0xabc", "display": ":1", "pid": 598971},
+                "sha256": "verified-x11-image", "mimeType": "image/jpeg",
+                "imageBase64": "aGVsbG8=", "imageWidth": 640,
+                "captureSource": "verified_x11_read_only",
+                "safeForClickReceipt": False, "readOnly": True,
+            }
+            args = {"expectedWindowId": "0xabc", "action": "click",
+                    "x": 200, "y": 150, "confirm": True}
+            with patch.object(g.production, "run", return_value=fallback) as run:
+                result = g.invoke("ccer_desktop_capture", {})
+                self.assertTrue(any(c["type"] == "image" for c in result["content"]))
+                self.assertIsNone(g._last_visual_observation)
+                with self.assertRaisesRegex(PolicyError, "fresh Concat screenshot"):
+                    g.invoke("ccer_desktop_act", args)
+                self.assertEqual(1, run.call_count)
+
+    def test_readonly_fallback_revokes_earlier_native_authorization(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as root:
+            g = DirectGateway(FakeConcat(), root, access="control")
+            native = {
+                "window": {"windowId": "0xabc", "display": "native-slint"},
+                "sha256": "native", "mimeType": "image/jpeg",
+                "imageBase64": "aGVsbG8=", "frameNo": 16,
+                "captureSource": "authenticated_native_slint",
+                "safeForClickReceipt": True, "readOnly": False,
+            }
+            fallback = {
+                "window": {"windowId": "0xabc", "display": ":1"},
+                "sha256": "fallback", "mimeType": "image/jpeg",
+                "imageBase64": "aGVsbG8=",
+                "captureSource": "verified_x11_read_only",
+                "safeForClickReceipt": False, "readOnly": True,
+            }
+            with patch.object(g.production, "run", side_effect=[native, fallback]) as run:
+                g.invoke("ccer_desktop_capture", {})
+                self.assertIsNotNone(g._last_visual_observation)
+                g.invoke("ccer_desktop_capture", {})
+                self.assertIsNone(g._last_visual_observation)
+                with self.assertRaisesRegex(PolicyError, "fresh Concat screenshot"):
+                    g.invoke("ccer_desktop_act", {
+                        "expectedWindowId": "0xabc", "action": "click",
+                        "confirm": True, "x": 200, "y": 150})
+                self.assertEqual(2, run.call_count)
 
     def test_direct_cli_rejects_headless_even_with_control_access(self):
         from unittest.mock import patch

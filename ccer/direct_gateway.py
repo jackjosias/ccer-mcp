@@ -60,6 +60,10 @@ class DirectGateway(Gateway):
             if args.get("withCapture", True) is not True:
                 raise PolicyError("A screenshot AFTER every GUI action is mandatory")
             self._last_visual_observation = None   # fail closed on any error
+        if name == "ccer_desktop_capture":
+            # Any new capture invalidates a prior action receipt, including
+            # errors and read-only fallbacks; fail closed on overloaded GUI.
+            self._last_visual_observation = None
         outcome = super().invoke(name, args)
         if name in ("ccer_desktop_capture", "ccer_desktop_act"):
             metadata = outcome.get("structuredContent", {})
@@ -67,10 +71,17 @@ class DirectGateway(Gateway):
             if not has_image or not metadata.get("sha256"):
                 raise PolicyError("Visual verification missing: an actual Concat image is mandatory")
             if name == "ccer_desktop_capture":
-                self._last_visual_observation = {
-                    "when": time.monotonic(),
-                    "windowId": metadata["window"]["windowId"],
-                }
+                # Verified X11 fallback is a valid READ-ONLY image, never a
+                # Slint BEFORE receipt authorizing mouse or keyboard input.
+                if (metadata.get("safeForClickReceipt") is True
+                        and metadata.get("captureSource") == "authenticated_native_slint"
+                        and metadata.get("readOnly") is False
+                        and type(metadata.get("frameNo")) is int
+                        and metadata.get("window", {}).get("display") == "native-slint"):
+                    self._last_visual_observation = {
+                        "when": time.monotonic(),
+                        "windowId": metadata["window"]["windowId"],
+                    }
         return outcome
 
     def handle(self, message):

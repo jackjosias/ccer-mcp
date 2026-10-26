@@ -99,7 +99,9 @@ def capture(*, max_width=840):
             return {"window": _window(client), "imageBase64": frame["imageBase64"],
                     "mimeType": frame["mimeType"], "sha256": frame["sha256"],
                     "frameNo": frame["frameNo"], "capturedAt": time.time(),
-                    "imageWidth": client._width, "coordinates": "native logical pixels"}
+                    "imageWidth": client._width, "coordinates": "native logical pixels",
+                    "captureSource": "authenticated_native_slint",
+                    "safeForClickReceipt": True, "readOnly": False}
         except Exception:
             _close()
             raise
