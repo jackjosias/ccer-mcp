@@ -9,8 +9,7 @@ import math
 import os
 import shutil
 import subprocess
-import tempfile
-from pathlib import Path
+from .temp_lifecycle import managed_scratch
 
 from .controls import PolicyError, media_probe
 from .creative import to_srt
@@ -98,8 +97,8 @@ def render(engine, plan: dict, output: str, *, audio: str | None = None,
         raise PolicyError("Subtitle sidecar already exists")
     mission = engine._mission("directed_render", {"output": str(target), "scenes": len(scenes)})
     try:
-        with tempfile.TemporaryDirectory(prefix=".ccer-render-", dir=target.parent) as d:
-            scratch = Path(d)
+        with managed_scratch(engine.root, project=target.parent.name,
+                             purpose="directed_render") as scratch:
             commands = []
             segments = []
             for i, (source, item) in enumerate(zip(sources, scenes)):

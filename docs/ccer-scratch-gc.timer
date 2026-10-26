@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily recovery of abandoned CCER scratch jobs
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=30min
+Unit=ccer-scratch-gc.service
+
+[Install]
+WantedBy=timers.target
