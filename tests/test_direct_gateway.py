@@ -215,6 +215,36 @@ class DirectGatewayTests(unittest.TestCase):
                         "x": 250, "y": 100, "confirm": True})
                 self.assertEqual(2, run.call_count)
 
+
+    def test_offline_then_online_mcp_catalogue_keeps_gui_only_control(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as root:
+            backend = FakeConcat()
+            g = DirectGateway(backend, root, access="control")
+            # A disconnected Concat backend must not erase safe CCER tools.
+            with patch.object(backend, "tools", side_effect=[[], backend.tools()]):
+                first = g.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
+                second = g.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+            for response in (first, second):
+                names = {t["name"] for t in response["result"]["tools"]}
+                self.assertIn("ccer_desktop_status", names)
+                self.assertIn("ccer_desktop_capture", names)
+                self.assertIn("ccer_desktop_act", names)
+                self.assertNotIn("project_create", names)
+                self.assertNotIn("edit_apply", names)
+            # A control profile still cannot click without an authenticated
+            # fresh Slint BEFORE screenshot, even after backend reconnects.
+            blocked = g.handle({"jsonrpc": "2.0", "id": 3,
+                                "method": "tools/call",
+                                "params": {"name": "ccer_desktop_act",
+                                           "arguments": {"expectedWindowId": "0xabc",
+                                                         "action": "click",
+                                                         "x": 70, "y": 90,
+                                                         "confirm": True}}})
+            self.assertTrue(blocked["result"]["isError"])
+            self.assertIn("fresh Concat screenshot",
+                          blocked["result"]["content"][0]["text"])
+
     def test_direct_cli_rejects_headless_even_with_control_access(self):
         from unittest.mock import patch
         from ccer.direct_cli import main
