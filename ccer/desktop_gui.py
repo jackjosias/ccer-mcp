@@ -202,7 +202,15 @@ def status():
 def capture(*, max_width=840):
     """Capture verified Concat UI or its narrowly allowlisted Import dialog."""
     if native_desktop.enabled():
-        return native_desktop.capture(max_width=max_width)
+        try:
+            return native_desktop.capture(max_width=max_width)
+        except PolicyError as error:
+            if "UI timeout" not in str(error):
+                raise
+            # Read-only observation of the *same* verified Concat window.
+            # Never use fallback frames as Slint BEFORE receipts or for input.
+            from .readonly_window import capture as fallback_capture
+            return fallback_capture(max_width=max_width)
     if type(max_width) is not int or not 320 <= max_width <= 1600:
         raise PolicyError("maxWidth must be integer 320..1600")
     with _GUI_LOCK:
