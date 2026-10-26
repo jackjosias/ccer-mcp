@@ -91,6 +91,29 @@ class VisibleDesktopTests(unittest.TestCase):
             self.assertEqual(2, factory.call_count)
 
 
+
+    def test_observe_reports_native_window_size_not_resized_preview(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            client = MagicMock()
+            active = client.__enter__.return_value
+            active._width, active._height = 1400, 900
+            active.observe.return_value = {
+                "windowId": "concat-main", "frameNo": 1, "sha256": "a" * 64,
+                "imageBase64": "unused",
+            }
+            with (patch.object(desktop, "EVIDENCE", root),
+                  patch.object(desktop, "_file_state", return_value={"pid": 700}),
+                  patch.object(desktop, "_client", return_value=client),
+                  patch.object(desktop, "_write_image", return_value="evidence.jpg"),
+                  patch.object(desktop.secrets, "token_hex", return_value="abcdef012345")):
+                receipt = desktop.observe()
+            self.assertEqual(1400, receipt["nativeWidth"])
+            self.assertEqual(900, receipt["nativeHeight"])
+            disk = json.loads((root / "before-abcdef012345.json").read_text())
+            self.assertEqual(1400, disk["nativeWidth"])
+            self.assertEqual(900, disk["nativeHeight"])
+
     def test_native_launch_scope_restores_verified_media_root(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

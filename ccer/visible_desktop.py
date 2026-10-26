@@ -194,9 +194,11 @@ def observe():
     value = _file_state()
     with _client(value) as client:
         frame = client.observe()
+        native_width, native_height = client._width, client._height
     stamp = secrets.token_hex(6)
     image_path = _write_image("before-" + stamp + ".jpg", frame)
     proof = {"pid": value["pid"], "windowId": frame["windowId"],
+             "nativeWidth": native_width, "nativeHeight": native_height,
              "frameNo": frame["frameNo"], "sha256": frame["sha256"],
              "observedAt": time.time(), "image": image_path}
     proof_path = EVIDENCE / ("before-" + stamp + ".json")
