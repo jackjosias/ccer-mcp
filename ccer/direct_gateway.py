@@ -98,7 +98,9 @@ class DirectGateway(Gateway):
                 self.catalogue = [
                     item for item in discovered if item["name"] in self.allowed
                 ] + [item for item in self.catalogue
-                     if item["name"] in READ_CCER]
+                     if item["name"] in READ_CCER
+                      or (self.access == "control"
+                          and item["name"] == "ccer_desktop_act")]
         response = super().handle(message)
         if (response and message.get("method") == "initialize"
                 and "result" in response):

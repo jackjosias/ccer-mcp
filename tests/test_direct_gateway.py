@@ -154,6 +154,67 @@ class DirectGatewayTests(unittest.TestCase):
                         "confirm": True, "x": 200, "y": 150})
                 self.assertEqual(2, run.call_count)
 
+
+    def test_jsonrpc_capture_fallback_is_never_click_authorization(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as root:
+            g = DirectGateway(FakeConcat(), root, access="control")
+            handshake = g.handle({"jsonrpc": "2.0", "id": 1,
+                                  "method": "initialize", "params": {}})
+            self.assertEqual("ccer-mcp", handshake["result"]["serverInfo"]["name"])
+            listing = g.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+            self.assertIn("ccer_desktop_act",
+                          {t["name"] for t in listing["result"]["tools"]})
+            fallback = {
+                "window": {"windowId": "0xabc", "pid": 598971, "display": ":1"},
+                "sha256": "valid-image", "imageBase64": "aGVsbG8=",
+                "mimeType": "image/jpeg", "captureSource": "verified_x11_read_only",
+                "safeForClickReceipt": False, "readOnly": True,
+            }
+            with patch.object(g.production, "run", return_value=fallback) as process:
+                read = g.handle({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+                                 "params": {"name": "ccer_desktop_capture",
+                                            "arguments": {}}})
+                self.assertFalse(read["result"]["isError"])
+                self.assertTrue(any(p["type"] == "image"
+                                    for p in read["result"]["content"]))
+                blocked = g.handle({"jsonrpc": "2.0", "id": 4,
+                                    "method": "tools/call",
+                                    "params": {"name": "ccer_desktop_act",
+                                               "arguments": {
+                                                   "expectedWindowId": "0xabc",
+                                                   "action": "click",
+                                                   "x": 250, "y": 100,
+                                                   "confirm": True}}})
+                self.assertTrue(blocked["result"]["isError"])
+                self.assertIn("fresh Concat screenshot",
+                              blocked["result"]["content"][0]["text"])
+                self.assertEqual(1, process.call_count)
+
+    def test_failed_capture_revokes_existing_native_authorization(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as root:
+            g = DirectGateway(FakeConcat(), root, access="control")
+            native = {
+                "window": {"windowId": "0xabc", "display": "native-slint"},
+                "sha256": "native", "mimeType": "image/jpeg",
+                "imageBase64": "aGVsbG8=", "frameNo": 7,
+                "captureSource": "authenticated_native_slint",
+                "safeForClickReceipt": True, "readOnly": False,
+            }
+            with patch.object(g.production, "run",
+                              side_effect=[native, PolicyError("CCER: UI timeout")]) as run:
+                g.invoke("ccer_desktop_capture", {})
+                self.assertIsNotNone(g._last_visual_observation)
+                with self.assertRaisesRegex(PolicyError, "UI timeout"):
+                    g.invoke("ccer_desktop_capture", {})
+                self.assertIsNone(g._last_visual_observation)
+                with self.assertRaisesRegex(PolicyError, "fresh Concat screenshot"):
+                    g.invoke("ccer_desktop_act", {
+                        "expectedWindowId": "0xabc", "action": "click",
+                        "x": 250, "y": 100, "confirm": True})
+                self.assertEqual(2, run.call_count)
+
     def test_direct_cli_rejects_headless_even_with_control_access(self):
         from unittest.mock import patch
         from ccer.direct_cli import main
