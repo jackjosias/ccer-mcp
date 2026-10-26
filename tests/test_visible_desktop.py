@@ -43,6 +43,63 @@ class VisibleDesktopTests(unittest.TestCase):
                         desktop.launch(desktop.HOME / "Videos", desktop.HOME / "Videos")
                     spawn.assert_not_called()
 
+    def test_status_explains_memory_block_without_spawning(self):
+        with (patch.object(desktop, "_file_state", return_value=None),
+              patch.object(desktop, "_windows", return_value=[]),
+              patch.object(desktop, "_desktop", return_value=":1"),
+              patch("ccer.asr_readiness.status", return_value={
+                  "memoryAvailableBytes": 500_000_000,
+                  "loadPerLogicalCpu": 0.2}),
+              patch.object(desktop.subprocess, "Popen") as spawn):
+            state = desktop.status()
+            self.assertFalse(state["nativeBridge"])
+            self.assertFalse(state["launchReady"])
+            self.assertIn("overloaded", state["launchBlocker"])
+            self.assertIn("blocked", state["next"])
+            spawn.assert_not_called()
+
+    def test_status_allows_only_single_new_launch_if_safe(self):
+        with (patch.object(desktop, "_file_state", return_value=None),
+              patch.object(desktop, "_windows", return_value=[]),
+              patch.object(desktop, "_desktop", return_value=":1"),
+              patch("ccer.asr_readiness.status", return_value={
+                  "memoryAvailableBytes": 6 * 1024**3,
+                  "loadPerLogicalCpu": 0.3})):
+            state = desktop.status()
+            self.assertTrue(state["launchReady"])
+            self.assertIsNone(state["launchBlocker"])
+
+    def test_overloaded_launch_is_denied_before_any_spawn(self):
+        with (patch.dict(os.environ, {"DISPLAY": ":1", "XDG_SESSION_TYPE": "x11"}),
+              patch.object(desktop, "_windows", return_value=[]),
+              patch("ccer.asr_readiness.status", return_value={
+                  "memoryAvailableBytes": 1500000000,
+                  "loadPerLogicalCpu": 4.5}),
+              patch.object(desktop.subprocess, "Popen") as spawn):
+            with self.assertRaisesRegex(PolicyError, "overloaded"):
+                desktop.launch(desktop.HOME / "Videos", desktop.HOME / "Videos")
+            spawn.assert_not_called()
+
+    def test_cpu_overload_refuses_even_if_ram_sufficient(self):
+        with patch("ccer.asr_readiness.status", return_value={
+                "memoryAvailableBytes": 8 * 1024**3,
+                "loadPerLogicalCpu": 2.25}):
+            with self.assertRaisesRegex(PolicyError, "overloaded"):
+                desktop._verify_launch_resources()
+
+    def test_missing_resource_measurement_fails_closed(self):
+        with patch("ccer.asr_readiness.status", return_value={
+                "memoryAvailableBytes": None, "loadPerLogicalCpu": None}):
+            with self.assertRaisesRegex(PolicyError, "cannot be verified"):
+                desktop._verify_launch_resources()
+
+    def test_safe_reading_allows_continuing_to_other_guards(self):
+        with patch("ccer.asr_readiness.status", return_value={
+                "memoryAvailableBytes": 4 * 1024**3,
+                "loadPerLogicalCpu": 0.75}):
+            value = desktop._verify_launch_resources()
+            self.assertEqual(0.75, value["loadPerLogicalCpu"])
+
     def test_delayed_window_registration_waits_without_relaunch(self):
         found = {"windowId": "0x03c00005", "pid": 105496, "title": "Concat"}
         with (patch.object(desktop, "_windows", side_effect=[[], [], [found]]) as spy,

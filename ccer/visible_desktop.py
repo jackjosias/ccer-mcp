@@ -97,14 +97,30 @@ def _client(value):
 
 
 def status():
+    """Observe native app and explain whether a *new* launch is safe."""
     state = _file_state()
     active = _live(state)
-    return {"nativeBridge": active,
-            "pid": state["pid"] if active else None,
-            "officialConcatWindows": _windows(),
-            "display": _desktop(),
-            "next": "Connect to the patched visible Concat" if active else
-                    "Close official Concat, then launch CCER-patched Concat"}
+    windows = _windows()
+    display = _desktop()
+    ready = not active and not windows
+    blocker = None
+    if ready:
+        try:
+            _verify_launch_resources()
+        except PolicyError as error:
+            ready = False
+            blocker = str(error)
+    elif active:
+        blocker = "Patched Concat is already running; do not relaunch"
+    else:
+        blocker = "Existing Concat window detected; do not launch another"
+    return {"nativeBridge": active, "pid": state["pid"] if active else None,
+            "officialConcatWindows": windows, "display": display,
+            "launchReady": ready, "launchBlocker": blocker,
+            "next": ("Connect to the already-running patched Concat" if active else
+                     "Use the existing Concat window without replacing it" if windows else
+                     "Launch blocked until resource safety conditions recover" if not ready else
+                     "One new native Concat launch is permitted by current resource checks")}
 
 
 def _wait_for_native_window(pid: int, *, timeout: float = 20.0):
@@ -123,10 +139,31 @@ def _wait_for_native_window(pid: int, *, timeout: float = 20.0):
         time.sleep(.25)
 
 
+def _verify_launch_resources():
+    """Prevent a new persistent Concat under unmeasurable or heavy load.
+
+    Reuse CCER's existing Linux memory/load probe. This is a lightweight
+    fail-closed check, not a promise of editing performance or ASR readiness.
+    """
+    from .asr_readiness import status as resource_status
+    probe = resource_status()
+    available = probe.get("memoryAvailableBytes")
+    per_cpu = probe.get("loadPerLogicalCpu")
+    if available is None or per_cpu is None:
+        raise PolicyError("CCER: launch resources cannot be verified; no Concat spawned")
+    if available < 2 * 1024**3 or per_cpu > 2.0:
+        raise PolicyError(
+            "CCER: desktop overloaded for safe new Concat launch "
+            "(need 2 GiB MemAvailable and load/core <= 2.0); "
+            "no editor spawned. Close other workloads only with user approval.")
+    return {"memoryAvailableBytes": available, "loadPerLogicalCpu": per_cpu}
+
+
 def launch(media_root: Path, export_root: Path):
     _desktop()
     if _windows():
         raise PolicyError("CCER: Concat already open; do not replace or close its user's window")
+    _verify_launch_resources()
     if not EXE.is_file() or not LIBS.is_dir():
         raise PolicyError("CCER: opt-in compiled Rust binary or FFmpeg runtime is missing")
     for path in (media_root, export_root):
