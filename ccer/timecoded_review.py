@@ -42,6 +42,57 @@ def _frame(source: Path, seconds: float) -> bytes:
     return process.stdout
 
 
+def plan_long_review(source, *, cursor=0, window_seconds=30, frame_count=6, page_size=12):
+    """Page over full video timecodes without decoding or writing image frames.
+
+    Each planned window reuses ccer_timecoded_review, never editing Concat.
+    """
+    source = Path(source)
+    window = _number(window_seconds, "windowSeconds", .5, 120)
+    if type(cursor) is not int or cursor < 0:
+        raise PolicyError("cursor must be a nonnegative integer")
+    if type(frame_count) is not int or not 1 <= frame_count <= 8:
+        raise PolicyError("frameCount must be 1..8")
+    if type(page_size) is not int or not 1 <= page_size <= 24:
+        raise PolicyError("pageSize must be 1..24")
+    info = media_probe(source)
+    if not any(stream.get("codec_type") == "video" for stream in info["streams"]):
+        raise PolicyError("Media has no video")
+    try:
+        duration = float(info["format"]["duration"])
+    except (ValueError, TypeError, KeyError) as error:
+        raise PolicyError("Media duration unavailable") from error
+    if not math.isfinite(duration) or not 0 < duration <= 86400:
+        raise PolicyError("Planning supports video durations up to 24 hours")
+    total = math.ceil(duration / window)
+    if cursor > total:
+        raise PolicyError("cursor is beyond the final review window")
+    end_cursor = min(total, cursor + page_size)
+    windows = []
+    for index in range(cursor, end_cursor):
+        start = index * window
+        end = min(duration, (index + 1) * window)
+        windows.append({
+            "index": index, "startSeconds": round(start, 3),
+            "endSeconds": round(end, 3),
+            "reviewArguments": {
+                "file": str(source), "startSeconds": round(start, 3),
+                "seconds": window, "frameCount": frame_count,
+            },
+        })
+    return {
+        "file": str(source), "durationSeconds": round(duration, 3),
+        "windowSeconds": window, "totalWindows": total, "cursor": cursor,
+        "nextCursor": end_cursor if end_cursor < total else None,
+        "plannedFramesPerWindow": frame_count, "windows": windows,
+        "imageFilesCreated": 0, "readOnly": True,
+        "requiresEditorialJudgment": True,
+        "note": ("Metadata-only plan. Call ccer_timecoded_review on each "
+                 "reviewArguments to decode bounded real JPEG frames in "
+                 "memory. Planning never infers video semantics."),
+    }
+
+
 def review(source, *, start_seconds=0, seconds=30, frame_count=6):
     """Return metadata + actual JPEG frames, never an invented film description."""
     if not shutil.which("ffmpeg"):

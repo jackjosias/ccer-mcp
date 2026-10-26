@@ -1,5 +1,4 @@
 """Contract tests for an offline-safe direct Concat backend."""
-import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch

@@ -38,6 +38,56 @@ class TimecodedReviewTests(unittest.TestCase):
                              result["structuredContent"]["frames"])
             self.assertNotIn("imageBase64", str(result["structuredContent"]))
 
+
+    def test_long_review_pages_cover_complete_file_without_jpegs(self):
+        metadata = {"format": {"duration": "365.5"}, "streams": [{"codec_type": "video"}]}
+        with tempfile.TemporaryDirectory() as root:
+            video = Path(root) / "footage.mp4"
+            video.write_bytes(b"fixture")
+            with patch("ccer.timecoded_review.media_probe", return_value=metadata):
+                gateway = DirectGateway(_NoBackend(), root, access="observe")
+                first = gateway.invoke("ccer_long_review_plan", {
+                    "file": str(video), "windowSeconds": 60,
+                    "frameCount": 8, "cursor": 0, "pageSize": 3,
+                })["structuredContent"]
+                second = gateway.invoke("ccer_long_review_plan", {
+                    "file": str(video), "windowSeconds": 60,
+                    "frameCount": 8, "cursor": first["nextCursor"], "pageSize": 4,
+                })["structuredContent"]
+                self.assertEqual(7, first["totalWindows"])
+                self.assertEqual([0., 60., 120.], [
+                    row["startSeconds"] for row in first["windows"]])
+                self.assertEqual([180., 240., 300., 360.], [
+                    row["startSeconds"] for row in second["windows"]])
+                self.assertEqual(365.5, second["windows"][-1]["endSeconds"])
+                self.assertIsNone(second["nextCursor"])
+                self.assertEqual(8, second["windows"][0]["reviewArguments"]["frameCount"])
+                self.assertTrue(first["readOnly"])
+                self.assertEqual(0, first["imageFilesCreated"])
+                self.assertFalse(list(Path(root).rglob("*.jpg")))
+
+    def test_long_review_rejects_bad_parameters(self):
+        from ccer.timecoded_review import plan_long_review
+        metadata = {"format": {"duration": "1000"}, "streams": [{"codec_type": "video"}]}
+        with patch("ccer.timecoded_review.media_probe", return_value=metadata):
+            for options in ({"cursor": -1}, {"cursor": True},
+                            {"window_seconds": float("nan")},
+                            {"window_seconds": 0.2}, {"frame_count": 9},
+                            {"frame_count": True}, {"page_size": 25},
+                            {"page_size": True}, {"cursor": 100}):
+                with self.subTest(options=options), self.assertRaises(PolicyError):
+                    plan_long_review("/unused.mp4", **options)
+
+    def test_long_review_refuses_media_outside_approved_root(self):
+        with tempfile.TemporaryDirectory() as folder:
+            approved = Path(folder) / "approved"
+            approved.mkdir()
+            outside = Path(folder) / "private.mp4"
+            outside.write_bytes(b"sample")
+            gateway = DirectGateway(_NoBackend(), approved)
+            with self.assertRaises(PolicyError):
+                gateway.invoke("ccer_long_review_plan", {"file": str(outside)})
+
     def test_root_policy_never_opens_unapproved_media(self):
         with tempfile.TemporaryDirectory() as base:
             approved = Path(base) / "approved"

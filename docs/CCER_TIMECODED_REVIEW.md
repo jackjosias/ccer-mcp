@@ -89,3 +89,25 @@ transmises lors de l'invocation de `ccer_timecoded_review` par le MCP.
 
 Ne jamais utiliser l'analyse hors écran pour appliquer une mutation
 invisible au projet : la règle GUI-FIRST reste permanente.
+
+## Parcours paginé des vidéos longues
+
+Le nouvel outil de lecture seule `ccer_long_review_plan` reçoit
+`file`, `windowSeconds` (0,5 à 120), `frameCount` (1 à 8),
+`cursor` (entier positif, défaut 0) et `pageSize` (1 à 24).
+Il lit la durée avec FFprobe et renvoie les fenêtres ordonnées avec
+des `reviewArguments` directement utilisables par l'outil existant
+`ccer_timecoded_review`.
+
+Exemple : vidéo de 30 minutes et fenêtres de 30 secondes => 60
+fenêtres. `pageSize:12` renvoie les douze premières,
+`nextCursor:12` permet de reprendre le même parcours plus tard.
+Le planificateur n'extrait aucun JPEG. Chaque revue ultérieure
+transmet au plus huit JPEG réels décodés en mémoire, avec leurs
+timecodes. Une fenêtre planifiée ne signifie pas qu'elle a été visionnée.
+Le parcours est borné aux vidéos de 24 heures au maximum.
+
+Aucune transcription ou compréhension sémantique n'est inventée.
+Les sources et les exports ne sont jamais effacés. La fonction n'a
+aucune capacité d'effacement des images déjà transmises aux services
+ChatGPT : une suppression du cloud ne doit jamais être promise.
