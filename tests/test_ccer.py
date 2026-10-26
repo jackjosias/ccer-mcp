@@ -74,6 +74,8 @@ class ControlsTests(unittest.TestCase):
             self.assertEqual(answer["result"]["serverInfo"]["name"], "ccer-mcp")
             preflight = g.invoke("ccer_preflight", {})["structuredContent"]
             self.assertEqual(preflight["concat"]["concat"], "0.2.8")
+            self.assertEqual(preflight["asr"]["engine"], "Concat embedded whisper.cpp")
+            self.assertFalse(preflight["asr"]["transcriptionPerformed"])
             output = io.StringIO()
             g.serve(io.StringIO('{"jsonrpc":"2.0","id":2,"method":"tools/list"}\n'), output)
             self.assertEqual(len(json.loads(output.getvalue())["result"]["tools"]), 54)

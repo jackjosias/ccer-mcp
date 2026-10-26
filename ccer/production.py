@@ -322,6 +322,7 @@ class Production:
             from .recipes import produce
             return produce(self, a)
         if name == "ccer_preflight":
+            from .asr_readiness import status as asr_status
             return {
                 "root": str(self.root), "rootWritable": os.access(self.root, os.W_OK),
                 "concat": structured(self.upstream.tool("concat_version")),
@@ -329,6 +330,7 @@ class Production:
                 "ffprobe": bool(shutil.which("ffprobe")),
                 "diskFreeBytes": shutil.disk_usage(self.root).free,
                 "audit": self.journal.verify(),
+                "asr": asr_status(),
             }
         if name == "ccer_project_inspect":
             path = self.path(a["path"], must_exist=True)
