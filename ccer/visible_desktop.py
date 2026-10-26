@@ -107,6 +107,22 @@ def status():
                     "Close official Concat, then launch CCER-patched Concat"}
 
 
+def _wait_for_native_window(pid: int, *, timeout: float = 20.0):
+    """Wait for X11 registration, never respawn or terminate Concat."""
+    deadline = time.monotonic() + timeout
+    while True:
+        windows = _windows()
+        if len(windows) == 1 and windows[0]["pid"] == pid:
+            return windows[0]
+        if any(win["pid"] != pid for win in windows):
+            raise PolicyError("CCER: another Concat window appeared; keep both untouched")
+        if time.monotonic() >= deadline:
+            raise RuntimeError(
+                "CCER: native window registration pending; Concat left running. "
+                "Check visible_desktop status; do not relaunch.")
+        time.sleep(.25)
+
+
 def launch(media_root: Path, export_root: Path):
     _desktop()
     if _windows():
@@ -158,11 +174,9 @@ def launch(media_root: Path, export_root: Path):
     try:
         with _client(value) as client:
             first = client.observe()
-        matching = [win for win in _windows() if win["pid"] == proc.pid]
-        if len(matching) != 1:
-            raise RuntimeError("CCER: native desktop window PID not uniquely verified")
+        window = _wait_for_native_window(proc.pid)
         return {"launched": True, "pid": proc.pid,
-                "windowId": matching[0]["windowId"],
+                "windowId": window["windowId"],
                 "nativeFrame": first["frameNo"], "display": os.environ["DISPLAY"],
                 "noPhysicalX11Input": True}
     except Exception:

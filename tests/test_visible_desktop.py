@@ -43,6 +43,27 @@ class VisibleDesktopTests(unittest.TestCase):
                         desktop.launch(desktop.HOME / "Videos", desktop.HOME / "Videos")
                     spawn.assert_not_called()
 
+    def test_delayed_window_registration_waits_without_relaunch(self):
+        found = {"windowId": "0x03c00005", "pid": 105496, "title": "Concat"}
+        with (patch.object(desktop, "_windows", side_effect=[[], [], [found]]) as spy,
+              patch.object(desktop.time, "sleep") as pause):
+            self.assertEqual(found, desktop._wait_for_native_window(105496))
+            self.assertEqual(3, spy.call_count)
+            self.assertEqual(2, pause.call_count)
+
+    def test_conflicting_window_refuses_without_killing_or_relaunching(self):
+        other = {"windowId": "0x03c00006", "pid": 22222, "title": "Concat"}
+        with patch.object(desktop, "_windows", return_value=[other]):
+            with self.assertRaisesRegex(PolicyError, "another Concat"):
+                desktop._wait_for_native_window(105496)
+
+    def test_registration_timeout_keeps_native_process_intact(self):
+        with patch.object(desktop, "_windows", return_value=[]):
+            with patch.object(desktop.time, "sleep") as pause:
+                with self.assertRaisesRegex(RuntimeError, "left running"):
+                    desktop._wait_for_native_window(105496, timeout=0)
+                pause.assert_not_called()
+
     def test_non_x11_fails_closed(self):
         with patch.dict(os.environ, {"DISPLAY": ":0", "XDG_SESSION_TYPE": "wayland"}):
             with self.assertRaisesRegex(PolicyError, "not X11"):
