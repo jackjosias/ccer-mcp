@@ -6,7 +6,7 @@ from pathlib import Path
 from .direct_gateway import DirectGateway
 from .isolated_session import bind_direct_process
 from .controls import PolicyError
-from .transport import ConcatTransport, TransportError
+from .transport import DeferredConcatTransport, TransportError
 
 
 def main(argv=None):
@@ -28,7 +28,7 @@ def main(argv=None):
         # isolated X display, never the user's foreground session.
         if private:
             print("CCER Direct: attached to private Concat GUI", file=sys.stderr)
-        upstream = ConcatTransport(args.concat_bin, "window")
+        upstream = DeferredConcatTransport(args.concat_bin, "window")
         upstream.start()
         DirectGateway(upstream, args.root, access=args.access).serve()
     except (TransportError, PolicyError, OSError, ValueError) as exc:

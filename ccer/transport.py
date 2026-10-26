@@ -3,6 +3,7 @@ import json
 import queue
 import subprocess
 import threading
+import time
 from pathlib import Path
 
 
@@ -121,6 +122,71 @@ class ConcatTransport:
                     p.kill()
                     p.wait()
             self.process = None
+
+
+class DeferredConcatTransport:
+    """Keep the direct MCP online while its optional Concat backend is offline.
+
+    Only a fresh caller request may reconnect. A request that failed after
+    dispatch is NEVER replayed automatically.
+    """
+
+    def __init__(self, binary, mode="window", retry_seconds=5):
+        self.binary = Path(binary)
+        self.mode = mode
+        self.retry_seconds = retry_seconds
+        self._link = None
+        self._retry_at = 0.0
+        self._lock = threading.RLock()
+
+    def _discard(self):
+        previous, self._link = self._link, None
+        if previous is not None:
+            previous.close()
+
+    def _ensure(self):
+        if self._link is not None:
+            process = self._link.process
+            if process is not None and process.poll() is None:
+                return self._link
+            self._discard()
+        if time.monotonic() < self._retry_at:
+            raise TransportError("Concat backend offline; safe reconnect is rate-limited")
+        fresh = ConcatTransport(self.binary, self.mode)
+        try:
+            fresh.start()
+        except (TransportError, OSError, ValueError) as error:
+            fresh.close()
+            self._retry_at = time.monotonic() + self.retry_seconds
+            raise TransportError(f"Concat backend unavailable: {error}") from error
+        self._retry_at = 0.0
+        self._link = fresh
+        return fresh
+
+    def start(self):
+        # Prewarm only; Concat need not already be running at user login.
+        self.tools()
+
+    def tools(self):
+        with self._lock:
+            try:
+                return self._ensure().tools()
+            except (TransportError, OSError):
+                self._discard()
+                return []
+
+    def tool(self, name, arguments=None, timeout=None):
+        with self._lock:
+            link = self._ensure()
+            try:
+                return link.tool(name, arguments, timeout)
+            except (TransportError, OSError):
+                self._discard()
+                raise
+
+    def close(self):
+        with self._lock:
+            self._discard()
 
 
 def structured(result):

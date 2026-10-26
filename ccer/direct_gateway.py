@@ -72,6 +72,20 @@ class DirectGateway(Gateway):
         return outcome
 
     def handle(self, message):
+        if isinstance(message, dict) and message.get("method") == "tools/list":
+            # Discover native read tools if Concat came online after the tunnel.
+            # Reuse the existing Gateway catalogue, without exposing writes.
+            discovered = self.upstream.tools()
+            if discovered:
+                names = {item["name"] for item in discovered}
+                from .production import TOOLS
+                if names & TOOLS.keys():
+                    raise PolicyError("CCER/native tool catalogue collision")
+                self.native = {item["name"]: item for item in discovered}
+                self.catalogue = [
+                    item for item in discovered if item["name"] in self.allowed
+                ] + [item for item in self.catalogue
+                     if item["name"] in READ_CCER]
         response = super().handle(message)
         if (response and message.get("method") == "initialize"
                 and "result" in response):
