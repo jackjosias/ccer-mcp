@@ -23,7 +23,8 @@ class Gateway:
                 "ccer_preflight", "ccer_project_inspect", "ccer_timeline_validate",
                 "ccer_asset_analyze", "ccer_audio_validate", "ccer_export_verify",
                 "ccer_mission_status", "ccer_mission_recover", "ccer_audit_report",
-                  "ccer_timecoded_review",
+                  "ccer_timecoded_review", "ccer_long_review_plan",
+                   "ccer_editorial_note_review",
                  "ccer_desktop_status", "ccer_desktop_capture"),
                 "destructiveHint": name == "ccer_checkpoint_restore"}}
             for name, config in TOOLS.items()
@@ -34,7 +35,7 @@ class Gateway:
             raise PolicyError("Arguments must be an object")
         if name in TOOLS:
             outcome = self.production.run(name, args)
-            if name == "ccer_timecoded_review":
+            if name in ("ccer_timecoded_review", "ccer_editorial_note_review"):
                 # Preserve real images as MCP image content, not a multi-MB JSON
                 # string. A vision-capable agent can inspect each sampled frame.
                 frames = outcome.pop("frames")

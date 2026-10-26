@@ -93,7 +93,7 @@ def plan_long_review(source, *, cursor=0, window_seconds=30, frame_count=6, page
     }
 
 
-def review(source, *, start_seconds=0, seconds=30, frame_count=6):
+def review(source, *, start_seconds=0, seconds=30, frame_count=6, focus_seconds=None):
     """Return metadata + actual JPEG frames, never an invented film description."""
     if not shutil.which("ffmpeg"):
         raise PolicyError("FFmpeg unavailable")
@@ -115,6 +115,12 @@ def review(source, *, start_seconds=0, seconds=30, frame_count=6):
     span = end - start
     times = [round(min(duration - .001, start + span * (index + .5) / frame_count), 3)
              for index in range(frame_count)]
+    if focus_seconds is not None:
+        focus = _number(focus_seconds, "focusSeconds", start, end)
+        anchor = round(min(duration - .001, focus), 3)
+        closest = min(range(len(times)), key=lambda i: abs(times[i] - anchor))
+        times[closest] = anchor
+        times.sort()
     frames = [{"timeSeconds": t, "mimeType": "image/jpeg",
                "imageBase64": base64.b64encode(_frame(source, t)).decode("ascii")}
               for t in times]
@@ -155,6 +161,38 @@ def review(source, *, start_seconds=0, seconds=30, frame_count=6):
                    "analyzers. Frames are delivered as MCP images for visual "
                    "inspection; no automatic semantic recognition or full-speed playback.")
     }
+
+def review_annotation(source, *, time_seconds, note, context_seconds=8, frame_count=5):
+    """Read-only evidence around a user-supplied editing note."""
+    if not isinstance(note, str) or not 1 <= len(note.strip()) <= 1200:
+        raise PolicyError("note must be 1..1200 characters")
+    focus = _number(time_seconds, "timeSeconds", 0, 86400)
+    context = _number(context_seconds, "contextSeconds", .5, 60)
+    if type(frame_count) is not int or not 1 <= frame_count <= 8:
+        raise PolicyError("frameCount must be 1..8")
+    info = media_probe(source)
+    if not any(s.get("codec_type") == "video" for s in info["streams"]):
+        raise PolicyError("Media has no video")
+    try:
+        duration = float(info["format"]["duration"])
+    except (ValueError, TypeError, KeyError) as error:
+        raise PolicyError("Media duration unavailable") from error
+    if not math.isfinite(duration) or duration <= 0 or focus >= duration:
+        raise PolicyError("Annotation timeSeconds outside video duration")
+    start = max(0., min(focus - context / 2, max(0., duration - context)))
+    result = review(source, start_seconds=start, seconds=context,
+                    frame_count=frame_count, focus_seconds=focus)
+    result["annotation"] = {
+        "note": note.strip(), "timeSeconds": focus, "verified": False,
+        "provenance": "user_supplied",
+        "focusFrameTimeSeconds": min(
+            (frame["timeSeconds"] for frame in result["frames"]),
+            key=lambda t: abs(t - focus)),
+    }
+    result["readOnly"] = True
+    result["annotationPersisted"] = False
+    return result
+
 
 def main(argv=None):
     """Read-only CLI smoke test. Enforce the same media-root boundary as MCP."""

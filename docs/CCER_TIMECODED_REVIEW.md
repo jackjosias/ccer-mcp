@@ -111,3 +111,21 @@ Aucune transcription ou compréhension sémantique n'est inventée.
 Les sources et les exports ne sont jamais effacés. La fonction n'a
 aucune capacité d'effacement des images déjà transmises aux services
 ChatGPT : une suppression du cloud ne doit jamais être promise.
+
+## Revue de remarques éditoriales horodatées
+
+`ccer_editorial_note_review` accepte `file`, `timeSeconds`,
+`note` (1 à 1 200 caractères), `contextSeconds` (0,5 à 60)
+et `frameCount` (1 à 8). Exemple :
+`{"file":".../source.mp4","timeSeconds":83,"note":"À 01:23, le cadrage est mauvais","contextSeconds":8}`.
+
+L'outil réutilise FFmpeg et `ccer_timecoded_review`. Il extrait en
+mémoire des JPEG réels, dont un exactement au timecode donné, et
+conserve le contexte avant/après. Il ne crée pas de collection JPEG
+locale et ne persiste pas l'annotation. La note porte les marqueurs
+`provenance:user_supplied` et `verified:false` : CCER ne prétend
+pas comprendre automatiquement le jugement éditorial.
+
+Toute correction reste soumise à une confirmation explicite et
+aux captures AVANT/APRÈS des gestes dans Concat Desktop.
+Ce module ne peut pas effacer les images déjà transmises côté cloud.
