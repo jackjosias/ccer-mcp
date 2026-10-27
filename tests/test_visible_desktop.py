@@ -228,7 +228,7 @@ class VisibleDesktopTests(unittest.TestCase):
                             pass
 
     def test_native_route_rejects_tampered_visible_state(self):
-        with patch.dict(os.environ, {}, clear=True):
+        with patch.dict(os.environ, {"DISPLAY": ":1"}, clear=True):
             with patch.object(desktop, "_file_state", side_effect=PolicyError("unsafe state")):
                 with self.assertRaisesRegex(PolicyError, "unsafe state"):
                     native_desktop.enabled()
