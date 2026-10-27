@@ -205,8 +205,10 @@ def capture(*, max_width=840):
         try:
             return native_desktop.capture(max_width=max_width)
         except PolicyError as error:
-            if "UI timeout" not in str(error):
-                raise
+            if ("UI timeout" not in str(error)
+                    or os.environ.get("CCER_PRIVATE_DISPLAY")
+                    or os.environ.get("CCER_PRIVATE_XVFB_PID")):
+                raise  # Private Xvfb must never fall back to the human desktop.
             # Read-only observation of the *same* verified Concat window.
             # Never use fallback frames as Slint BEFORE receipts or for input.
             from .readonly_window import capture as fallback_capture

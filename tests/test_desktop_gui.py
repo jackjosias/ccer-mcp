@@ -25,6 +25,15 @@ class DesktopGuiTests(unittest.TestCase):
         isolated.start()
         self.addCleanup(isolated.stop)
 
+    def test_private_native_timeout_does_not_capture_human_desktop(self):
+        with patch("ccer.desktop_gui.native_desktop.enabled", return_value=True), \
+             patch("ccer.desktop_gui.native_desktop.capture", side_effect=PolicyError("CCER: UI timeout")), \
+             patch.dict("os.environ", {"CCER_PRIVATE_DISPLAY": ":94"}), \
+             patch("ccer.readonly_window.capture") as human_capture:
+            with self.assertRaisesRegex(PolicyError, "UI timeout"):
+                capture(max_width=640)
+            human_capture.assert_not_called()
+
     def test_action_requires_explicit_confirmation(self):
         with self.assertRaises(PolicyError):
             interact(expected_window_id="0x3a00005",
