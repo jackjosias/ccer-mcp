@@ -201,6 +201,23 @@ class NativeDesktopTests(unittest.TestCase):
             with self.assertRaises(PolicyError):
                 desktop_gui.capture()
 
+class VisibleRoutingTests(unittest.TestCase):
+    def test_xvfb_cannot_attach_visible_bridge(self):
+        with patch.dict(os.environ, {"CCER_PRIVATE_DISPLAY": ":98", "DISPLAY": ":98"}, clear=True):
+            self.assertIsNone(native_desktop._visible_config())
+            self.assertFalse(native_desktop.enabled())
+
+    def test_visible_bridge_requires_same_display(self):
+        state = {"socket": "/tmp/example.sock", "proof": "dummy", "pid": 9001,
+                 "display": ":1"}
+        with patch("ccer.visible_desktop._file_state", return_value=state), \
+             patch("ccer.visible_desktop._live", return_value=True):
+            for display in ("", ":97"):
+                with patch.dict(os.environ, {"DISPLAY": display}, clear=True):
+                    self.assertIsNone(native_desktop._visible_config())
+            with patch.dict(os.environ, {"DISPLAY": ":1"}, clear=True):
+                self.assertEqual(9001, native_desktop._visible_config()[2])
+
 class NativeUnixWireTests(unittest.TestCase):
     def test_real_unix_transport_and_router(self):
         native_desktop._close()

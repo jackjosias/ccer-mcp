@@ -86,6 +86,16 @@ def main():
         details = json.loads(bridge.stdout)
         if not details.get("visibleDragExecuted"):
             raise RuntimeError("CCER Direct did not control the private GUI")
+    native_smoke = "--native-smoke" in sys.argv
+    if native_smoke:
+        # Reuse the attested private Xvfb; never start smoke on the human DISPLAY.
+        smoke = subprocess.run(
+            [sys.executable, "-m", "tests.native_slint_smoke", "--project", "--export"],
+            env={**os.environ, **env}, capture_output=True, text=True, timeout=300)
+        print(smoke.stdout[-6000:], flush=True)
+        if smoke.returncode:
+            raise RuntimeError("Private native export smoke failed: " +
+                               (smoke.stdout + smoke.stderr)[-2500:])
     if run(["xdotool","getwindowfocus"])!=human_focus:
         raise RuntimeError("Human focus changed")
     if run(["xdotool","getmouselocation","--shell"])!=human_pointer:

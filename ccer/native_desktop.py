@@ -16,11 +16,17 @@ _SESSION_STARTED = None
 
 
 def _visible_config():
-    # The local owner-only desktop receipt is the same secure Slint transport,
-    # not an X11 pointer-control fallback or a second editing engine.
+    # Private Xvfb sessions cannot attach to the user's visible Concat.
+    # Explicit CCER_INAPP_SOCKET sessions are handled separately by _session().
+    if os.environ.get("CCER_PRIVATE_DISPLAY") or os.environ.get("CCER_PRIVATE_XVFB_PID"):
+        return None
+    display = os.environ.get("DISPLAY")
+    if not display:
+        return None
     from .visible_desktop import _file_state, _live
     receipt = _file_state()
-    if receipt is not None and _live(receipt):
+    if (receipt is not None and _live(receipt)
+            and receipt.get("display") == display):
         return receipt["socket"], receipt["proof"], receipt["pid"]
     return None
 
