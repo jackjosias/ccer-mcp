@@ -38,18 +38,21 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
    (le parseur ne prétend pas exécuter lui-même Whisper).
 5. Analyse sémantique — À QUALIFIER : VLM local ou OpenVision adapté aux
    limites RAM/CPU ; compréhension des sons non vocaux (Whisper ne suffit pas).
-6. Quasi temps réel — SOCLE HORODATÉ TESTÉ : ccer_av_events agrège les
-   observations vidéo/audio et les sous-titres externes sous forme de pages
-   de 1 à 100 événements, avec curseur de reprise et sans cache JPEG local.
-   La diffusion en direct, la latence mesurée, les images adaptatives et la
-   backpressure entre processus restent À CONSTRUIRE.
+6. Quasi temps réel — RELECTURE PROGRESSIVE TESTÉE, LIVE NON ACQUIS :
+    ccer_av_events conserve la pagination ; ccer_av_replay_poll relit une
+    fenêtre enregistrée par appel avec curseur, pression CPU/RAM mesurée,
+    budget adaptatif de 1 à 4 images et pause via consumerReady=false
+    sans décodage. Aucun événement n'est tronqué silencieusement.
+    Vidéo réelle MPEG-4/AAC et 22 tests ciblés PASS ; ni caméra/micro
+    en continu, ni worker permanent, ni garantie de latence ou de sémantique.
 7. Réalisation professionnelle — À VALIDER : vrai rush parlé de plusieurs
    minutes, coupes, titres, transitions, mix audio, sous-titres et MP4 décodé.
-8. Recette finale — Python 207/207 PASS (28 oct. 2026), git-diff-check
+8. Recette finale — Python 213/213 PASS (28 oct. 2026), git-diff-check
    PASS, zéro erreur IDE, fork Rust propre. Le nettoyage des preuves CCER a
    supprimé les 29 aperçus historiques (393 185 octets), dossier vidé ;
    timer existant actif/activé. Restent à qualifier : Rust natif complet,
    perception sémantique des sons et images, vrai montage parlé de plusieurs
-   minutes, streaming adaptatif, pont MCP distant et QA créative finale.
+   minutes, streaming véritablement continu avec latence mesurée, connecteur
+   MCP distant et QA créative finale.
 
 Ne jamais prétendre que les phases 4 à 8 sont validées sur une vidéo muette de 2 s.
