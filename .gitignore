@@ -13,3 +13,10 @@ build/
 
 # Independent upstream Concat Rust source checkout (its own Git history).
 .upstream-concat/
+
+# Local test evidence, temporary media and extracted build dependencies.
+# This is never source code and must not enter a Git commit.
+.runtime/
+
+# Cached system-development packages fetched for local Rust compilation.
+*.deb

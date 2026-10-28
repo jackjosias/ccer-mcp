@@ -151,10 +151,17 @@ def _verify_launch_resources():
     per_cpu = probe.get("loadPerLogicalCpu")
     if available is None or per_cpu is None:
         raise PolicyError("CCER: launch resources cannot be verified; no Concat spawned")
-    if available < 2 * 1024**3 or per_cpu > 2.0:
+    # Owner may explicitly opt in to a visible launch under CPU pressure.
+    # Minimum memory and all desktop/window isolation checks still apply.
+    cpu_override = os.environ.get("CCER_VISIBLE_CPU_OVERRIDE") == "1"
+    # Owner opt-in still requires 1 GiB; the normal limit remains 2 GiB.
+    min_available = (1 if cpu_override else 2) * 1024**3
+    if available < min_available or (per_cpu > 2.0 and not cpu_override):
         raise PolicyError(
             "CCER: desktop overloaded for safe new Concat launch "
-            "(need 2 GiB MemAvailable and load/core <= 2.0); "
+            "(need 2 GiB MemAvailable and load/core <= 2.0 by default; "
+            "an explicit CCER_VISIBLE_CPU_OVERRIDE=1 allows high CPU load "
+            "with at least 1 GiB MemAvailable); "
             "no editor spawned. Close other workloads only with user approval.")
     return {"memoryAvailableBytes": available, "loadPerLogicalCpu": per_cpu}
 
@@ -369,6 +376,8 @@ def act(args):
 def main():
     p = argparse.ArgumentParser(description="Control visible Concat Slint without X11 injection")
     p.add_argument("command", choices=("status", "launch", "observe", "act", "cleanup"))
+    p.add_argument("--allow-high-cpu", action="store_true",
+                   help="Owner-approved visible launch despite high CPU load; memory gate retained")
     p.add_argument("--media-root", default=str(HOME / "Videos"))
     p.add_argument("--export-root", default=str(HOME / "Videos"))
     p.add_argument("--receipt")
@@ -385,6 +394,9 @@ def main():
     p.add_argument("--path")
     p.add_argument("--confirm", action="store_true")
     args = p.parse_args()
+    if args.allow_high_cpu:
+        # Explicit operator opt-in applies only to this CLI process.
+        os.environ["CCER_VISIBLE_CPU_OVERRIDE"] = "1"
     try:
         if args.command == "status":
             result = status()

@@ -87,6 +87,18 @@ class VisibleDesktopTests(unittest.TestCase):
             with self.assertRaisesRegex(PolicyError, "overloaded"):
                 desktop._verify_launch_resources()
 
+    def test_explicit_cpu_override_preserves_memory_gate(self):
+        with patch.dict(os.environ, {"CCER_VISIBLE_CPU_OVERRIDE": "1"}):
+            with patch("ccer.asr_readiness.status", return_value={
+                    "memoryAvailableBytes": 4 * 1024**3,
+                    "loadPerLogicalCpu": 5.0}):
+                self.assertEqual(5.0, desktop._verify_launch_resources()["loadPerLogicalCpu"])
+            with patch("ccer.asr_readiness.status", return_value={
+                    "memoryAvailableBytes": 500_000_000,
+                    "loadPerLogicalCpu": 5.0}):
+                with self.assertRaisesRegex(PolicyError, "overloaded"):
+                    desktop._verify_launch_resources()
+
     def test_missing_resource_measurement_fails_closed(self):
         with patch("ccer.asr_readiness.status", return_value={
                 "memoryAvailableBytes": None, "loadPerLogicalCpu": None}):

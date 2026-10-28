@@ -106,7 +106,7 @@ def frame(env, win):
     return result
 
 
-def viewer(env, win, access, *, frame_provider=None):
+def viewer(env, win, access, *, frame_provider=None, on_view=None):
     cache = {"when": 0, "data": b""}
     lock = threading.Lock()
 
@@ -121,6 +121,8 @@ def viewer(env, win, access, *, frame_provider=None):
                 self.end_headers()
                 return
             if uri.path == "/":
+                if on_view is not None:
+                    on_view()
                 body = ("""<!doctype html><meta charset="utf-8"><title>CCER | Concat isolé</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>body{background:#111;color:white;margin:0;text-align:center;font:15px system-ui}
@@ -130,12 +132,12 @@ header{padding:14px}img{width:100%;height:auto;max-width:1400px}</style>
 <script>const p=new URL(location.href).searchParams.get('pass');
 const img=document.getElementById('v');
 function paint(){img.src='/image?pass='+encodeURIComponent(p)+'&r='+Date.now()}
-paint();setInterval(paint,2500);</script>""").encode("utf-8")
+paint();setInterval(paint,650);</script>""").encode("utf-8")
                 mime = "text/html; charset=utf-8"
             elif uri.path == "/image":
                 try:
                     with lock:
-                        if time.monotonic() - cache["when"] >= 2 or not cache["data"]:
+                        if time.monotonic() - cache["when"] >= 0.35 or not cache["data"]:
                             pixels = (frame_provider() if frame_provider is not None
                                       else frame(env, win))
                             if (not isinstance(pixels, bytes) or len(pixels) < 400

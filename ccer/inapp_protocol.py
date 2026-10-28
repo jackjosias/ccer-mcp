@@ -125,8 +125,12 @@ class InAppComputerUse:
             obj = json.loads(answer)
         except (ValueError, UnicodeError) as exc:
             raise PolicyError("INAPP_DENIED: malformed response") from exc
-        if not isinstance(obj, dict) or obj.get("id") != self._counter or obj.get("error"):
-            raise PolicyError("INAPP_DENIED: mismatched response or adapter error")
+        if not isinstance(obj, dict) or obj.get("id") != self._counter:
+            raise PolicyError("INAPP_DENIED: mismatched native response")
+        if obj.get("error"):
+            reason = obj["error"].get("message") if isinstance(obj["error"], dict) else None
+            safe_reason = reason[:180] if isinstance(reason, str) else "unspecified"
+            raise PolicyError("INAPP_DENIED: native adapter rejected: " + safe_reason)
         result = obj.get("result")
         if not isinstance(result, dict):
             raise PolicyError("INAPP_DENIED: invalid result")
