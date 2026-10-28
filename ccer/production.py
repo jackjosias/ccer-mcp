@@ -54,6 +54,7 @@ TOOLS = {
     "ccer_transcript_read": schema("Read-only validated existing SRT; captions supplied, not freshly transcribed", {"file": PATH, "transcriptFile": PATH}, ["file", "transcriptFile"]),
     "ccer_av_timeline": schema("Read-only synchronized video frames, supplied SRT and optional original WAV evidence", {"file": PATH, "transcriptFile": PATH, "startSeconds": NUMBER, "seconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 8}, "maxCues": {"type": "integer", "minimum": 1, "maximum": 200}, "includeAudio": BOOL}, ["file", "transcriptFile"]),
     "ccer_audio_window": schema("Return requested 0.25..10s original audio as bounded WAV MCP audio part, no transcription", {"file": PATH, "startSeconds": NUMBER, "seconds": NUMBER}, ["file"]),
+    "ccer_av_events": schema("Read-only paginated absolute video/audio event timecodes and optionally unverified supplied SRT; not real-time perception or ASR", {"file": PATH, "transcriptFile": PATH, "startSeconds": NUMBER, "seconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 8}, "cursor": {"type": "integer", "minimum": 0}, "pageSize": {"type": "integer", "minimum": 1, "maximum": 100}}, ["file"]),
     "ccer_delivery_transcode": schema("Safe verified video transcode to common platform aspect ratios", {"file": PATH, "output": PATH, "profile": STRING}, ["file", "output", "profile"]),
     "ccer_creative_plan": schema("Reviewable story structure built from user-supplied script", {"brief": {"type": "object"}}, ["brief"]),
     "ccer_storyboard": schema("Shot list and visual intent for planned scenes", {"plan": {"type": "object"}}, ["plan"]),
@@ -296,6 +297,15 @@ class Production:
             return audio_window(self.path(a["file"], must_exist=True),
                                 start_seconds=a.get("startSeconds", 0),
                                 seconds=a.get("seconds", 4))
+        if name == "ccer_av_events":
+            from .av_event_cursor import inspect_event_window
+            return inspect_event_window(self.root, a["file"],
+                                        transcript=a.get("transcriptFile"),
+                                        start_seconds=a.get("startSeconds", 0),
+                                        seconds=a.get("seconds", 30),
+                                        frame_count=a.get("frameCount", 4),
+                                        cursor=a.get("cursor", 0),
+                                        page_size=a.get("pageSize", 40))
         if name == "ccer_transcript_read":
             from .av_timeline import read_srt
             return read_srt(self.path(a["file"], must_exist=True),

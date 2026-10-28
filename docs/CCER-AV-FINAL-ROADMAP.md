@@ -25,8 +25,11 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
    Réutiliser le modèle small existant, sans téléchargement en double.
 5. Analyse sémantique — À QUALIFIER : VLM local ou OpenVision adapté aux
    limites RAM/CPU ; compréhension des sons non vocaux (Whisper ne suffit pas).
-6. Quasi temps réel — À CONSTRUIRE : flux d'événements horodatés, frames
-   adaptatives, segments audio, backpressure, latence et reprises mesurées.
+6. Quasi temps réel — SOCLE HORODATÉ TESTÉ : ccer_av_events agrège les
+   observations vidéo/audio et les sous-titres externes sous forme de pages
+   de 1 à 100 événements, avec curseur de reprise et sans cache JPEG local.
+   La diffusion en direct, la latence mesurée, les images adaptatives et la
+   backpressure entre processus restent À CONSTRUIRE.
 7. Réalisation professionnelle — À VALIDER : vrai rush parlé de plusieurs
    minutes, coupes, titres, transitions, mix audio, sous-titres et MP4 décodé.
 8. Recette finale — tests Python/Rust, contrôle des deux dépôts, sécurité,

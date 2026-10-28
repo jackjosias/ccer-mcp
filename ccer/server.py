@@ -26,7 +26,7 @@ class Gateway:
                   "ccer_timecoded_review", "ccer_long_review_plan",
                    "ccer_editorial_note_review", "ccer_timed_caption_context",
                  "ccer_desktop_status", "ccer_desktop_capture", "ccer_asr_status",
-                  "ccer_transcript_read", "ccer_av_timeline", "ccer_audio_window"),
+                  "ccer_transcript_read", "ccer_av_timeline", "ccer_audio_window", "ccer_av_events"),
                 "destructiveHint": name == "ccer_checkpoint_restore"}}
             for name, config in TOOLS.items()
         ]

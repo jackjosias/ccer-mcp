@@ -96,5 +96,64 @@ class EventCursorTests(unittest.TestCase):
                     inspect_event_window(root, private)
                 blocked.assert_not_called()
 
+    def test_mcp_direct_gateway_exposes_readonly_event_page(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from ccer.direct_gateway import DirectGateway
+        class Backend:
+            def tools(self):
+                return []
+        with tempfile.TemporaryDirectory() as folder:
+            video = Path(folder) / "clip.mp4"
+            video.write_bytes(b"fixture")
+            gateway = DirectGateway(Backend(), folder)
+            self.assertIn("ccer_av_events", {entry["name"] for entry in gateway.catalogue})
+            expected = {"events": [{"kind": "frame_sample", "timeSeconds": 1}],
+                        "transcriptionPerformed": False}
+            with patch("ccer.av_event_cursor.inspect_event_window",
+                       return_value=expected) as inspect:
+                result = gateway.invoke("ccer_av_events", {"file": str(video)})
+            inspect.assert_called_once()
+            self.assertFalse(result["isError"])
+            self.assertEqual(expected, result["structuredContent"])
+            self.assertFalse(any(part["type"] == "image" for part in result["content"]))
+
+    def test_real_ffmpeg_video_to_mcp_event_page_without_jpeg_files(self):
+        import shutil
+        import subprocess
+        import tempfile
+        from pathlib import Path
+        from ccer.direct_gateway import DirectGateway
+        if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+            self.skipTest("FFmpeg and FFprobe required")
+        class Backend:
+            def tools(self):
+                return []
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            video = root / "real.mp4"
+            made = subprocess.run([
+                "ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+                "-f", "lavfi", "-i", "testsrc2=size=160x90:rate=12",
+                "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=16000",
+                "-t", "3", "-c:v", "mpeg4", "-q:v", "8",
+                "-c:a", "aac", str(video),
+            ], capture_output=True, timeout=75)
+            self.assertEqual(0, made.returncode, made.stderr.decode(errors="replace"))
+            result = DirectGateway(Backend(), root).invoke(
+                "ccer_av_events", {"file": str(video), "startSeconds": 0,
+                                   "seconds": 2, "frameCount": 2, "pageSize": 3})
+            self.assertFalse(result["isError"])
+            data = result["structuredContent"]
+            self.assertTrue(data["totalEvents"] >= 2)
+            self.assertEqual(2, data["sampledFrames"])
+            self.assertTrue(all(0 <= e["timeSeconds"] < 2 for e in data["events"]))
+            self.assertFalse(data["transcriptionPerformed"])
+            self.assertFalse(data["continuousPlaybackPerformed"])
+            self.assertFalse(data["mediaArtifactsCreated"])
+            self.assertFalse(any(part["type"] == "image" for part in result["content"]))
+            self.assertEqual([], list(root.glob("*.jpg")))
+
 if __name__ == "__main__":
     unittest.main()
