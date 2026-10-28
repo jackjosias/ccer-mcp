@@ -36,14 +36,13 @@ véritable MP4 de 3 secondes MPEG-4/AAC interrogé via le DirectGateway.
 Exécuter `python3 -m unittest tests.test_av_replay_poll -v`.
 Les tests n'écrivent aucune image JPEG permanente.
 
-## Choix de backend sémantique
-Le dépôt officiel Qwen3-VL (https://github.com/QwenLM/Qwen3-VL)
-décrit une entrée vidéo constituée d'images horodatées. Mage-VL MCP
-(https://github.com/WeiyePlayer/mage-vl-mcp) utilise un modèle local
-mais documente un GPU NVIDIA de 8 Gio. Aucun de ces deux modèles
-n'a été installé ou exécuté dans CCER. Sur ce poste Intel, la
-qualification sémantique exige d'abord un backend réellement disponible,
-une mesure mémoire et un test qualitatif sur des scènes et sons réels.
+## Vision sans modèle supplémentaire
+Les images horodatées sont extraites en mémoire avec FFmpeg et transmises
+via ccer_timecoded_review. ChatGPT peut inspecter ces images reçues, tandis
+que ccer_desktop_capture permet d'observer les changements dans Concat.
+Les scènes, couleurs et silences sont des indices techniques, pas des
+identifications sémantiques automatiques. Aucun adaptateur Qwen/Ollama
+n'est requis ou exposé par CCER.
 
 ## Travail restant
 Enchaîner ces fenêtres automatiquement avec cadence/latence mesurées

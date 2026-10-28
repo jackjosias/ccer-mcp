@@ -55,8 +55,6 @@ TOOLS = {
     "ccer_av_timeline": schema("Read-only synchronized video frames, supplied SRT and optional original WAV evidence", {"file": PATH, "transcriptFile": PATH, "startSeconds": NUMBER, "seconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 8}, "maxCues": {"type": "integer", "minimum": 1, "maximum": 200}, "includeAudio": BOOL, "timelineOffsetSeconds": NUMBER}, ["file", "transcriptFile"]),
     "ccer_audio_window": schema("Return requested 0.25..10s original audio as bounded WAV MCP audio part, no transcription", {"file": PATH, "startSeconds": NUMBER, "seconds": NUMBER}, ["file"]),
     "ccer_av_events": schema("Read-only paginated absolute video/audio event timecodes and optionally unverified supplied SRT; not real-time perception or ASR", {"file": PATH, "transcriptFile": PATH, "startSeconds": NUMBER, "seconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 8}, "cursor": {"type": "integer", "minimum": 0}, "pageSize": {"type": "integer", "minimum": 1, "maximum": 100}, "timelineOffsetSeconds": NUMBER}, ["file"]),
-    "ccer_vision_model_status": schema("Read-only check installed local Qwen3.5 0.8B vision weights and Ollama loopback readiness; no inference/download"),
-    "ccer_vision_frame": schema("Explicit local-only Qwen3.5 inference on one real FFmpeg video frame; not audio understanding; model text unverified", {"file": PATH, "timeSeconds": NUMBER}, ["file"]),
     "ccer_av_replay_poll": schema("One bounded recorded-video A/V window per consumer poll with cursor backpressure and adaptive frame budget; NOT a live camera stream", {"file": PATH, "transcriptFile": PATH, "cursor": {"type": "integer", "minimum": 0}, "windowSeconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 4}, "maxEvents": {"type": "integer", "minimum": 1, "maximum": 100}, "consumerReady": BOOL, "timelineOffsetSeconds": NUMBER}, ["file"]),
     "ccer_delivery_transcode": schema("Safe verified video transcode to common platform aspect ratios", {"file": PATH, "output": PATH, "profile": STRING}, ["file", "output", "profile"]),
     "ccer_creative_plan": schema("Reviewable story structure built from user-supplied script", {"brief": {"type": "object"}}, ["brief"]),
@@ -300,13 +298,6 @@ class Production:
             return audio_window(self.path(a["file"], must_exist=True),
                                 start_seconds=a.get("startSeconds", 0),
                                 seconds=a.get("seconds", 4))
-        if name == "ccer_vision_model_status":
-            from .vision_model import vision_status
-            return vision_status()
-        if name == "ccer_vision_frame":
-            from .vision_model import describe_frame
-            return describe_frame(self.root, a["file"],
-                                  time_seconds=a.get("timeSeconds", 0))
         if name == "ccer_av_replay_poll":
             from .av_replay_poll import replay_poll
             return replay_poll(self.root, a["file"], transcript=a.get("transcriptFile"),
