@@ -26,7 +26,7 @@ class Gateway:
                   "ccer_timecoded_review", "ccer_long_review_plan",
                    "ccer_editorial_note_review", "ccer_timed_caption_context",
                  "ccer_desktop_status", "ccer_desktop_capture", "ccer_asr_status",
-                  "ccer_transcript_read", "ccer_av_timeline"),
+                  "ccer_transcript_read", "ccer_av_timeline", "ccer_audio_window"),
                 "destructiveHint": name == "ccer_checkpoint_restore"}}
             for name, config in TOOLS.items()
         ]
@@ -36,11 +36,19 @@ class Gateway:
             raise PolicyError("Arguments must be an object")
         if name in TOOLS:
             outcome = self.production.run(name, args)
+            if name == "ccer_audio_window":
+                audio = outcome.pop("audioBase64")
+                metadata = dict(outcome)
+                return {"content": [
+                    {"type": "text", "text": json.dumps(metadata, ensure_ascii=False)},
+                    {"type": "audio", "mimeType": outcome["mimeType"], "data": audio}],
+                    "structuredContent": metadata, "isError": False}
             if name in ("ccer_timecoded_review", "ccer_editorial_note_review",
                         "ccer_av_timeline"):
                 # Preserve real images as MCP image content, not a multi-MB JSON
                 # string. A vision-capable agent can inspect each sampled frame.
                 frames = outcome.pop("frames")
+                audio_evidence = outcome.pop("audioEvidence", None)
                 summary = {**outcome, "frames": [
                     {"timeSeconds": frame["timeSeconds"], "mimeType": frame["mimeType"]}
                     for frame in frames]}
@@ -50,6 +58,12 @@ class Gateway:
                                     f"Video frame at {frame['timeSeconds']:.3f}s"})
                     content.append({"type": "image", "mimeType": "image/jpeg",
                                     "data": frame["imageBase64"]})
+                if audio_evidence is not None:
+                    summary["audioEvidence"] = {k: v for k, v in audio_evidence.items()
+                                                if k != "audioBase64"}
+                    content[0]["text"] = json.dumps(summary, ensure_ascii=False)
+                    content.append({"type": "audio", "mimeType": audio_evidence["mimeType"],
+                                    "data": audio_evidence["audioBase64"]})
                 return {"content": content, "structuredContent": summary, "isError": False}
             if name in ("ccer_desktop_capture", "ccer_desktop_act") and "imageBase64" in outcome:
                 metadata = {k: v for k, v in outcome.items() if k != "imageBase64"}

@@ -75,10 +75,15 @@ def read_srt(video, transcript):
 
 
 def audiovisual_review(video, transcript, *, start_seconds=0, seconds=30,
-                       frame_count=4, max_cues=100):
+                       frame_count=4, max_cues=100, include_audio=False):
     """Time-align real JPEG evidence, speech captions and existing audio metrics."""
     if type(max_cues) is not int or not 1 <= max_cues <= 200:
         raise PolicyError("maxCues must be 1..200")
+    if type(include_audio) is not bool:
+        raise PolicyError("includeAudio must be boolean")
+    if include_audio and (type(seconds) not in (int, float) or not math.isfinite(seconds)
+                          or not .25 <= seconds <= 10):
+        raise PolicyError("includeAudio requires a 0.25..10 second window")
     subtitles = read_srt(video, transcript)
     report = review(video, start_seconds=start_seconds, seconds=seconds,
                     frame_count=frame_count)
@@ -107,4 +112,8 @@ def audiovisual_review(video, transcript, *, start_seconds=0, seconds=30,
                    "semanticUnderstandingPerformed": False,
                    "readOnly": True, "noLocalMediaArtifacts": True,
                    "method": "Existing timecoded_review frames and audio metrics + unverified supplied SRT"})
+    if include_audio:
+        from .audio_evidence import audio_window
+        report["audioEvidence"] = audio_window(
+            video, start_seconds=start, seconds=end - start)
     return report

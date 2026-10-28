@@ -14,9 +14,11 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
 ## Phases et critères d'acceptation
 1. Fondation native CCER/Concat — PASS précédent : véritable GUI et MP4 1080p.
 2. Vidéo horodatée — EXISTANT : fenêtres paginées, JPEG, scènes/noirs/silences.
-3. Sous-titres et image/audio — EN RECETTE : lecture SRT fiable, images réelles
-   synchronisées avec chaque phrase et métriques audio. Nouveaux outils
-   ccer_transcript_read et ccer_av_timeline, lecture seule.
+3. Sous-titres et image/audio — VALIDÉ AU NIVEAU MCP LOCAL : lecture SRT,
+   véritables images et courts segments audio PCM/WAV synchronisés, sans création
+   de fichiers intermédiaires. Outils ccer_transcript_read, ccer_av_timeline
+   (includeAudio explicite) et ccer_audio_window (0,25 à 10 s). La capacité du
+   client ChatGPT à percevoir sémantiquement les blocs audio MCP reste à certifier.
 4. Écoute réelle Whisper — À TESTER : ouvrir une vidéo parlée dans Concat,
    exécuter la transcription native, exporter SRT via l'interface,
    comparer les paroles à l'audio, importer le SRT dans CCER.

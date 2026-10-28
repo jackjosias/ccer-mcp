@@ -99,7 +99,7 @@ class AVTimelineTests(unittest.TestCase):
              "-c:a", "aac", str(media)], capture_output=True, timeout=45)
         self.assertEqual(0, generated.returncode, generated.stderr.decode(errors="replace"))
         result = audiovisual_review(media, self.srt, start_seconds=1.,
-                                    seconds=1., frame_count=2)
+                                    seconds=1., frame_count=2, include_audio=True)
         self.assertTrue(result["audioPresent"])
         self.assertEqual(2, result["frameCount"])
         self.assertEqual(2, len(result["transcriptCues"]))
@@ -107,6 +107,18 @@ class AVTimelineTests(unittest.TestCase):
                          [cue["text"] for cue in result["transcriptCues"]])
         self.assertTrue(all(row["imageBase64"] for row in result["frames"]))
         self.assertFalse(result["transcriptionPerformed"])
+        wav = base64.b64decode(result["audioEvidence"]["audioBase64"], validate=True)
+        self.assertTrue(wav.startswith(b"RIFF"))
+        self.assertEqual(b"WAVE", wav[8:12])
+        reply = DirectGateway(Backend(), self.root).invoke(
+            "ccer_av_timeline", {"file": str(media), "transcriptFile": str(self.srt),
+                                 "startSeconds": 1., "seconds": 1.,
+                                 "frameCount": 1, "includeAudio": True})
+        self.assertFalse(reply["isError"])
+        self.assertEqual("audio", reply["content"][-1]["type"])
+        self.assertEqual("image", reply["content"][2]["type"])
+        self.assertNotIn("audioBase64", str(reply["structuredContent"]))
+        self.assertNotIn("imageBase64", str(reply["structuredContent"]))
 
 if __name__ == "__main__":
     unittest.main()
