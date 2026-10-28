@@ -44,8 +44,9 @@ class Gateway:
                     {"type": "text", "text": json.dumps(metadata, ensure_ascii=False)},
                     {"type": "audio", "mimeType": outcome["mimeType"], "data": audio}],
                     "structuredContent": metadata, "isError": False}
-            if name in ("ccer_timecoded_review", "ccer_editorial_note_review",
-                        "ccer_av_timeline"):
+            if (name in ("ccer_timecoded_review", "ccer_editorial_note_review",
+                        "ccer_av_timeline") or
+                    (name == "ccer_av_replay_poll" and "frames" in outcome)):
                 # Preserve real images as MCP image content, not a multi-MB JSON
                 # string. A vision-capable agent can inspect each sampled frame.
                 frames = outcome.pop("frames")

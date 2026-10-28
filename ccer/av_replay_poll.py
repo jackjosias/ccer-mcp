@@ -48,7 +48,7 @@ def _pressure():
 
 def replay_poll(root, file, *, transcript=None, cursor=0, window_seconds=4,
                 frame_count=2, max_events=80, consumer_ready=True,
-                timeline_offset_seconds=0):
+                timeline_offset_seconds=0, include_frames=False):
     """Return the next bounded media window, or pause without decoding.
 
     NOT a true live camera/audio stream: the file is a previously recorded
@@ -63,6 +63,8 @@ def replay_poll(root, file, *, transcript=None, cursor=0, window_seconds=4,
         raise PolicyError("maxEvents must be 1..100")
     if type(consumer_ready) is not bool:
         raise PolicyError("consumerReady must be boolean")
+    if type(include_frames) is not bool:
+        raise PolicyError("includeFrames must be boolean")
     _positive(timeline_offset_seconds, "timelineOffsetSeconds", 0, 86400)
     source = inside(root, file, must_exist=True)
     srt = inside(root, transcript, must_exist=True) if transcript is not None else None
@@ -104,12 +106,14 @@ def replay_poll(root, file, *, transcript=None, cursor=0, window_seconds=4,
     page = inspect_event_window(root, source, transcript=srt,
                                 start_seconds=start, seconds=window,
                                 frame_count=sampled, page_size=max_events,
-                                timeline_offset_seconds=timeline_offset_seconds)
+                                timeline_offset_seconds=timeline_offset_seconds,
+                                 include_frames=include_frames)
     elapsed_ms = max(0.0, (time.perf_counter() - started) * 1000)
     # Never advance a window if any events would be silently dropped.
     if page["nextCursor"] is not None:
         raise PolicyError("Event overflow; reduce windowSeconds or increase maxEvents")
-    return {**base, "events": page["events"], "processed": True,
+    frames = {"frames": page["frames"]} if include_frames else {}
+    return {**base, **frames, "events": page["events"], "processed": True,
             "decodedFrames": sampled, "pressure": pressure,
             "paused": False, "complete": cursor + 1 == total,
             "nextCursor": cursor + 1 if cursor + 1 < total else None,

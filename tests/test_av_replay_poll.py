@@ -79,7 +79,8 @@ class AVReplayPollTests(unittest.TestCase):
                        {"cursor": 4}, {"window_seconds": 0.1},
                        {"frame_count": 9}, {"max_events": 101},
                        {"consumer_ready": 1},
-                       {"timeline_offset_seconds": float("nan")}):
+                       {"timeline_offset_seconds": float("nan")},
+                       {"include_frames": 1}):
             with self.subTest(kwargs=kwargs), \
                  patch("ccer.av_replay_poll.media_probe", return_value=self.meta):
                 with self.assertRaises(PolicyError):
@@ -129,11 +130,26 @@ class AVReplayPollTests(unittest.TestCase):
                          item["latencyMeasurement"])
         self.assertFalse(any(part["type"] == "image"
                              for part in first["content"]))
+        # Same FFmpeg decode as the events, now exposed as real MCP JPEG parts.
+        with_frames = gateway.invoke("ccer_av_replay_poll",
+                                     {"file": str(video), "windowSeconds": 2,
+                                      "frameCount": 2, "includeFrames": True})
+        import base64
+        image_parts = [part for part in with_frames["content"]
+                       if part["type"] == "image"]
+        self.assertTrue(image_parts)
+        self.assertLessEqual(len(image_parts), 2)
+        self.assertTrue(all(base64.b64decode(part["data"]).startswith(bytes((0xFF, 0xD8)))
+                            for part in image_parts))
+        self.assertNotIn("imageBase64", str(with_frames["structuredContent"]))
+        self.assertEqual(len(image_parts), len(with_frames["structuredContent"]["frames"]))
         paused = gateway.invoke("ccer_av_replay_poll",
                                 {"file": str(video), "windowSeconds": 2,
-                                 "cursor": 1, "consumerReady": False})
+                                 "cursor": 1, "consumerReady": False,
+                                 "includeFrames": True})
         self.assertEqual(1, paused["structuredContent"]["nextCursor"])
         self.assertFalse(paused["structuredContent"]["processed"])
+        self.assertFalse(any(part["type"] == "image" for part in paused["content"]))
         self.assertEqual([], list(self.root.glob("*.jpg")))
 
 if __name__ == "__main__":

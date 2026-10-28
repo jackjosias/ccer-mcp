@@ -82,8 +82,8 @@ def event_page(report, *, cursor=0, page_size=40):
 
 def inspect_event_window(root, video, *, transcript=None, start_seconds=0,
                          seconds=30, frame_count=4, cursor=0, page_size=40,
-                         timeline_offset_seconds=0):
-    """Reuse exactly one authorized CCER reviewer and return events, not JPEGs."""
+                         timeline_offset_seconds=0, include_frames=False):
+    """Reuse one authorized reviewer; optionally forward existing JPEGs."""
     from .controls import inside
     if type(cursor) is not int or cursor < 0:
         raise PolicyError("cursor must be nonnegative")
@@ -91,6 +91,8 @@ def inspect_event_window(root, video, *, transcript=None, start_seconds=0,
         raise PolicyError("page_size must be 1..100")
     if type(frame_count) is not int or not 1 <= frame_count <= 8:
         raise PolicyError("frame_count must be 1..8")
+    if type(include_frames) is not bool:
+        raise PolicyError("includeFrames must be boolean")
     source = inside(root, video, must_exist=True)
     if transcript is None:
         from .timecoded_review import review
@@ -104,6 +106,9 @@ def inspect_event_window(root, video, *, transcript=None, start_seconds=0,
                                     seconds=seconds, frame_count=frame_count,
                                     timeline_offset_seconds=timeline_offset_seconds)
     result = event_page(report, cursor=cursor, page_size=page_size)
+    if include_frames:
+        # Forward the same JPEGs already decoded; no extra FFmpeg invocation.
+        result["frames"] = report["frames"]
     result["file"] = str(source)
     result["timelineOffsetSeconds"] = timeline_offset_seconds if transcript is not None else 0
     result["transcriptSource"] = ("external_srt_unverified"

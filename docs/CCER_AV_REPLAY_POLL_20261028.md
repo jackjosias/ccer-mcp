@@ -36,6 +36,15 @@ véritable MP4 de 3 secondes MPEG-4/AAC interrogé via le DirectGateway.
 Exécuter `python3 -m unittest tests.test_av_replay_poll -v`.
 Les tests n'écrivent aucune image JPEG permanente.
 
+## Images visuelles dans la même fenêtre
+Avec `includeFrames=true`, les JPEG déjà décodés pour les événements sont
+transmis en blocs image MCP. Aucun nouveau passage FFmpeg ni fichier JPEG
+ne sont créés ; les métadonnées JSON ne contiennent jamais leur base64.
+Par défaut `includeFrames=false` conserve le mode événementiel léger.
+Les limites de 1 à 4 images et la pause par `consumerReady=false`
+continuent de protéger le PC. Un véritable MP4 MPEG-4/AAC a servi de recette
+pour vérifier les octets JPEG et la transmission MCP.
+
 ## Vision sans modèle supplémentaire
 Les images horodatées sont extraites en mémoire avec FFmpeg et transmises
 via ccer_timecoded_review. ChatGPT peut inspecter ces images reçues, tandis
@@ -46,6 +55,6 @@ n'est requis ou exposé par CCER.
 
 ## Travail restant
 Enchaîner ces fenêtres automatiquement avec cadence/latence mesurées
-et contrôle d'acquittement interprocessus, raccorder un backend de vision
-et d'identification des sons, puis réaliser dans le Concat GUI un montage
+et contrôle d'acquittement interprocessus, inspecter dans ChatGPT les images MCP reçues et utiliser le son/Whisper
+existants sans autre modèle local, puis réaliser dans le Concat GUI un montage
 parlé de plusieurs minutes avec vérification MP4 et audit Rust.

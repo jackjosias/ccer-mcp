@@ -55,7 +55,7 @@ TOOLS = {
     "ccer_av_timeline": schema("Read-only synchronized video frames, supplied SRT and optional original WAV evidence", {"file": PATH, "transcriptFile": PATH, "startSeconds": NUMBER, "seconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 8}, "maxCues": {"type": "integer", "minimum": 1, "maximum": 200}, "includeAudio": BOOL, "timelineOffsetSeconds": NUMBER}, ["file", "transcriptFile"]),
     "ccer_audio_window": schema("Return requested 0.25..10s original audio as bounded WAV MCP audio part, no transcription", {"file": PATH, "startSeconds": NUMBER, "seconds": NUMBER}, ["file"]),
     "ccer_av_events": schema("Read-only paginated absolute video/audio event timecodes and optionally unverified supplied SRT; not real-time perception or ASR", {"file": PATH, "transcriptFile": PATH, "startSeconds": NUMBER, "seconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 8}, "cursor": {"type": "integer", "minimum": 0}, "pageSize": {"type": "integer", "minimum": 1, "maximum": 100}, "timelineOffsetSeconds": NUMBER}, ["file"]),
-    "ccer_av_replay_poll": schema("One bounded recorded-video A/V window per consumer poll with cursor backpressure and adaptive frame budget; NOT a live camera stream", {"file": PATH, "transcriptFile": PATH, "cursor": {"type": "integer", "minimum": 0}, "windowSeconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 4}, "maxEvents": {"type": "integer", "minimum": 1, "maximum": 100}, "consumerReady": BOOL, "timelineOffsetSeconds": NUMBER}, ["file"]),
+    "ccer_av_replay_poll": schema("One bounded recorded-video A/V window per consumer poll with cursor backpressure and adaptive frame budget; NOT a live camera stream", {"file": PATH, "transcriptFile": PATH, "cursor": {"type": "integer", "minimum": 0}, "windowSeconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 4}, "maxEvents": {"type": "integer", "minimum": 1, "maximum": 100}, "consumerReady": BOOL, "timelineOffsetSeconds": NUMBER, "includeFrames": BOOL}, ["file"]),
     "ccer_delivery_transcode": schema("Safe verified video transcode to common platform aspect ratios", {"file": PATH, "output": PATH, "profile": STRING}, ["file", "output", "profile"]),
     "ccer_creative_plan": schema("Reviewable story structure built from user-supplied script", {"brief": {"type": "object"}}, ["brief"]),
     "ccer_storyboard": schema("Shot list and visual intent for planned scenes", {"plan": {"type": "object"}}, ["plan"]),
@@ -304,6 +304,7 @@ class Production:
                                cursor=a.get("cursor", 0), window_seconds=a.get("windowSeconds", 4),
                                frame_count=a.get("frameCount", 2), max_events=a.get("maxEvents", 80),
                                consumer_ready=a.get("consumerReady", True),
+                                include_frames=a.get("includeFrames", False),
                                timeline_offset_seconds=a.get("timelineOffsetSeconds", 0))
         if name == "ccer_av_events":
             from .av_event_cursor import inspect_event_window

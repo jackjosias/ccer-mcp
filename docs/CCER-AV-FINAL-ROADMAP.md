@@ -49,7 +49,9 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
 6. Quasi temps réel — RELECTURE PROGRESSIVE TESTÉE, LIVE NON ACQUIS :
     ccer_av_events conserve la pagination ; ccer_av_replay_poll relit une
     fenêtre enregistrée par appel avec curseur, pression CPU/RAM mesurée,
-    budget adaptatif de 1 à 4 images et pause via consumerReady=false
+    budget adaptatif de 1 à 4 images ; includeFrames=true transmet les JPEG
+     MCP issus du même décodage, sans fichier temporaire ni seconde passe.
+     Pause par consumerReady=false
     sans décodage. La latence locale par fenêtre est mesurée, sans
     prétendre mesurer une latence live bout-en-bout. Pas de troncature.
     Vidéo réelle MPEG-4/AAC et 22 tests ciblés PASS ; ni caméra/micro
