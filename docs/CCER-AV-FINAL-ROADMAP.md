@@ -36,8 +36,14 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
    transcription comparée indépendamment à l'écoute encore à certifier.
    Le contrôle de provenance du parseur reste `external_srt_unverified`
    (le parseur ne prétend pas exécuter lui-même Whisper).
-5. Analyse sémantique — À QUALIFIER : VLM local ou OpenVision adapté aux
-   limites RAM/CPU ; compréhension des sons non vocaux (Whisper ne suffit pas).
+5. Analyse sémantique — ADAPTATEUR LOCAL PRÊT, INFÉRENCE NON CERTIFIÉE :
+   modèle visuel Ollama qwen3.5:0.8b déjà sur disque (1 036 034 688 octets),
+   également partagé par la variante fast. Nouveaux outils
+   ccer_vision_model_status / ccer_vision_frame : image FFmpeg unique,
+   hash SHA-256, requête bornée 127.0.0.1 uniquement, aucune image stockée.
+   Ollama offline lors du contrôle : ready=false, donc aucun résultat sémantique
+   réel ni reconnaissance des sons non vocaux encore prouvés. Ollama système
+   failed 217/USER (compte absent), réglages du service à sécuriser.
 6. Quasi temps réel — RELECTURE PROGRESSIVE TESTÉE, LIVE NON ACQUIS :
     ccer_av_events conserve la pagination ; ccer_av_replay_poll relit une
     fenêtre enregistrée par appel avec curseur, pression CPU/RAM mesurée,
@@ -47,7 +53,7 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
     en continu, ni worker permanent, ni garantie de latence ou de sémantique.
 7. Réalisation professionnelle — À VALIDER : vrai rush parlé de plusieurs
    minutes, coupes, titres, transitions, mix audio, sous-titres et MP4 décodé.
-8. Recette finale — Python 213/213 PASS (28 oct. 2026), git-diff-check
+8. Recette finale — Python 218/218 PASS (28 oct. 2026), git-diff-check
    PASS, zéro erreur IDE, fork Rust propre. Le nettoyage des preuves CCER a
    supprimé les 29 aperçus historiques (393 185 octets), dossier vidé ;
    timer existant actif/activé. Restent à qualifier : Rust natif complet,

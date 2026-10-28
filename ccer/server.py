@@ -27,7 +27,8 @@ class Gateway:
                    "ccer_editorial_note_review", "ccer_timed_caption_context",
                  "ccer_desktop_status", "ccer_desktop_capture", "ccer_asr_status",
                   "ccer_transcript_read", "ccer_av_timeline", "ccer_audio_window",
-                   "ccer_av_events", "ccer_av_replay_poll"),
+                   "ccer_av_events", "ccer_av_replay_poll",
+                   "ccer_vision_model_status", "ccer_vision_frame"),
                 "destructiveHint": name == "ccer_checkpoint_restore"}}
             for name, config in TOOLS.items()
         ]
