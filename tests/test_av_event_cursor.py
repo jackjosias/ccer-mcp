@@ -57,5 +57,44 @@ class EventCursorTests(unittest.TestCase):
         self.assertNotIn("scene_cut_candidate", kinds)
         self.assertNotIn("audio_silence_candidate", kinds)
 
+    def test_readonly_adapter_uses_existing_review_and_strips_jpeg(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from ccer.av_event_cursor import inspect_event_window
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            video = root / "clip.mp4"
+            video.write_bytes(b"fixture")
+            with patch("ccer.timecoded_review.review", return_value=self.report) as spy:
+                result = inspect_event_window(root, video, seconds=4)
+            spy.assert_called_once()
+            self.assertEqual("none", result["transcriptSource"])
+            self.assertNotIn("SECRET_JPEG", str(result))
+
+    def test_readonly_adapter_checks_media_root_for_video_and_srt(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from ccer.av_event_cursor import inspect_event_window
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder) / "approved"
+            root.mkdir()
+            video = root / "clip.mp4"
+            video.write_bytes(b"fixture")
+            srt = root / "speech.srt"
+            srt.write_text("00:00:00,000 --> 00:00:01,000\nHello\n")
+            with patch("ccer.av_timeline.audiovisual_review",
+                       return_value=self.report) as spy:
+                result = inspect_event_window(root, video, transcript=srt)
+            spy.assert_called_once()
+            self.assertEqual("external_srt_unverified", result["transcriptSource"])
+            private = Path(folder) / "private.mp4"
+            private.write_bytes(b"private fixture")
+            with patch("ccer.timecoded_review.review") as blocked:
+                with self.assertRaises(PolicyError):
+                    inspect_event_window(root, private)
+                blocked.assert_not_called()
+
 if __name__ == "__main__":
     unittest.main()

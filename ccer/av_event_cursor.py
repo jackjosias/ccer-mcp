@@ -78,3 +78,31 @@ def event_page(report, *, cursor=0, page_size=40):
             "readOnly": True, "transcriptionPerformed": False,
             "semanticUnderstandingPerformed": False,
             "continuousPlaybackPerformed": False, "mediaArtifactsCreated": False}
+
+
+def inspect_event_window(root, video, *, transcript=None, start_seconds=0,
+                         seconds=30, frame_count=4, cursor=0, page_size=40):
+    """Reuse exactly one authorized CCER reviewer and return events, not JPEGs."""
+    from .controls import inside
+    if type(cursor) is not int or cursor < 0:
+        raise PolicyError("cursor must be nonnegative")
+    if type(page_size) is not int or not 1 <= page_size <= 100:
+        raise PolicyError("page_size must be 1..100")
+    if type(frame_count) is not int or not 1 <= frame_count <= 8:
+        raise PolicyError("frame_count must be 1..8")
+    source = inside(root, video, must_exist=True)
+    if transcript is None:
+        from .timecoded_review import review
+        report = review(source, start_seconds=start_seconds,
+                        seconds=seconds, frame_count=frame_count)
+    else:
+        from .av_timeline import audiovisual_review
+        captions = inside(root, transcript, must_exist=True)
+        report = audiovisual_review(source, captions,
+                                    start_seconds=start_seconds,
+                                    seconds=seconds, frame_count=frame_count)
+    result = event_page(report, cursor=cursor, page_size=page_size)
+    result["file"] = str(source)
+    result["transcriptSource"] = ("external_srt_unverified"
+                                   if transcript is not None else "none")
+    return result
