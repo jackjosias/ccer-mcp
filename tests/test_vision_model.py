@@ -71,6 +71,26 @@ class VisionModelTests(unittest.TestCase):
                 with self.assertRaises(PolicyError):
                     describe_frame(self.root, other)
 
+    def test_critical_resource_pressure_blocks_model_even_if_server_online(self):
+        manifest = self.root / "0.8b"
+        digest = "a" * 64
+        manifest.write_text(json.dumps({"layers": [{
+            "mediaType": "application/vnd.ollama.image.model",
+            "digest": "sha256:" + digest, "size": 12}]}))
+        blobs = self.root / "blobs"
+        blobs.mkdir()
+        (blobs / ("sha256-" + digest)).write_bytes(b"x" * 12)
+        with patch("ccer.vision_model.MANIFEST", manifest), \
+             patch("ccer.vision_model.BLOBS", blobs), \
+             patch("ccer.vision_model.socket.create_connection") as conn, \
+             patch("ccer.vision_model._pressure", return_value={"tier": "critical"}):
+            status = vision_status()
+        self.assertTrue(status["installed"])
+        self.assertTrue(status["ollamaLoopbackOnline"])
+        self.assertTrue(status["modelServerReady"])
+        self.assertFalse(status["ready"])
+        self.assertFalse(status["heavyInferenceAllowed"])
+
     def test_bogus_model_manifest_refused(self):
         manifest = self.root / "0.8b"
         manifest.write_text('{"layers":[{"mediaType":"application/vnd.ollama.image.model","digest":"invalid","size":12}]}')

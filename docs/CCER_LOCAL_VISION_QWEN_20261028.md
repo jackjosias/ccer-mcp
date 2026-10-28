@@ -9,7 +9,10 @@ aucune deuxième copie des poids n'est requise.
 `python3 -m ccer.vision_model` est une sonde de lecture seule : son
 résultat réel a été `installed=true`, `ollamaLoopbackOnline=false`,
 `ready=false`, `inferencePerformed=false`, `modelDownloadPerformed=false`.
-Le modèle n'a **pas** été lancé ni téléchargé. L'absence de service est
+Le modèle n'a **pas** été lancé ni téléchargé. Le statut réutilise
+la mesure CPU/RAM du moteur audiovisuel, et expose
+`heavyInferenceAllowed=false` sous pression critique. Aucun modèle
+n'est alors chargé. L'absence de service est
 un blocage d'exécution d'inférence réel, non une preuve d'incompatibilité
 du modèle. L'état actuel du poste est sous forte pression CPU/RAM.
 

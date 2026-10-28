@@ -17,6 +17,10 @@ la liste des événements est vide et le curseur est conservé. Sur pression
 CPU/RAM critique, une seule image est décodée au maximum, contre 2
 en mode contraint et 4 en mode normal. Si `maxEvents` serait dépassé,
 l'opération refuse plutôt que perdre silencieusement des événements.
+`observationLatencyMs`, `windowDurationSeconds` et
+`processingRealTimeFactor` mesurent désormais chaque analyse de fenêtre
+sur une horloge monotone. Ces métriques excluent la latence réseau,
+l'attente du consommateur et toute notion de diffusion live.
 
 L'implémentation ne crée pas de fichier JPG, de base de données de frames,
 de boucle de traitement persistante ni de second Concat.

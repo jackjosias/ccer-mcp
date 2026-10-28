@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import math
 import os
+import time
 from pathlib import Path
 
 from .controls import PolicyError, inside, media_probe
@@ -99,10 +100,12 @@ def replay_poll(root, file, *, transcript=None, cursor=0, window_seconds=4,
     pressure = _pressure()
     budget = {"normal": 4, "constrained": 2, "critical": 1}[pressure["tier"]]
     sampled = min(frame_count, budget)
+    started = time.perf_counter()
     page = inspect_event_window(root, source, transcript=srt,
                                 start_seconds=start, seconds=window,
                                 frame_count=sampled, page_size=max_events,
                                 timeline_offset_seconds=timeline_offset_seconds)
+    elapsed_ms = max(0.0, (time.perf_counter() - started) * 1000)
     # Never advance a window if any events would be silently dropped.
     if page["nextCursor"] is not None:
         raise PolicyError("Event overflow; reduce windowSeconds or increase maxEvents")
@@ -111,5 +114,10 @@ def replay_poll(root, file, *, transcript=None, cursor=0, window_seconds=4,
             "paused": False, "complete": cursor + 1 == total,
             "nextCursor": cursor + 1 if cursor + 1 < total else None,
             "eventCount": page["totalEvents"],
+            "observationLatencyMs": round(elapsed_ms, 3),
+            "windowDurationSeconds": round(end - start, 3),
+            "processingRealTimeFactor": round((end - start) * 1000 / elapsed_ms, 3)
+            if elapsed_ms > 0 else None,
+            "latencyMeasurement": "local_steady_clock_elapsed_per_poll_not_end_to_end_stream",
             "transcriptSource": page["transcriptSource"],
             "timelineOffsetSeconds": page["timelineOffsetSeconds"]}

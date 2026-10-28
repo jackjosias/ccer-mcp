@@ -15,6 +15,7 @@ from pathlib import Path
 
 from .controls import PolicyError, inside, media_probe
 from .timecoded_review import _frame
+from .av_replay_poll import _pressure
 
 MODEL = "qwen3.5:0.8b"
 MANIFEST = (Path.home() / ".ollama/models/manifests/registry.ollama.ai"
@@ -55,10 +56,15 @@ def vision_status():
             server_online = True
     except OSError:
         server_online = False
+    pressure = _pressure()
+    safe_to_load = pressure["tier"] != "critical"
     return {"model": MODEL, "installed": installed,
             "modelBytes": model_bytes if installed else 0,
             "ollamaLoopbackOnline": server_online,
-            "ready": installed and server_online,
+            "ready": installed and server_online and safe_to_load,
+            "resourceAdvisory": pressure,
+            "modelServerReady": installed and server_online,
+            "heavyInferenceAllowed": safe_to_load,
             "inferencePerformed": False, "mediaUploadedToCloud": False,
             "requiresExplicitToolCall": True, "modelDownloadPerformed": False,
             "audioUnderstandingAvailable": False}

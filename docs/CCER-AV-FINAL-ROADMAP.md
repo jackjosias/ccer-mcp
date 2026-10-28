@@ -41,6 +41,7 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
    également partagé par la variante fast. Nouveaux outils
    ccer_vision_model_status / ccer_vision_frame : image FFmpeg unique,
    hash SHA-256, requête bornée 127.0.0.1 uniquement, aucune image stockée.
+   La pression CPU/RAM critique bloque l'inférence via le gouverneur CCER.
    Ollama offline lors du contrôle : ready=false, donc aucun résultat sémantique
    réel ni reconnaissance des sons non vocaux encore prouvés. Ollama système
    failed 217/USER (compte absent), réglages du service à sécuriser.
@@ -48,12 +49,13 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
     ccer_av_events conserve la pagination ; ccer_av_replay_poll relit une
     fenêtre enregistrée par appel avec curseur, pression CPU/RAM mesurée,
     budget adaptatif de 1 à 4 images et pause via consumerReady=false
-    sans décodage. Aucun événement n'est tronqué silencieusement.
+    sans décodage. La latence locale par fenêtre est mesurée, sans
+    prétendre mesurer une latence live bout-en-bout. Pas de troncature.
     Vidéo réelle MPEG-4/AAC et 22 tests ciblés PASS ; ni caméra/micro
     en continu, ni worker permanent, ni garantie de latence ou de sémantique.
 7. Réalisation professionnelle — À VALIDER : vrai rush parlé de plusieurs
    minutes, coupes, titres, transitions, mix audio, sous-titres et MP4 décodé.
-8. Recette finale — Python 218/218 PASS (28 oct. 2026), git-diff-check
+8. Recette finale — Python 220/220 PASS (28 oct. 2026), git-diff-check
    PASS, zéro erreur IDE, fork Rust propre. Le nettoyage des preuves CCER a
    supprimé les 29 aperçus historiques (393 185 octets), dossier vidé ;
    timer existant actif/activé. Restent à qualifier : Rust natif complet,

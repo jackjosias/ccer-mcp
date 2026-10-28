@@ -46,6 +46,21 @@ class AVReplayPollTests(unittest.TestCase):
         self.assertTrue(b["complete"])
         self.assertFalse(a["liveStreamActive"])
 
+    def test_replay_latency_is_measured_not_claimed_live(self):
+        report = {"events": [], "nextCursor": None, "totalEvents": 0,
+                  "transcriptSource": "none", "timelineOffsetSeconds": 0}
+        with patch("ccer.av_replay_poll.media_probe", return_value=self.meta), \
+             patch("ccer.av_replay_poll._pressure",
+                   return_value={"tier": "normal"}), \
+             patch("ccer.av_replay_poll.inspect_event_window", return_value=report), \
+             patch("ccer.av_replay_poll.time.perf_counter", side_effect=[20.0, 20.25]):
+            measured = replay_poll(self.root, self.media, window_seconds=2)
+        self.assertEqual(250, measured["observationLatencyMs"])
+        self.assertEqual(8, measured["processingRealTimeFactor"])
+        self.assertEqual("local_steady_clock_elapsed_per_poll_not_end_to_end_stream",
+                         measured["latencyMeasurement"])
+        self.assertFalse(measured["liveStreamActive"])
+
     def test_no_silent_truncation_or_unsafe_root(self):
         response = {"events": [], "nextCursor": 2, "totalEvents": 101}
         with patch("ccer.av_replay_poll.media_probe", return_value=self.meta), \
@@ -109,6 +124,9 @@ class AVReplayPollTests(unittest.TestCase):
         self.assertEqual(1, item["nextCursor"])
         self.assertTrue(item["processed"])
         self.assertTrue(item["events"])
+        self.assertGreaterEqual(item["observationLatencyMs"], 0)
+        self.assertEqual("local_steady_clock_elapsed_per_poll_not_end_to_end_stream",
+                         item["latencyMeasurement"])
         self.assertFalse(any(part["type"] == "image"
                              for part in first["content"]))
         paused = gateway.invoke("ccer_av_replay_poll",
