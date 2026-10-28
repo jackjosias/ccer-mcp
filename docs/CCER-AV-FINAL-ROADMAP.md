@@ -56,7 +56,7 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
 7. Réalisation professionnelle — À VALIDER : vrai rush parlé de plusieurs
    minutes, coupes, titres, transitions, mix audio, sous-titres et MP4 décodé.
 8. Recette finale — Python 220/220 PASS (28 oct. 2026), git-diff-check
-   PASS, zéro erreur IDE, fork Rust propre. Le nettoyage des preuves CCER a
+   PASS, zéro erreur IDE, fork Rust propre, rustfmt --check PASS (fork Concat). Le nettoyage des preuves CCER a
    supprimé les 29 aperçus historiques (393 185 octets), dossier vidé ;
    timer existant actif/activé. Restent à qualifier : Rust natif complet,
    perception sémantique des sons et images, vrai montage parlé de plusieurs
