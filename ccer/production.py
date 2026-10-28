@@ -51,6 +51,8 @@ TOOLS = {
     "ccer_long_review_plan": schema("Read-only paginated video timecode planning without decoding or storing images; reuse ccer_timecoded_review", {"file": PATH, "windowSeconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 8}, "cursor": {"type": "integer", "minimum": 0}, "pageSize": {"type": "integer", "minimum": 1, "maximum": 24}}, ["file"]),
     "ccer_editorial_note_review": schema("Read-only video evidence around user timecode and note without editing or semantic inventions", {"file": PATH, "timeSeconds": NUMBER, "note": {"type": "string", "minLength": 1, "maxLength": 1200}, "contextSeconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 8}}, ["file", "timeSeconds", "note"]),
     "ccer_timed_caption_context": schema("User-supplied timed subtitles with bounded FFmpeg audio silence evidence; no speech recognition", {"file": PATH, "cues": {"type": "array", "items": {"type": "object"}, "minItems": 1, "maxItems": 2000}, "startSeconds": NUMBER, "seconds": NUMBER, "maxCues": {"type": "integer", "minimum": 1, "maximum": 100}, "includeAudioSilence": BOOL}, ["file", "cues"]),
+    "ccer_transcript_read": schema("Read-only validated existing SRT; captions supplied, not freshly transcribed", {"file": PATH, "transcriptFile": PATH}, ["file", "transcriptFile"]),
+    "ccer_av_timeline": schema("Read-only synchronized video frames, supplied SRT, scene and audio evidence", {"file": PATH, "transcriptFile": PATH, "startSeconds": NUMBER, "seconds": NUMBER, "frameCount": {"type": "integer", "minimum": 1, "maximum": 8}, "maxCues": {"type": "integer", "minimum": 1, "maximum": 200}}, ["file", "transcriptFile"]),
     "ccer_delivery_transcode": schema("Safe verified video transcode to common platform aspect ratios", {"file": PATH, "output": PATH, "profile": STRING}, ["file", "output", "profile"]),
     "ccer_creative_plan": schema("Reviewable story structure built from user-supplied script", {"brief": {"type": "object"}}, ["brief"]),
     "ccer_storyboard": schema("Shot list and visual intent for planned scenes", {"plan": {"type": "object"}}, ["plan"]),
@@ -288,6 +290,18 @@ class Production:
                                     window_seconds=a.get("windowSeconds", 30),
                                     frame_count=a.get("frameCount", 6),
                                     page_size=a.get("pageSize", 12))
+        if name == "ccer_transcript_read":
+            from .av_timeline import read_srt
+            return read_srt(self.path(a["file"], must_exist=True),
+                            self.path(a["transcriptFile"], must_exist=True))
+        if name == "ccer_av_timeline":
+            from .av_timeline import audiovisual_review
+            return audiovisual_review(self.path(a["file"], must_exist=True),
+                                      self.path(a["transcriptFile"], must_exist=True),
+                                      start_seconds=a.get("startSeconds", 0),
+                                      seconds=a.get("seconds", 30),
+                                      frame_count=a.get("frameCount", 4),
+                                      max_cues=a.get("maxCues", 100))
         if name == "ccer_timed_caption_context":
             from .timed_caption_context import timed_caption_context
             return timed_caption_context(self.path(a["file"], must_exist=True),

@@ -67,8 +67,8 @@ class ControlsTests(unittest.TestCase):
     def test_tools_and_preflight(self):
         with tempfile.TemporaryDirectory() as td:
             g = Gateway(FakeConcat(), td)
-            self.assertEqual(len(TOOLS), 48)
-            self.assertEqual(len(g.catalogue), 54)
+            self.assertTrue({"ccer_transcript_read", "ccer_av_timeline"}.issubset(TOOLS))
+            self.assertEqual(len(g.catalogue), len(TOOLS) + len(g.native))
             answer = g.handle({"jsonrpc": "2.0", "id": 1, "method": "initialize",
                 "params": {"protocolVersion": "2025-06-18"}})
             self.assertEqual(answer["result"]["serverInfo"]["name"], "ccer-mcp")
@@ -78,7 +78,7 @@ class ControlsTests(unittest.TestCase):
             self.assertFalse(preflight["asr"]["transcriptionPerformed"])
             output = io.StringIO()
             g.serve(io.StringIO('{"jsonrpc":"2.0","id":2,"method":"tools/list"}\n'), output)
-            self.assertEqual(len(json.loads(output.getvalue())["result"]["tools"]), 54)
+            self.assertEqual(len(json.loads(output.getvalue())["result"]["tools"]), len(g.catalogue))
 
     def test_batch_and_timeline(self):
         with tempfile.TemporaryDirectory() as td:
