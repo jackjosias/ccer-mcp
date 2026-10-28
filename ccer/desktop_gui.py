@@ -183,7 +183,26 @@ def _window():
 def status():
     """Read-only; no desktop activation."""
     if native_desktop.enabled():
-        return native_desktop.status()
+        try:
+            return native_desktop.status()
+        except PolicyError as error:
+            if ("UI timeout" not in str(error)
+                    or os.environ.get("CCER_PRIVATE_DISPLAY")
+                    or os.environ.get("CCER_PRIVATE_XVFB_PID")):
+                raise
+            # Reuse the already-attested read-only fallback; never claim
+            # authenticated BEFORE evidence or enable physical X11 input.
+            from .readonly_window import capture as fallback_capture
+            evidence = fallback_capture(max_width=320)
+            return {"available": True, "window": evidence["window"],
+                    "captureScope": "attested X11 read-only observation",
+                    "controlScope": "disabled until native Slint responds",
+                    "inputReady": False,
+                    "isolation": {"private": False, "engine": "x11_readonly"},
+                    "requiresActionConfirmation": True,
+                    "otherAppsAccessible": False, "readOnly": True,
+                    "safeForClickReceipt": False,
+                    "nativeStatus": "slint_ui_timeout"}
     with _GUI_LOCK:
         try:
             isolation = require_private_input()
@@ -231,7 +250,9 @@ def capture(*, max_width=840):
                 "mimeType": "image/jpeg",
                 "sha256": hashlib.sha256(jpeg).hexdigest(),
                 "capturedAt": time.time(), "imageWidth": target,
-                "coordinates": "Interaction x/y are full window pixels, not thumbnail pixels"}
+                "captureSource": "verified_x11_observation_only",
+                "readOnly": True, "safeForClickReceipt": False,
+                "coordinates": "Window pixels; X11 screenshot is observation only"}
 
 
 def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
@@ -323,3 +344,20 @@ def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
             time.sleep(.15)  # Allow UI repaint before the post-action observation.
             result.update(capture())
         return result
+
+
+def main():
+    """Expose existing read-only Concat status/capture without GUI input."""
+    import argparse
+    import json
+    parser = argparse.ArgumentParser(description="Inspect verified Concat window")
+    parser.add_argument("--capture", action="store_true",
+                        help="Send a read-only JPEG to stdout; never an action receipt")
+    parser.add_argument("--max-width", type=int, default=640)
+    args = parser.parse_args()
+    result = capture(max_width=args.max_width) if args.capture else status()
+    print(json.dumps(result, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

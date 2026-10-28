@@ -167,6 +167,13 @@ def _verify_launch_resources():
 
 
 def launch(media_root: Path, export_root: Path):
+    """Public visible launcher, serialized with reconciliation across clients."""
+    from .desktop_reconcile import _lock
+    with _lock():
+        return _launch_unlocked(media_root, export_root)
+
+
+def _launch_unlocked(media_root: Path, export_root: Path):
     _desktop()
     if _windows():
         raise PolicyError("CCER: Concat already open; do not replace or close its user's window")
@@ -375,7 +382,9 @@ def act(args):
 
 def main():
     p = argparse.ArgumentParser(description="Control visible Concat Slint without X11 injection")
-    p.add_argument("command", choices=("status", "launch", "observe", "act", "cleanup"))
+    p.add_argument("command", choices=("status", "launch", "reconcile", "observe", "act", "cleanup"))
+    p.add_argument("--replace-unpatched", action="store_true",
+                   help="Explicitly close owner-verified official Concat windows before native launch")
     p.add_argument("--allow-high-cpu", action="store_true",
                    help="Owner-approved visible launch despite high CPU load; memory gate retained")
     p.add_argument("--media-root", default=str(HOME / "Videos"))
@@ -402,6 +411,11 @@ def main():
             result = status()
         elif args.command == "launch":
             result = launch(Path(args.media_root), Path(args.export_root))
+        elif args.command == "reconcile":
+            from .desktop_reconcile import reconcile
+            result = reconcile(Path(args.media_root), Path(args.export_root),
+                               replace_unpatched=args.replace_unpatched,
+                               confirmed=args.confirm)
         elif args.command == "observe":
             result = observe()
         elif args.command == "cleanup":

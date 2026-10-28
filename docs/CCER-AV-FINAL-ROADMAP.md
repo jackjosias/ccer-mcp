@@ -45,6 +45,13 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
    Whisper intégré à Concat traite les paroles. Sur demande de l'utilisateur,
    tout l'adaptateur Qwen/Ollama ajouté à CCER a été retiré, sans supprimer
    les modèles préexistants ailleurs sur la machine.
+   Le pont natif Slint a permis trois gestes confirmés BEFORE/AFTER,
+   mais l'aperçu vidéo reste noir même à l'intérieur du clip : anomalie
+   de rendu ouverte, voir docs/CCER_NATIVE_GUI_RECOVERY_20261028.md.
+   Cycle de vie natif idempotent réconcilié sur la machine réelle :
+   unique Concat instrumenté PID 120739, fenêtre 0x03a00005,
+   statut Slint inputReady=true ; deuxième appel ATTACHED sans spawn.
+   Commande et invariants : docs/CCER_NATIVE_IDEMPOTENT_LIFECYCLE_20261028.md.
    L'inspection intégrale en temps réel reste à qualifier.
 6. Quasi temps réel — RELECTURE PROGRESSIVE TESTÉE, LIVE NON ACQUIS :
     ccer_av_events conserve la pagination ; ccer_av_replay_poll relit une
@@ -58,7 +65,8 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
     en continu, ni worker permanent, ni garantie de latence ou de sémantique.
 7. Réalisation professionnelle — À VALIDER : vrai rush parlé de plusieurs
    minutes, coupes, titres, transitions, mix audio, sous-titres et MP4 décodé.
-8. Recette finale — Python 216/216 PASS (28 oct. 2026), git-diff-check
+8. Recette finale — Base Python 216/216 PASS (28 oct. 2026) ; Rust concat-core 60 tests
+   unitaires et 2 doctests PASS, git-diff-check
    PASS, zéro erreur IDE, fork Rust propre, rustfmt --check PASS (fork Concat). Le nettoyage des preuves CCER a
    supprimé les 29 aperçus historiques (393 185 octets), dossier vidé ;
    timer existant actif/activé. Restent à qualifier : Rust natif complet,

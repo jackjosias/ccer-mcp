@@ -61,6 +61,16 @@ class DesktopGuiTests(unittest.TestCase):
         with self.assertRaises(PolicyError):
             capture(max_width=640)
 
+    @patch("ccer.desktop_gui._run", return_value=bytes((255, 216)) + b"x" * 260 + bytes((255, 217)))
+    @patch("ccer.desktop_gui._window", return_value=WINDOW)
+    def test_real_desktop_screenshot_is_observation_only(self, window, run):
+        result = capture(max_width=640)
+        self.assertTrue(result["readOnly"])
+        self.assertFalse(result["safeForClickReceipt"])
+        self.assertEqual("verified_x11_observation_only", result["captureSource"])
+        self.assertEqual(WINDOW["windowId"], result["window"]["windowId"])
+        self.assertEqual(["ffmpeg"], [c.args[0][0] for c in run.call_args_list])
+
     @patch("ccer.desktop_gui._window", return_value=WINDOW)
     def test_drag_coordinates_are_bounded_before_input(self, win):
         with self.assertRaises(PolicyError):

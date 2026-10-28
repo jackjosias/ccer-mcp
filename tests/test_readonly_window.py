@@ -65,6 +65,29 @@ class ReadOnlyNativeFallbackTests(unittest.TestCase):
                 readonly_window.capture()
             self.assertEqual(1, run.call_count)
 
+    def test_status_exposes_readonly_after_native_timeout_without_input(self):
+        with patch.object(desktop_gui.native_desktop, "enabled", return_value=True), \
+             patch.object(desktop_gui.native_desktop, "status",
+                          side_effect=PolicyError("CCER: UI timeout")), \
+             patch.object(readonly_window, "capture",
+                          return_value={"window": {"windowId": "0x03600005",
+                                                   "pid": 598971}}) as fallback:
+            status = desktop_gui.status()
+        self.assertFalse(status["inputReady"])
+        self.assertFalse(status["safeForClickReceipt"])
+        self.assertEqual("slint_ui_timeout", status["nativeStatus"])
+        self.assertEqual("0x03600005", status["window"]["windowId"])
+        fallback.assert_called_once_with(max_width=320)
+
+    def test_status_does_not_fallback_on_authentication_failure(self):
+        with patch.object(desktop_gui.native_desktop, "enabled", return_value=True), \
+             patch.object(desktop_gui.native_desktop, "status",
+                          side_effect=PolicyError("bad credential")), \
+             patch.object(readonly_window, "capture") as fallback:
+            with self.assertRaisesRegex(PolicyError, "credential"):
+                desktop_gui.status()
+            fallback.assert_not_called()
+
     def test_only_native_timeout_falls_back_to_read_only(self):
         with patch.object(desktop_gui.native_desktop, "enabled", return_value=True):
             with patch.object(desktop_gui.native_desktop, "capture",
