@@ -23,8 +23,11 @@ def _seconds(parts):
     return h * 3600 + m * 60 + s + ms / 1000
 
 
-def read_srt(video, transcript):
-    """Return validated cues from existing SRT with honest provenance."""
+def read_srt(video, transcript, *, timeline_offset_seconds=0):
+    """Read supplied SRT and optionally map project time into source time."""
+    offset = timeline_offset_seconds
+    if type(offset) not in (int, float) or not math.isfinite(offset) or not 0 <= offset <= 86400:
+        raise PolicyError("timelineOffsetSeconds must be finite and nonnegative")
     info = media_probe(video)
     if not any(s.get("codec_type") == "video" for s in info["streams"]):
         raise PolicyError("SRT review requires video")
@@ -53,12 +56,17 @@ def read_srt(video, transcript):
         match = STAMP.fullmatch(lines[0]) if lines else None
         if match is None or len(lines) < 2:
             raise PolicyError("Malformed SRT cue")
-        start = _seconds(match.groups()[:4])
-        end = _seconds(match.groups()[4:])
+        timeline_start = _seconds(match.groups()[:4])
+        timeline_end = _seconds(match.groups()[4:])
+        if timeline_start < offset - .001:
+            raise PolicyError("SRT begins before mapped clip")
+        start, end = max(0.0, timeline_start - offset), timeline_end - offset
         text = "\n".join(lines[1:])
         if not text or len(text) > 800 or start < 0 or end <= start or end > duration + .05:
             raise PolicyError("Invalid SRT cue")
-        cues.append({"start": start, "duration": end - start, "text": text})
+        cues.append({"start": start, "duration": end - start, "text": text,
+                     "timelineStartSeconds": timeline_start,
+                     "timelineEndSeconds": timeline_end})
         if len(cues) > 2000:
             raise PolicyError("Too many SRT cues")
     if not cues:
@@ -71,11 +79,14 @@ def read_srt(video, transcript):
             "cues": cues, "cueCount": len(cues), "captionQA": qa,
             "audioPresent": any(s.get("codec_type") == "audio" for s in info["streams"]),
             "provenance": "external_srt_unverified",
+            "timebase": "source_relative",
+            "timelineOffsetSeconds": round(float(offset), 3),
             "asrPerformed": False, "readOnly": True}
 
 
 def audiovisual_review(video, transcript, *, start_seconds=0, seconds=30,
-                       frame_count=4, max_cues=100, include_audio=False):
+                       frame_count=4, max_cues=100, include_audio=False,
+                        timeline_offset_seconds=0):
     """Time-align real JPEG evidence, speech captions and existing audio metrics."""
     if type(max_cues) is not int or not 1 <= max_cues <= 200:
         raise PolicyError("maxCues must be 1..200")
@@ -84,7 +95,7 @@ def audiovisual_review(video, transcript, *, start_seconds=0, seconds=30,
     if include_audio and (type(seconds) not in (int, float) or not math.isfinite(seconds)
                           or not .25 <= seconds <= 10):
         raise PolicyError("includeAudio requires a 0.25..10 second window")
-    subtitles = read_srt(video, transcript)
+    subtitles = read_srt(video, transcript, timeline_offset_seconds=timeline_offset_seconds)
     report = review(video, start_seconds=start_seconds, seconds=seconds,
                     frame_count=frame_count)
     start = report["window"]["startSeconds"]
@@ -103,6 +114,7 @@ def audiovisual_review(video, transcript, *, start_seconds=0, seconds=30,
         for row in report["frames"]]
     report.update({"transcriptFile": str(transcript),
                    "transcriptSource": subtitles["provenance"],
+                    "timelineOffsetSeconds": subtitles["timelineOffsetSeconds"],
                    "transcriptCues": matched,
                    "totalTranscriptCues": subtitles["cueCount"],
                    "frameSpeechAssociations": associations,

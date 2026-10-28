@@ -32,6 +32,29 @@ class AVTimelineTests(unittest.TestCase):
         self.assertFalse(result["asrPerformed"])
         self.assertEqual("external_srt_unverified", result["provenance"])
 
+    def test_concat_timeline_offset_maps_to_media_and_frame(self):
+        self.srt.write_text("1\n00:00:00,900 --> 00:00:02,900\nHello friends\n",
+                            encoding="utf-8")
+        frame = {"timeSeconds": 1., "mimeType": "image/jpeg",
+                 "imageBase64": base64.b64encode(b"\xff\xd8test\xff\xd9").decode()}
+        report = {"frames": [frame], "window": {"startSeconds": 0., "endSeconds": 2.},
+                  "frameCount": 1}
+        with patch("ccer.av_timeline.media_probe", return_value=self.meta), \
+             patch("ccer.av_timeline.review", return_value=report):
+            result = audiovisual_review(
+                self.video, self.srt, start_seconds=0, seconds=2, frame_count=1,
+                timeline_offset_seconds=.9)
+        self.assertEqual(0, result["transcriptCues"][0]["startSeconds"])
+        self.assertEqual(2, result["transcriptCues"][0]["endSeconds"])
+        self.assertEqual([0], result["frameSpeechAssociations"][0]["cueIndices"])
+        self.assertEqual(.9, result["timelineOffsetSeconds"])
+        self.assertFalse(result["transcriptionPerformed"])
+
+    def test_untrusted_offset_fails_closed(self):
+        for bad in (-.1, True, float("nan"), 86401):
+            with self.subTest(value=bad), self.assertRaises(PolicyError):
+                read_srt(self.video, self.srt, timeline_offset_seconds=bad)
+
     def test_srt_overlap_rejected(self):
         self.srt.write_text("00:00:00,000 --> 00:00:01,400\nA\n\n"
                             "00:00:01,000 --> 00:00:02,000\nB\n")

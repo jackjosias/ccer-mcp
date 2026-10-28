@@ -19,17 +19,23 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
    de fichiers intermédiaires. Outils ccer_transcript_read, ccer_av_timeline
    (includeAudio explicite) et ccer_audio_window (0,25 à 10 s). La capacité du
    client ChatGPT à percevoir sémantiquement les blocs audio MCP reste à certifier.
-4. Écoute réelle Whisper — TRANSCRIPTION NATIVE OBSERVÉE, RECETTE PARTIELLE :
-   Concat PID 101086, projet `Untitled project 8`, média parlé de test
-   `ccer-whisper-spoken-test-20261028.mp4` (5,705 s). Le modèle existant
-   Small Multilingual a généré un titre persistant de 0,900 à 6,500 s,
-   visible dans Concat et confirmé dans `concat.json` ; zéro second modèle.
-   `ccer.project_caption_audit` valide par FFprobe la couverture temporelle
-   sans écrire de média. Avertissement `caption_layout` : phrase trop longue.
-   **Export SRT GUI NON CERTIFIÉ** : boîte `xdg-desktop-portal-gtk` ouverte
-   `Exporter en SRT…`, nom `Untitled project 8.srt` prérempli, aucun fichier
-   SRT encore créé/vérifié. Aucun clic X11 physique ni action aveugle.
-   Comparaison parole/audio et ingestion du SRT par CCER encore ouvertes.
+4. Écoute réelle Whisper — EXPORT SRT NATIF + SYNCHRO SOURCE VALIDÉS :
+   Concat PID 101086, projet `Untitled project 8` et média parlé 5,705 s.
+   Modèle Small Multilingual existant : texte transcrit sur la piste Concat.
+   Le bouton Save du dialogue GTK externe `Exporter en SRT…` a été actionné
+   **une seule fois** avec AT-SPI natif, sans souris X11 ni clavier simulé,
+   après contrôle de l'identité du dialogue, du nom et de l'absence d'écrasement.
+   Export réellement vérifié : `~/Desktop/Concat/Untitled project 8/Untitled project 8.srt`
+   (117 octets), un cue de 00:00:00,900 à 00:00:06,500, phrase anglaise.
+   `ccer.native_srt_acceptance` a lu ce SRT et le vrai MP4 ; compensation
+   explicite de la position +0,900 s dans `ccer_transcript_read`,
+   `ccer_av_timeline` et `ccer_av_events` : cue source de 0,000 à
+   5,600 s, deux vraies images décodées associées au cue, audio présent,
+   zéro JPEG local persistant. Anciennes requêtes offset=0 inchangées.
+   `caption_layout` signale un bloc de texte trop long ; qualité de la
+   transcription comparée indépendamment à l'écoute encore à certifier.
+   Le contrôle de provenance du parseur reste `external_srt_unverified`
+   (le parseur ne prétend pas exécuter lui-même Whisper).
 5. Analyse sémantique — À QUALIFIER : VLM local ou OpenVision adapté aux
    limites RAM/CPU ; compréhension des sons non vocaux (Whisper ne suffit pas).
 6. Quasi temps réel — SOCLE HORODATÉ TESTÉ : ccer_av_events agrège les

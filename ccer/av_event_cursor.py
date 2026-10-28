@@ -81,7 +81,8 @@ def event_page(report, *, cursor=0, page_size=40):
 
 
 def inspect_event_window(root, video, *, transcript=None, start_seconds=0,
-                         seconds=30, frame_count=4, cursor=0, page_size=40):
+                         seconds=30, frame_count=4, cursor=0, page_size=40,
+                         timeline_offset_seconds=0):
     """Reuse exactly one authorized CCER reviewer and return events, not JPEGs."""
     from .controls import inside
     if type(cursor) is not int or cursor < 0:
@@ -100,9 +101,11 @@ def inspect_event_window(root, video, *, transcript=None, start_seconds=0,
         captions = inside(root, transcript, must_exist=True)
         report = audiovisual_review(source, captions,
                                     start_seconds=start_seconds,
-                                    seconds=seconds, frame_count=frame_count)
+                                    seconds=seconds, frame_count=frame_count,
+                                    timeline_offset_seconds=timeline_offset_seconds)
     result = event_page(report, cursor=cursor, page_size=page_size)
     result["file"] = str(source)
+    result["timelineOffsetSeconds"] = timeline_offset_seconds if transcript is not None else 0
     result["transcriptSource"] = ("external_srt_unverified"
                                    if transcript is not None else "none")
     return result
