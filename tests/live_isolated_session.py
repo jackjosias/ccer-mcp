@@ -89,9 +89,13 @@ def main():
     native_smoke = "--native-smoke" in sys.argv
     if native_smoke:
         # Reuse the attested private Xvfb; never start smoke on the human DISPLAY.
+        smoke_args = [sys.executable, "-m", "tests.native_slint_smoke",
+                      "--project", "--export"]
+        if "--dialog-only" in sys.argv:
+            smoke_args.append("--dialog-only")
         smoke = subprocess.run(
-            [sys.executable, "-m", "tests.native_slint_smoke", "--project", "--export"],
-            env={**os.environ, **env}, capture_output=True, text=True, timeout=300)
+            smoke_args, env={**os.environ, **env},
+            capture_output=True, text=True, timeout=300)
         print(smoke.stdout[-6000:], flush=True)
         if smoke.returncode:
             raise RuntimeError("Private native export smoke failed: " +

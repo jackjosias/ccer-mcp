@@ -1,5 +1,6 @@
 """Run against the real Slint Concat, no physical X11 input."""
 import base64
+import json
 import os
 import secrets
 import stat
@@ -11,6 +12,8 @@ import time
 from pathlib import Path
 from unittest.mock import patch
 from ccer.inapp_protocol import InAppComputerUse
+from ccer.controls import PolicyError
+from ccer.focus_isolation import require_private_input
 from ccer.isolated_session import terminate, viewer
 
 
@@ -31,6 +34,9 @@ class WatchingClient(InAppComputerUse):
 
 
 def main():
+    # Never make short-lived native smoke windows appear on the human DISPLAY.
+    # Only an independently attested Xvfb session may run this disposable test.
+    require_private_input()
     base=Path.cwd()
     executable=base/".upstream-concat/src/target/debug/concat"
     ffmpeg=base/".upstream-concat/.ccer-ffmpeg7/lib"
@@ -39,8 +45,8 @@ def main():
         raise RuntimeError("Approved smoke fixture missing: run tests/create_native_smoke_fixture.sh")
     if not executable.is_file() or not ffmpeg.is_dir():
         raise RuntimeError("Native binary or FFmpeg unavailable")
-    export_dir=base/".runtime/ccer-smoke/exports"
-    export_dir.mkdir(parents=True, exist_ok=True)
+    export_dir=base/".runtime/ccer-smoke/exports"/("native-"+secrets.token_hex(6))
+    export_dir.mkdir(parents=True, exist_ok=False)
     with tempfile.TemporaryDirectory(prefix="ccer-native-") as tmp:
         scratch=Path(tmp)
         private_root=scratch/".local/state/ccer-inapp"
@@ -84,8 +90,10 @@ def main():
                     a=ui.observe()
                     if "--watch" in sys.argv:
                         access = secrets.token_hex(24)
+                        viewing_started = threading.Event()
                         observer = viewer(env, None, access,
-                                          frame_provider=lambda: mirrored["jpeg"])
+                                          frame_provider=lambda: mirrored["jpeg"],
+                                          on_view=viewing_started.set)
                         threading.Thread(target=observer.serve_forever, daemon=True).start()
                         from urllib import error, request
                         local = "http://127.0.0.1:" + str(observer.server_address[1])
@@ -102,20 +110,37 @@ def main():
                         print("CCER PRIVATE WATCH VERIFIED: HTTP 200 JPEG; invalid token 403", flush=True)
                         print("CCER PRIVATE WATCH (read-only): http://127.0.0.1:"
                               + str(observer.server_address[1]) + "/?pass=" + access, flush=True)
+                    if "--live-demo" in sys.argv:
+                        if "--watch" not in sys.argv or "--project" not in sys.argv:
+                            raise RuntimeError("Live demo requires --watch --project")
+                        print("CCER LIVE DEMO READY: waiting for observer", flush=True)
+                        deadline = time.monotonic() + 150
+                        while not viewing_started.is_set():
+                            if time.monotonic() >= deadline:
+                                raise RuntimeError("No authenticated visual observer connected")
+                            ui.observe()  # Keep Rust's 15-second idle timeout satisfied.
+                            viewing_started.wait(1)
+                        print("CCER LIVE DEMO: viewer connected", flush=True)
+                        for _ in range(4):
+                            ui.observe()
+                            time.sleep(1)
                     evidence_dir = base / ".runtime/ccer-smoke"
                     (evidence_dir / "before.jpg").write_bytes(base64.b64decode(a["imageBase64"]))
-                    x,y=ui._width//2,ui._height//2
-                    b=ui.act({"type":"move","x":x,"y":y},confirm=True,expected_sha256=a["sha256"])
-                    assert b["frameNo"]>a["frameNo"]
-                    c=ui.observe()
-                    d=ui.act({"type":"drag","x":x,"y":y,"targetX":x+10,"targetY":y+10,"duration":.25},
-                             confirm=True,expected_sha256=c["sha256"])
-                    assert d["frameNo"]>c["frameNo"]
-                    actions = [
-                        {"type": "click", "x": x, "y": y},
-                        {"type": "scroll", "x": x, "y": y, "deltaY": 15},
-                        {"type": "key", "key": "Escape"},
-                    ]
+                    if "--project" not in sys.argv:
+                        x,y=ui._width//2,ui._height//2
+                        b=ui.act({"type":"move","x":x,"y":y},confirm=True,expected_sha256=a["sha256"])
+                        assert b["frameNo"]>a["frameNo"]
+                        c=ui.observe()
+                        d=ui.act({"type":"drag","x":x,"y":y,"targetX":x+10,"targetY":y+10,"duration":.25},
+                                 confirm=True,expected_sha256=c["sha256"])
+                        assert d["frameNo"]>c["frameNo"]
+                        actions = [
+                            {"type": "click", "x": x, "y": y},
+                            {"type": "scroll", "x": x, "y": y, "deltaY": 15},
+                            {"type": "key", "key": "Escape"},
+                        ]
+                    else:
+                        actions = []
                     for gesture in actions:
                         observed = ui.observe()
                         current = ui.act(gesture, confirm=True,
@@ -142,10 +167,39 @@ def main():
                         if not project_root.is_relative_to(scratch.resolve()):
                             raise RuntimeError("Project root escaped disposable HOME")
                         observed = ui.observe()
-                        created = ui.act({"type": "click", "x": 200, "y": 487},
-                                         confirm=True, expected_sha256=observed["sha256"])
+                        try:
+                            created = ui.act({"type": "click", "x": 265, "y": 250},
+                                             confirm=True, expected_sha256=observed["sha256"])
+                        except PolicyError as exc:
+                            if "native adapter rejected: CCER: UI timeout" not in str(exc):
+                                raise
+                            # The first click opens a compose dialog, not a project.
+                            # Never repeat an input merely because the RPC timed out.
+                            print("CCER: project-dialog click timed out; observing once", flush=True)
+                            created = ui.observe()
                         (evidence_dir / "project_create_after.jpg").write_bytes(
                             base64.b64decode(created["imageBase64"]))
+                        time.sleep(2)
+                        dialog = ui.observe()
+                        (evidence_dir / "project_dialog_after.jpg").write_bytes(
+                            base64.b64decode(dialog["imageBase64"]))
+                        if "--dialog-only" in sys.argv:
+                            print("CCER: modal capture saved; no unverified Create click", flush=True)
+                            return
+                        # New project opens a modal. Confirm Create exactly once;
+                        # a timed-out RPC is ambiguous and must not be retried.
+                        target_x = round(ui._width * 0.367)
+                        target_y = round(ui._height * 0.686)
+                        try:
+                            committed = ui.act(
+                                {"type": "click", "x": target_x, "y": target_y},
+                                confirm=True, expected_sha256=dialog["sha256"])
+                            (evidence_dir / "project_confirm_after.jpg").write_bytes(
+                                base64.b64decode(committed["imageBase64"]))
+                        except PolicyError as exc:
+                            if "native adapter rejected: CCER: UI timeout" not in str(exc):
+                                raise
+                            print("CCER: create-click outcome ambiguous; inspecting disk only", flush=True)
                         deadline = time.monotonic() + 20
                         while not (project_root.is_dir() and any(project_root.iterdir())) and time.monotonic() < deadline:
                             time.sleep(.25)
@@ -156,26 +210,72 @@ def main():
                         (evidence_dir / "project_import_after.jpg").write_bytes(
                             base64.b64decode(final_frame["imageBase64"]))
                         print("PASS: Concat created project inside disposable HOME:", project_root)
-                        selected_before = ui.observe()
-                        selected = ui.act({"type": "click", "x": 164, "y": 166},
-                                          confirm=True, expected_sha256=selected_before["sha256"])
-                        (evidence_dir / "project_selected_media.jpg").write_bytes(
-                            base64.b64decode(selected["imageBase64"]))
-                        menu_before = ui.observe()
-                        menu = ui.act({"type": "click", "x": 25, "y": 13},
-                                      confirm=True, expected_sha256=menu_before["sha256"])
-                        (evidence_dir / "project_file_menu.jpg").write_bytes(
-                            base64.b64decode(menu["imageBase64"]))
-                        chosen_before = ui.observe()
-                        chosen = ui.act({"type": "click", "x": 91, "y": 49},
-                                        confirm=True, expected_sha256=chosen_before["sha256"])
-                        (evidence_dir / "project_menu_add_after.jpg").write_bytes(
-                            base64.b64decode(chosen["imageBase64"]))
-                        time.sleep(2)
-                        menu_result = ui.observe()
-                        (evidence_dir / "project_menu_add_settled.jpg").write_bytes(
-                            base64.b64decode(menu_result["imageBase64"]))
-                        print("Menu Add Selected dispatched; actual clip placement and export require proof")
+                        # Reuse the verified MediaCard-to-timeline drag path.
+                        # The File menu has no "Add selected" action in Concat.
+                        source_x, source_y = 164, 166
+                        target_x = round(ui._width * 0.188)
+                        target_y = round(ui._height * 0.707)
+                        timeline_before = ui.observe()
+                        dragged = ui.act(
+                            {"type": "drag", "x": source_x, "y": source_y,
+                             "targetX": target_x, "targetY": target_y,
+                             "duration": 0.3},
+                            confirm=True, expected_sha256=timeline_before["sha256"])
+                        (evidence_dir / "project_timeline_drag_after.jpg").write_bytes(
+                            base64.b64decode(dragged["imageBase64"]))
+                        time.sleep(3)
+                        settled = ui.observe()
+                        (evidence_dir / "project_timeline_drag_settled.jpg").write_bytes(
+                            base64.b64decode(settled["imageBase64"]))
+                        print("Media-to-timeline drag dispatched; inspect timeline evidence",
+                              flush=True)
+                        if "--export" in sys.argv:
+                            export_before = ui.observe()
+                            opened = ui.act({"type": "click", "x": 710, "y": 17},
+                                            confirm=True, expected_sha256=export_before["sha256"])
+                            (evidence_dir / "project_export_open_after.jpg").write_bytes(
+                                base64.b64decode(opened["imageBase64"]))
+                            time.sleep(2)
+                            export_opened = ui.observe()
+                            (evidence_dir / "project_export_dialog.jpg").write_bytes(
+                                base64.b64decode(export_opened["imageBase64"]))
+                            print("Native Concat export UI opened; rendering into:", export_dir, flush=True)
+                            render_before = ui.observe()
+                            dispatched = ui.act({"type": "click", "x": 710, "y": 529},
+                                                confirm=True, expected_sha256=render_before["sha256"])
+                            (evidence_dir / "project_export_dispatch_after.jpg").write_bytes(
+                                base64.b64decode(dispatched["imageBase64"]))
+                            deadline = time.monotonic() + 120
+                            confirmed = None
+                            while time.monotonic() < deadline and confirmed is None:
+                                for candidate in export_dir.glob("*.mp4"):
+                                    if not candidate.is_file() or candidate.stat().st_size < 1000:
+                                        continue
+                                    probe = subprocess.run(
+                                        ["ffprobe", "-v", "error", "-show_streams", "-show_format",
+                                         "-of", "json", str(candidate)], capture_output=True,
+                                        text=True, timeout=25, check=False)
+                                    if probe.returncode:
+                                        continue
+                                    report = json.loads(probe.stdout)
+                                    video_streams = [stream for stream in report.get("streams", [])
+                                                     if stream.get("codec_type") == "video"]
+                                    duration = float(report.get("format", {}).get("duration", 0))
+                                    if (video_streams and video_streams[0].get("codec_name") == "h264"
+                                            and video_streams[0].get("width") == 1920
+                                            and video_streams[0].get("height") == 1080
+                                            and 1.5 <= duration <= 3.0):
+                                        confirmed = (candidate, duration)
+                                        break
+                                if confirmed is None:
+                                    time.sleep(2)
+                            final_export = ui.observe()
+                            (evidence_dir / "project_export_result.jpg").write_bytes(
+                                base64.b64decode(final_export["imageBase64"]))
+                            if confirmed is None:
+                                raise RuntimeError("Concat did not produce a verified MP4 within 120s")
+                            print("PASS Concat native MP4 H.264 verified by ffprobe:",
+                                  confirmed[0], "duration:", confirmed[1], flush=True)
                     else:
                         print("Import/export-folder outcomes need visual inspection; no export is claimed")
                     if "--stay" in sys.argv:
