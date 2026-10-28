@@ -41,3 +41,15 @@ de test `Untitled project 8`, demande `--confirm`, vérifie avant le geste
 que le fichier cible n'existe pas et n'autorise aucune tentative répétée
 automatique. Après le succès, son préflight doit refuser une nouvelle
 écriture. Le projet, la source et les anciens exports sont préservés.
+
+## Rétention des captures temporaires (28 octobre 2026)
+Le gestionnaire existant `ccer.evidence_retention.prune` traite désormais
+également les **familles strictement reconnues** de JPEG de diagnostic
+historiques, sans changer les protections des reçus natifs avant/après :
+âge supérieur ou égal à 30 minutes, fichier régulier possédé par l'utilisateur,
+taille au maximum 2 Mio, refus des liens symboliques et des photos non reconnues.
+La recette réelle `python3 -m ccer.visible_desktop cleanup` a supprimé
+29 aperçus (393 185 octets) et laissé 0 fichier dans le dossier géré.
+Le timer périodique `ccer-scratch-gc.timer` est actif et activé.
+Les sources, projets, exports MP4 et SRT restent conservés ; aucune copie
+stockée par ChatGPT dans le cloud n'est supprimable par ce nettoyage local.

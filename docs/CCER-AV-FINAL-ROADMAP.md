@@ -45,8 +45,11 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
    backpressure entre processus restent À CONSTRUIRE.
 7. Réalisation professionnelle — À VALIDER : vrai rush parlé de plusieurs
    minutes, coupes, titres, transitions, mix audio, sous-titres et MP4 décodé.
-8. Recette finale — Python 193/193 PASS (28 oct. 2026), git-diff-check
-   PASS, zéro erreur IDE. Rust natif, SRT final, montage parlé professionnel,
-   sécurité des deux dépôts et QA finale encore à valider.
+8. Recette finale — Python 207/207 PASS (28 oct. 2026), git-diff-check
+   PASS, zéro erreur IDE, fork Rust propre. Le nettoyage des preuves CCER a
+   supprimé les 29 aperçus historiques (393 185 octets), dossier vidé ;
+   timer existant actif/activé. Restent à qualifier : Rust natif complet,
+   perception sémantique des sons et images, vrai montage parlé de plusieurs
+   minutes, streaming adaptatif, pont MCP distant et QA créative finale.
 
 Ne jamais prétendre que les phases 4 à 8 sont validées sur une vidéo muette de 2 s.

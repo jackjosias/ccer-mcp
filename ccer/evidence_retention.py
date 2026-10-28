@@ -21,6 +21,31 @@ ACTIVE_RECEIPT_SECONDS = 90
 _PATTERN = re.compile(r"^(before|after)-([0-9a-f]{12})\.(jpg|json)$")
 _RECEIPT = re.compile(r"^[0-9a-f]{12}$")
 
+# Historical CCER visual reviews left small diagnostic JPGs without receipts.
+# Strictly scoped name families; all other JPGs and original media are ignored.
+_DIAGNOSTIC = re.compile(r"""
+    ^(?:
+        after-(?:close|new)-[a-f0-9]{12} |
+        after-drag-failure |
+        captions-(?:open|dialog-detail) |
+        checksave-[a-f0-9]{12} |
+        created-[0-9]+ |
+        detail-after-[a-f0-9]{12} |
+        form-[a-f0-9]{12} |
+        import-settled-[a-f0-9]{12} |
+        media-import-[a-f0-9]{12} |
+        menu(?:-detail)?-[a-f0-9]{12} |
+        preview(?:-after|-sm)?-[a-f0-9]{12} |
+        selected-[0-9]+p |
+        srt-portal-preview |
+        text-panel-[a-f0-9]{12} |
+        timeline-captions-toolbar |
+        toolbar-caption |
+        whisper-(?:started|finished|result-full|state-[0-9]+|progress-[0-9]+)
+    )\.jpg$
+""", re.VERBOSE)
+_MAX_DIAGNOSTIC_BYTES = 2 * 1024 * 1024
+
 
 def _private_root(root: Path) -> Path:
     root = Path(root)
@@ -46,6 +71,18 @@ def _managed_files(root: Path):
         yield entry, match, mode
 
 
+def _diagnostic_files(root: Path):
+    """Recognize only owned, small, regular CCER diagnostic images."""
+    for entry in root.iterdir():
+        if not _DIAGNOSTIC.fullmatch(entry.name):
+            continue
+        mode = entry.lstat()
+        if (not stat.S_ISREG(mode.st_mode) or mode.st_uid != os.getuid()
+                or mode.st_size > _MAX_DIAGNOSTIC_BYTES):
+            raise PolicyError("Unsafe CCER diagnostic preview: " + entry.name)
+        yield entry, mode
+
+
 def prune(root: Path, *, now: float | None = None) -> dict:
     """Delete only expired recognized evidence; never an unexpired action receipt."""
     root = _private_root(root)
@@ -60,6 +97,19 @@ def prune(root: Path, *, now: float | None = None) -> dict:
         # safety margin avoids racing with an action in progress.
         expiry = max(RETENTION_SECONDS, ACTIVE_RECEIPT_SECONDS)
         if age >= expiry:
+            try:
+                entry.unlink()
+            except FileNotFoundError:
+                continue
+            removed += 1
+            bytes_removed += mode.st_size
+        else:
+            count_remaining += 1
+            bytes_remaining += mode.st_size
+    # Diagnostic-only legacy screenshots have no native action receipt.
+    # Never delete fresh previews or unrecognized JPEGs.
+    for entry, mode in _diagnostic_files(root):
+        if now - mode.st_mtime >= RETENTION_SECONDS:
             try:
                 entry.unlink()
             except FileNotFoundError:

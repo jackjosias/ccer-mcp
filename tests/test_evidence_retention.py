@@ -93,5 +93,43 @@ class EvidenceRetentionTests(unittest.TestCase):
                     visible_desktop._write_image("video-export.mp4", frame)
 
 
+    def test_recognized_review_previews_expire_unknown_photos_remain(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            expired = root / "preview-aabbccddeeff.jpg"
+            fresh = root / "whisper-progress-2.jpg"
+            unknown = root / "family-photo.jpg"
+            source = root / "user-media.mp4"
+            for file in (expired, fresh, unknown, source):
+                file.write_bytes(b"original-or-review")
+            now = time.time()
+            os.utime(expired, (now - 2000, now - 2000))
+            os.utime(unknown, (now - 2400, now - 2400))
+            result = gc.prune(root, now=now)
+            self.assertEqual(1, result["removed"])
+            self.assertFalse(expired.exists())
+            for file in (fresh, unknown, source):
+                self.assertTrue(file.exists())
+
+    def test_diagnostic_symlink_refused_without_deleting_original(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            source = root / "source.mp4"
+            source.write_bytes(b"original")
+            (root / "preview-aabbccddeeff.jpg").symlink_to(source)
+            with self.assertRaisesRegex(PolicyError, "Unsafe CCER diagnostic"):
+                gc.prune(root)
+            self.assertEqual(b"original", source.read_bytes())
+
+    def test_oversized_preview_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            preview = root / "srt-portal-preview.jpg"
+            with preview.open("wb") as out:
+                out.truncate(gc._MAX_DIAGNOSTIC_BYTES + 1)
+            with self.assertRaisesRegex(PolicyError, "Unsafe CCER diagnostic"):
+                gc.prune(root)
+            self.assertTrue(preview.exists())
+
 if __name__ == "__main__":
     unittest.main()
