@@ -84,3 +84,12 @@ Ne jamais prétendre que les phases 4 à 8 sont validées sur une vidéo muette 
 - **Régressions** : 229 tests Python PASS avant le rendu ; relance intégrale pendant l'export expirée, donc sans verdict. `cargo fmt` et contrôles Git PASS. Tests Rust natifs lourds non certifiés.
 - **Gestion du stockage** : `preview-before-*` désormais pris en charge par le collecteur borné, tests de non-suppression des médias et de refus des liens symboliques (11/11 PASS), commit principal `5d4f78a`. Le collecteur a retiré 11 preuves expirées (211267 octets).
 - **Encore ouverts** : MP4 final certifié avec son et image, titres, transitions, mixage et SRT d'un montage long, qualité audio sémantique contrôlée, streaming AV continu mesuré et tests Rust natifs complets. Ne pas assimiler décodage FFmpeg ou présence d'audio à une écoute sémantique.
+
+## Certification terrain — reprise du 29 octobre 2026 (après finalisation)
+
+- **Export natif Concat terminé et retrouvé sur disque** : `~/Videos/Untitled project 9.mp4`, 194 346 686 octets, SHA-256 `8a2a2228193660753646723afd07758dc3d3679de43a6769e5f6d6c74ffecf45`. La capture native Slint du PID `114239` confirme visuellement « Exporté · 188 MB » et « 3 clips », sans lancement d'un second encodeur.
+- **Conteneur et flux PASS** : `ffprobe` exit 0, MP4 H.264 1920×1080 à 24 images/s, AAC 48 kHz stéréo, durée 183,458333 s ; comptage du fichier entier : 4 403 paquets vidéo et 8 599 paquets audio.
+- **Décodage intégral PASS** : FFmpeg `-xerror -threads 2 -i <export> -map 0:v:0 -map 0:a:0 -f null -` exécuté du début à la fin, exit 0 et aucune erreur de décodage émise. Une première tentative plafonnée à 180 s avait expiré, sans être comptée comme PASS.
+- **Timeline persistante** : trois segments `c2` (11,750 s), `c3` (88,039 s) et `c5` (80,274 s), couvrant le rush source de 180,063 s sur T4. Le décalage initial de 3,4 s donne un export de 183,458 s dans la tolérance d'une image.
+- **Non-régression du projet de référence** : `Untitled project 8/concat.json` SHA-256 `d20622f62cc694838d0935298ec5a9e21a0c56bf7fdcea8f10237d92feff7291` et SRT SHA-256 `9d8d684b21f5f490991ff0258270db11efb6007d750e8568c99f8427b8de9ca7` inchangés.
+- **Résiduels non certifiés** : montage professionnel de plusieurs minutes avec titres, transitions, mixage et SRT, compréhension sémantique de la voix et des images, vrai flux AV continu à latence mesurée, batterie Rust native complète et essai MCP distant. La validation technique de l'export ne clôt pas ces critères.
