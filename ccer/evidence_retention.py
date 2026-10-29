@@ -35,7 +35,7 @@ _DIAGNOSTIC = re.compile(r"""
         import-settled-[a-f0-9]{12} |
         media-import-[a-f0-9]{12} |
         menu(?:-detail)?-[a-f0-9]{12} |
-        preview(?:-after|-sm)?-[a-f0-9]{12} |
+        preview(?:-after|-before|-sm)?-[a-f0-9]{12} |
         selected-[0-9]+p |
         srt-portal-preview |
         text-panel-[a-f0-9]{12} |

@@ -111,6 +111,35 @@ class EvidenceRetentionTests(unittest.TestCase):
             for file in (fresh, unknown, source):
                 self.assertTrue(file.exists())
 
+    def test_expired_before_preview_is_pruned_without_touching_media(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            before = root / "preview-before-aabbccddeeff.jpg"
+            fresh = root / "preview-before-112233445566.jpg"
+            original = root / "source.mp4"
+            unknown = root / "user-photo.jpg"
+            for file in (before, fresh, original, unknown):
+                file.write_bytes(b"preserve-or-preview")
+            now = time.time()
+            os.utime(before, (now - 1900, now - 1900))
+            os.utime(unknown, (now - 5000, now - 5000))
+            result = gc.prune(root, now=now)
+            self.assertEqual(1, result["removed"])
+            self.assertFalse(before.exists())
+            self.assertTrue(fresh.exists())
+            self.assertEqual(b"preserve-or-preview", original.read_bytes())
+            self.assertTrue(unknown.exists())
+
+    def test_before_preview_symlink_never_followed(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            media = root / "source.mp4"
+            media.write_bytes(b"untouched")
+            (root / "preview-before-aabbccddeeff.jpg").symlink_to(media)
+            with self.assertRaisesRegex(PolicyError, "Unsafe CCER diagnostic"):
+                gc.prune(root)
+            self.assertEqual(b"untouched", media.read_bytes())
+
     def test_diagnostic_symlink_refused_without_deleting_original(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
