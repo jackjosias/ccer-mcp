@@ -75,3 +75,12 @@ Voir, écouter, comprendre, monter sur le véritable Concat Desktop, vérifier c
    MCP distant et QA créative finale.
 
 Ne jamais prétendre que les phases 4 à 8 sont validées sur une vidéo muette de 2 s.
+
+## Actualisation terrain — 29 octobre 2026
+
+- **Aperçu arrêté après seek corrigé (PASS GUI réelle)** : binaire Concat 0.2.8 reconstruit, fork commit `e21c997`. Deux positions vidéo différentes dans la fenêtre Slint ont produit une image non noire avec sous-titres, mesures YAVG 125,59 et 125,47. Contrôle AVANT/APRÈS et aucun clic physique X11.
+- **Montage long natif partiellement validé** : scratch `~/Desktop/Concat/Untitled project 9`, source H.264/AAC copiée sans réencodage (180,063 s), glisser-déposer natif et deux `SplitClips` réalisés. Trois segments `c2`, `c3`, `c5` couvrent les 180,063 s. Le projet `Untitled project 8` et son SRT restent intacts.
+- **Export GPU réel commencé le 29 octobre** depuis Concat, Intel HD 520, H.264/AAC 1920×1080. Au dernier contrôle à 23 h 08, le rendu était encore en cours, 49 % confirmé visuellement et fichier temporaire `~/Videos/.Untitled project 9.concat-video.mp4` > 100 Mo. **Ce fichier n'est pas un livrable final tant que l'encodeur ne l'a pas finalisé et que FFprobe/FFmpeg ne l'ont pas validé.**
+- **Régressions** : 229 tests Python PASS avant le rendu ; relance intégrale pendant l'export expirée, donc sans verdict. `cargo fmt` et contrôles Git PASS. Tests Rust natifs lourds non certifiés.
+- **Gestion du stockage** : `preview-before-*` désormais pris en charge par le collecteur borné, tests de non-suppression des médias et de refus des liens symboliques (11/11 PASS), commit principal `5d4f78a`. Le collecteur a retiré 11 preuves expirées (211267 octets).
+- **Encore ouverts** : MP4 final certifié avec son et image, titres, transitions, mixage et SRT d'un montage long, qualité audio sémantique contrôlée, streaming AV continu mesuré et tests Rust natifs complets. Ne pas assimiler décodage FFmpeg ou présence d'audio à une écoute sémantique.
