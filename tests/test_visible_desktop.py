@@ -99,6 +99,22 @@ class VisibleDesktopTests(unittest.TestCase):
                 with self.assertRaisesRegex(PolicyError, "overloaded"):
                     desktop._verify_launch_resources()
 
+    def test_owner_opt_in_accepts_resource_pressure(self):
+        with (patch.dict(os.environ, {"CCER_VISIBLE_RESOURCE_OVERRIDE": "1"}),
+              patch("ccer.asr_readiness.status", return_value={
+                  "memoryAvailableBytes": 350_000_000,
+                  "loadPerLogicalCpu": 9.5})):
+            measured = desktop._verify_launch_resources()
+            self.assertEqual(350_000_000, measured["memoryAvailableBytes"])
+            self.assertEqual(9.5, measured["loadPerLogicalCpu"])
+
+    def test_owner_override_still_requires_measurements(self):
+        with (patch.dict(os.environ, {"CCER_VISIBLE_RESOURCE_OVERRIDE": "1"}),
+              patch("ccer.asr_readiness.status", return_value={
+                  "memoryAvailableBytes": None, "loadPerLogicalCpu": None})):
+            with self.assertRaisesRegex(PolicyError, "cannot be verified"):
+                desktop._verify_launch_resources()
+
     def test_missing_resource_measurement_fails_closed(self):
         with patch("ccer.asr_readiness.status", return_value={
                 "memoryAvailableBytes": None, "loadPerLogicalCpu": None}):
