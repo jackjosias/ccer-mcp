@@ -68,6 +68,14 @@ notre module Rust dans l'AppImage officielle déjà en cours d'exécution.
    l'effet métier. Chaque reçu expire après 60 secondes, et une variation de
    l'image ou de PID entraîne un refus sans geste.
 
+## Autorisation propriétaire de la charge système
+
+L'option `python3 -m ccer.visible_desktop launch --ignore-resource-advisory`
+permet un lancement malgré les estimations CPU et RAM lorsque le propriétaire
+l'autorise explicitement. Elle préserve les contrôles d'identité du PID,
+de fenêtre unique, de chemins médias et les preuves Slint avant/après.
+Elle ne remplace ni ne ferme une AppImage officielle encore ouverte.
+
 ## Critères de certification restant à accomplir
 
 - Vérifier sur la **fenêtre installée visible** la connexion réelle au PID,
