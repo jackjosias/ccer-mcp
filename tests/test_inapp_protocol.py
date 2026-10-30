@@ -133,6 +133,29 @@ class InAppProtocolTests(unittest.TestCase):
             self.assertEqual(done["frameNo"],2)
             self.assertEqual([m for m,_ in self.server.calls].count("gesture"),1)
 
+    def test_bounded_unicode_typing_requires_visual_receipt(self):
+        with self.connect() as control:
+            with self.assertRaisesRegex(PolicyError, "BEFORE screenshot"):
+                control.act({"type": "type_text", "text": "CCER test"},
+                            confirm=True, expected_sha256="0" * 64)
+            before = control.observe()
+            done = control.act({"type": "type_text", "text": "CCER Démonstration"},
+                               confirm=True, expected_sha256=before["sha256"])
+            self.assertGreater(done["frameNo"], before["frameNo"])
+            gestures = [params["gesture"] for method, params in self.server.calls
+                        if method == "gesture"]
+            self.assertEqual(gestures, [{"type": "type_text", "text": "CCER Démonstration"}])
+
+    def test_select_all_is_explicit_one_gesture(self):
+        with self.connect() as control:
+            before = control.observe()
+            done = control.act({"type": "key", "key": "SelectAll"},
+                               confirm=True, expected_sha256=before["sha256"])
+            self.assertGreater(done["frameNo"], before["frameNo"])
+            gestures = [params["gesture"] for method, params in self.server.calls
+                        if method == "gesture"]
+            self.assertEqual(gestures, [{"type": "key", "key": "SelectAll"}])
+
     def test_reused_after_frame_is_rejected(self):
         with self.connect(stale_after=True) as control:
             before = control.observe()
@@ -150,6 +173,10 @@ class InAppProtocolTests(unittest.TestCase):
                 {"type":"click","x":-1,"y":30},
                 {"type":"click","x":float("nan"),"y":30},
                 {"type":"key","key":"ctrl+shift+delete"},
+                {"type":"type_text","text":""},
+                {"type":"type_text","text":"X" * 161},
+                {"type":"type_text","text":"line\nbreak"},
+                {"type":"type_text","text":"safe", "shell":"bad"},
                 {"type":"click","x":35,"y":30,"shell":"rm"},
                 {"type":"drag","x":10,"y":10,"targetX":20,"targetY":20,"duration":6},
                 {"type":"scroll","x":40,"y":40,"deltaY":float("inf")},

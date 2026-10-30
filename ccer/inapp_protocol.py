@@ -192,7 +192,7 @@ class InAppComputerUse:
         if not isinstance(raw, dict):
             raise PolicyError("INAPP_DENIED: malformed gesture")
         kind = raw.get("type")
-        if kind not in ("click", "move", "drag", "scroll", "key", "file_drop", "select_export_folder"):
+        if kind not in ("click", "move", "drag", "scroll", "key", "type_text", "file_drop", "select_export_folder"):
             raise PolicyError("INAPP_DENIED: unsupported gesture")
         allowed = {
             "click": {"type", "x", "y"},
@@ -200,6 +200,7 @@ class InAppComputerUse:
             "drag": {"type", "x", "y", "targetX", "targetY", "duration"},
             "scroll": {"type", "x", "y", "deltaY"},
             "key": {"type", "key"},
+            "type_text": {"type", "text"},
             "file_drop": {"type", "path"},
             "select_export_folder": {"type"},
         }[kind]
@@ -229,8 +230,13 @@ class InAppComputerUse:
             }:
                 raise PolicyError("INAPP_DENIED: unsupported media extension")
         elif kind == "key":
-            if raw["key"] not in ("Escape", "Left", "Right", "Up", "Down"):
+            if raw["key"] not in ("Escape", "Left", "Right", "Up", "Down", "SelectAll"):
                 raise PolicyError("INAPP_DENIED: keyboard whitelist violated")
+        elif kind == "type_text":
+            value = raw["text"]
+            if (not isinstance(value, str) or not 0 < len(value) <= 160
+                    or len(value.encode("utf-8")) > 1024 or not value.isprintable()):
+                raise PolicyError("INAPP_DENIED: text input must be 1..160 printable characters")
         else:
             for prop, bound in (("x", self._width), ("y", self._height)):
                 value = raw[prop]

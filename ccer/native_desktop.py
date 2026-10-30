@@ -144,6 +144,8 @@ def interact(*, expected_window_id, action, confirm_action, x=None, y=None,
                 gesture = {"type": "select_export_folder"}
             elif action == "key":
                 gesture = {"type": "key", "key": key}
+            elif action == "type_text":
+                gesture = {"type": "type_text", "text": text}
             elif action == "scroll" and type(scroll) is int and 0 < abs(scroll) <= 8:
                 gesture = {"type": "scroll", "x": x, "y": y, "deltaY": scroll * 15}
             else:

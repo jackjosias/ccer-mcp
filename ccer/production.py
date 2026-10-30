@@ -84,7 +84,7 @@ TOOLS = {
     "ccer_media_match_render": schema("On explicit approval, match annotated assets then render a new MP4 via existing directed renderer; refuse missing scenes", {"catalog": PATH, "plan": {"type": "object"}, "output": PATH, "confirm": BOOL, "audio": PATH, "burnCaptions": BOOL, "preset": STRING, "allowReuse": BOOL}, ["catalog", "plan", "output", "confirm"]),
     "ccer_desktop_status": schema("Read the active Concat GUI window identity and size (private Slint if enabled; otherwise isolated X11)"),
     "ccer_desktop_capture": schema("Capture the verified Concat window using the active GUI transport; never capture other applications", {"maxWidth": {"type": "integer", "minimum": 320, "maximum": 1600}}),
-    "ccer_desktop_act": schema("Confirmed GUI action with fresh BEFORE/AFTER Slint images: click, move, paced drag, key, scroll; file_drop uses text=absolute media path under CCER_INAPP_MEDIA_ROOT; select_export_folder uses CCER_INAPP_EXPORT_ROOT; all require confirmation and never fall back to physical X11", {
+    "ccer_desktop_act": schema("Confirmed GUI action with fresh BEFORE/AFTER Slint images: click, move, paced drag, key, bounded type_text, scroll; file_drop uses text=absolute media path under CCER_INAPP_MEDIA_ROOT; select_export_folder uses CCER_INAPP_EXPORT_ROOT; all require confirmation and never fall back to physical X11", {
         "expectedWindowId": STRING, "action": STRING, "confirm": BOOL, "x": {"type": "integer"},
         "y": {"type": "integer"}, "targetX": {"type": "integer"},
         "targetY": {"type": "integer"}, "duration": NUMBER,

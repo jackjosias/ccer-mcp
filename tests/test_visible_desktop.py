@@ -155,6 +155,29 @@ class VisibleDesktopTests(unittest.TestCase):
                                                     expected_pid=635319)
         native_desktop._close()
 
+    def test_visible_bounded_text_uses_existing_slint_receipt(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            receipt = "aabbccddeeff"
+            (root / ("before-" + receipt + ".json")).write_text(json.dumps({
+                "pid": 700, "sha256": "before", "observedAt": time.time()}))
+            native = MagicMock()
+            active = native.__enter__.return_value
+            active.observe.return_value = {"sha256": "before"}
+            active.act.return_value = {"frameNo": 2, "imageBase64": "fixture"}
+            with (patch.object(desktop, "EVIDENCE", root),
+                  patch.object(desktop, "_file_state", return_value={"pid": 700}),
+                  patch.object(desktop, "_client", return_value=native),
+                  patch.object(desktop, "_write_image", return_value="after.jpg")):
+                result = desktop.act(SimpleNamespace(
+                    confirm=True, receipt=receipt, type="type_text",
+                    text="CCER Démonstration"))
+            active.act.assert_called_once_with(
+                {"type": "type_text", "text": "CCER Démonstration"},
+                confirm=True, expected_sha256="before")
+            self.assertEqual("type_text", result["nativeEvent"])
+            self.assertFalse((root / ("before-" + receipt + ".json")).exists())
+
     def test_delayed_slint_action_is_observed_but_never_repeated(self):
         with tempfile.TemporaryDirectory() as folder:
             where = Path(folder)

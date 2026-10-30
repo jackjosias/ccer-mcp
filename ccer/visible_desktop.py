@@ -340,6 +340,8 @@ def act(args):
         gesture = {"type": "scroll", "x": args.x, "y": args.y, "deltaY": args.delta_y}
     elif args.type == "key":
         gesture = {"type": "key", "key": args.key}
+    elif args.type == "type_text":
+        gesture = {"type": "type_text", "text": args.text}
     elif args.type == "file_drop":
         gesture = {"type": "file_drop", "path": args.path}
     elif args.type == "select_export_folder":
@@ -392,7 +394,7 @@ def main():
     p.add_argument("--receipt")
     p.add_argument("--confirmed-reviewed", action="store_true")
     p.add_argument("--type", choices=("click","move","drag","scroll","key",
-                                      "file_drop","select_export_folder"))
+                                      "type_text","file_drop","select_export_folder"))
     p.add_argument("--x", type=int)
     p.add_argument("--y", type=int)
     p.add_argument("--to-x", type=int)
@@ -400,6 +402,7 @@ def main():
     p.add_argument("--duration", type=float, default=.5)
     p.add_argument("--delta-y", type=int)
     p.add_argument("--key")
+    p.add_argument("--text")
     p.add_argument("--path")
     p.add_argument("--confirm", action="store_true")
     args = p.parse_args()
