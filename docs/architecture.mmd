@@ -1,0 +1,15 @@
+flowchart LR
+    User["Client MCP"]
+    Gateway["Passerelle CCER"]
+    Safety["Contrôles de sécurité"]
+    Slint["Pont Slint instrumenté"]
+    Concat["Concat Desktop"]
+    AV["Analyse FFmpeg / FFprobe"]
+    Project["Projets et exports locaux"]
+    User --> Gateway
+    Gateway --> Safety
+    Safety --> Slint
+    Slint --> Concat
+    Concat --> Project
+    Gateway --> AV
+    AV --> Project

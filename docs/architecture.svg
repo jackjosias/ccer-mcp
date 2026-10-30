@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1546 430" role="img" aria-labelledby="title desc">
+<title id="title">Architecture de CCER et Concat</title>
+<desc id="desc">Passerelle MCP vers Concat via contrôles et pont Slint; analyse FFmpeg locale.</desc>
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#55c5cf"/></marker></defs>
+<rect width="1546" height="430" rx="20" fill="#101b2c"/>
+<text x="45" y="46" fill="#5ad3ce" font-family="sans-serif" font-size="13" letter-spacing="3">ARCHITECTURE · LOCAL-FIRST</text>
+<text x="45" y="91" fill="#f2f8ff" font-family="sans-serif" font-size="31" font-weight="bold">CCER × Concat</text>
+<text x="45" y="120" fill="#a8bdd2" font-family="sans-serif" font-size="15">MCP, fenêtre Concat instrumentée et analyse audiovisuelle</text>
+<path d="M239 226 C259 226 259 226 275 226" fill="none" stroke="#55c5cf" stroke-width="2" marker-end="url(#a)"/>
+<path d="M475 226 C495 226 495 157 511 157" fill="none" stroke="#55c5cf" stroke-width="2" marker-end="url(#a)"/>
+<path d="M711 157 C731 157 731 226 747 226" fill="none" stroke="#55c5cf" stroke-width="2" marker-end="url(#a)"/>
+<path d="M947 226 C967 226 967 226 983 226" fill="none" stroke="#55c5cf" stroke-width="2" marker-end="url(#a)"/>
+<path d="M1183 226 C1203 226 1203 226 1219 226" fill="none" stroke="#55c5cf" stroke-width="2" marker-end="url(#a)"/>
+<path d="M475 226 C495 226 495 295 511 295" fill="none" stroke="#55c5cf" stroke-width="2" marker-end="url(#a)"/>
+<path d="M711 295 C731 295 1203 226 1219 226" fill="none" stroke="#55c5cf" stroke-width="2" marker-end="url(#a)"/>
+<rect x="45" y="190" width="192" height="72" rx="13" fill="#1d3049" stroke="#498da2"/>
+<text x="60" y="232" fill="#f4f9ff" font-family="sans-serif" font-size="13.4" font-weight="bold">Client MCP</text>
+<rect x="281" y="190" width="192" height="72" rx="13" fill="#1a4352" stroke="#498da2"/>
+<text x="296" y="232" fill="#f4f9ff" font-family="sans-serif" font-size="13.4" font-weight="bold">Passerelle CCER</text>
+<rect x="517" y="121" width="192" height="72" rx="13" fill="#1d3049" stroke="#498da2"/>
+<text x="532" y="163" fill="#f4f9ff" font-family="sans-serif" font-size="13.4" font-weight="bold">Contrôles de sécurité</text>
+<rect x="753" y="190" width="192" height="72" rx="13" fill="#1d3049" stroke="#498da2"/>
+<text x="768" y="232" fill="#f4f9ff" font-family="sans-serif" font-size="13.4" font-weight="bold">Pont Slint instrumenté</text>
+<rect x="989" y="190" width="192" height="72" rx="13" fill="#1a4352" stroke="#498da2"/>
+<text x="1004" y="232" fill="#f4f9ff" font-family="sans-serif" font-size="13.4" font-weight="bold">Concat Desktop</text>
+<rect x="517" y="259" width="192" height="72" rx="13" fill="#1d3049" stroke="#498da2"/>
+<text x="532" y="301" fill="#f4f9ff" font-family="sans-serif" font-size="13.4" font-weight="bold">Analyse FFmpeg / FFprobe</text>
+<rect x="1225" y="190" width="192" height="72" rx="13" fill="#1d3049" stroke="#498da2"/>
+<text x="1240" y="232" fill="#f4f9ff" font-family="sans-serif" font-size="13.4" font-weight="bold">Projets et exports locaux</text>
+<text x="45" y="407" fill="#8ea7bb" font-family="sans-serif" font-size="12">Le pont Slint nécessite une version de Concat instrumentée.</text>
+</svg>

@@ -1,5 +1,37 @@
 # CCER — Creative Engineering Runtime
 
+<p align="center"><strong>Passerelle MCP pour Concat Desktop · Montage contrôlé, preuves visuelles et analyse audiovisuelle locale.</strong></p>
+
+<p align="center"><a href="https://www.python.org/"><img alt="Python 3.10+" src="https://img.shields.io/badge/Python-3.10%2B-3776AB"></a> <a href="https://modelcontextprotocol.io/"><img alt="MCP" src="https://img.shields.io/badge/Interface-MCP-118D83"></a> <a href="https://github.com/jub0t/Concat"><img alt="Concat" src="https://img.shields.io/badge/Éditeur-Concat-243B56"></a> <img alt="Développement" src="https://img.shields.io/badge/Statut-en%20développement-E9A23B"></p>
+
+**CCER** relie les clients MCP à [Concat Desktop](https://github.com/jub0t/Concat). Il utilise des contrôles locaux, FFmpeg/FFprobe et, avec Concat instrumenté, des captures et gestes vérifiés dans la fenêtre native.
+
+> [!IMPORTANT]
+> **CCER et Concat sont complémentaires mais indépendants.** La release officielle permet le MCP standard. Le contrôle visuel natif requiert un **Concat instrumenté avec pont Slint**. Aucun téléchargement ou redémarrage automatique n'est effectué au lancement.
+
+## Sommaire
+
+- [Vision](#vision)
+- [Fonctionnalités](#fonctionnalités)
+- [Prérequis et installation](#prérequis-et-installation)
+- [Architecture](#architecture)
+- [Configuration MCP](#client-configuration)
+- [Tests et sécurité](#tests-et-sécurité)
+- [Licence](#license)
+
+## Vision
+
+**Automatiser sans intervenir à l'aveugle.** CCER vise un contrôle du montage observable, vérifiable et non destructif, tout en préservant les médias originaux. Les contrôles techniques ne remplacent pas une appréciation créative.
+
+## Fonctionnalités
+
+| Domaine | Capacités | Précision |
+| --- | --- | --- |
+| MCP | Outils natifs de Concat et analyses CCER | Le mode standard peut utiliser un processus distinct |
+| Bureau visible | Captures et gestes natifs Slint | Nécessite Concat instrumenté |
+| Média | FFmpeg, FFprobe, timecodes, images et audio | Analyse technique, pas vision autonome |
+| Sûreté | Autorisations, périmètres, avant/après, timeouts | Pas de rejeu aveugle d'une action incertaine |
+
 **RÈGLE PERMANENTE POUR CHATGPT : montage visuel manuel obligatoire.**
 Chaque action modifiant Concat exige une capture avant, un geste réel souris/clavier,
 puis une capture après. Aucune mutation headless n'est permise via le connecteur.
@@ -17,6 +49,52 @@ A guarded, **local-first** MCP gateway for **Concat Desktop** on Linux, macOS an
 - Uses the **same native Concat engine** over MCP stdio; does not attempt to edit Concat's open on-screen project (upstream v0.2.8 constraint).
 - Explicit `window` or `headless` mode, no silent fallback, sandboxed write paths, bounded subprocess waits.
 - No Python runtime dependencies beyond the standard library. FFmpeg and FFprobe are optional for media QA.
+
+## Prérequis et installation
+
+| Composant | Exigence |
+| --- | --- |
+| Python | 3.10+ avec `venv` |
+| Git | Récupération du dépôt |
+| Concat Desktop | [Releases officielles](https://github.com/jub0t/Concat/releases/latest) |
+| FFmpeg et FFprobe | Contrôles audio/vidéo |
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-venv ffmpeg
+git clone https://github.com/jackjosias/ccer-mcp.git
+cd ccer-mcp
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pip install -e .
+ccer-concat --check
+ccer-concat --install
+ccer-concat --status
+```
+
+Le [`requirements.txt`](requirements.txt) indique qu'aucune dépendance Python tierce n'est obligatoire. Concat et FFmpeg sont installés séparément. L'AppImage est vérifiée par SHA-256, sans mise à jour silencieuse.
+
+## Architecture
+
+![Architecture CCER et Concat](docs/architecture.svg)
+
+[Source Mermaid](docs/architecture.mmd) · [SVG versionné](docs/architecture.svg). Régénération déterministe :
+
+```bash
+python3 docs/render_architecture.py --write
+python3 docs/render_architecture.py --check
+```
+
+## Tests et sécurité
+
+```bash
+python3 -m unittest discover -s tests -p 'test_*.py' -q
+python3 docs/render_architecture.py --check
+```
+
+> [!CAUTION]
+> Ne publiez jamais les fichiers `.env`, les clés API, `automation.json`, les vidéos personnelles ou des chemins locaux nominatifs. `git config user.name` et `git config user.email` se configurent uniquement sur votre ordinateur.
 
 ## CCER + Concat: install both
 

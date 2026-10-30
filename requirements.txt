@@ -1,0 +1,3 @@
+# CCER Python runtime uses the standard library; no pip dependencies.
+# System packages required for media inspection: FFmpeg and FFprobe.
+# Install Concat separately via ccer-concat --install (Linux).
