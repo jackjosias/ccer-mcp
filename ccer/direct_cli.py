@@ -3,6 +3,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
+from .concat_setup import default_binary
 from .direct_gateway import DirectGateway
 from .isolated_session import bind_direct_process
 from .controls import PolicyError
@@ -11,8 +12,7 @@ from .transport import DeferredConcatTransport, TransportError
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="CCER Direct MCP")
-    parser.add_argument("--concat-bin", type=Path, default=Path(os.getenv(
-        "CCER_CONCAT_BIN", str(Path.home() / "WORKSPACE-LOGICIEL/concat/Concat-0.2.8-x86_64.AppImage"))))
+    parser.add_argument("--concat-bin", type=Path, default=default_binary())
     parser.add_argument("--mode", choices=("window", "headless"),
                         default=os.getenv("CCER_MODE", "window"))
     parser.add_argument("--isolated-session", action="store_true",
