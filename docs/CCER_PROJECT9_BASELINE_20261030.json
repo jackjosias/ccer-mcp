@@ -1,0 +1,230 @@
+{
+  "activeTimelineId": "TL1",
+  "clips": [
+    {
+      "duration": 11.750000476837158,
+      "fadeIn": 0,
+      "fadeOut": 0,
+      "filters": [],
+      "id": "c2",
+      "kind": "video",
+      "mediaId": "m1",
+      "name": "ccer-long-source-20261029.mp4",
+      "offsetX": 0,
+      "offsetY": 0,
+      "opacity": 1,
+      "preservePitch": true,
+      "rotation": 0,
+      "scale": 1,
+      "sourceStart": 0,
+      "speed": 1,
+      "start": 3.4000000953674316,
+      "trackId": "T4",
+      "videoEffects": [],
+      "volume": 1
+    },
+    {
+      "duration": 88.03882694244385,
+      "fadeIn": 0,
+      "fadeOut": 0,
+      "filters": [],
+      "id": "c3",
+      "kind": "video",
+      "mediaId": "m1",
+      "name": "ccer-long-source-20261029.mp4",
+      "offsetX": 0,
+      "offsetY": 0,
+      "opacity": 1,
+      "preservePitch": true,
+      "rotation": 0,
+      "scale": 1,
+      "sourceStart": 11.750000476837158,
+      "speed": 1,
+      "start": 15.15000057220459,
+      "trackId": "T4",
+      "videoEffects": [],
+      "volume": 1
+    },
+    {
+      "duration": 80.27417258071898,
+      "fadeIn": 0,
+      "fadeOut": 0,
+      "filters": [],
+      "id": "c5",
+      "kind": "video",
+      "mediaId": "m1",
+      "name": "ccer-long-source-20261029.mp4",
+      "offsetX": 0,
+      "offsetY": 0,
+      "opacity": 1,
+      "preservePitch": true,
+      "rotation": 0,
+      "scale": 1,
+      "sourceStart": 99.788827419281,
+      "speed": 1,
+      "start": 103.18882751464844,
+      "trackId": "T4",
+      "videoEffects": [],
+      "volume": 1
+    }
+  ],
+  "concat": "0.1.0",
+  "fonts": [],
+  "media": [
+    {
+      "audioCodec": "aac",
+      "audioTracks": [
+        {
+          "channels": 2,
+          "codec": "aac",
+          "index": 1,
+          "language": "eng",
+          "sampleRate": 48000
+        }
+      ],
+      "duration": 180.063,
+      "frameRate": 23.976023976023978,
+      "frameRateFraction": "24000/1001",
+      "hasAudio": true,
+      "height": 1080,
+      "id": "m1",
+      "kind": "video",
+      "name": "ccer-long-source-20261029.mp4",
+      "path": "/home/jack-josias/Videos/CCER/ccer-long-source-20261029.mp4",
+      "videoCodec": "h264",
+      "width": 1920
+    }
+  ],
+  "name": "Untitled project 9",
+  "timelines": [
+    {
+      "clips": [
+        {
+          "duration": 11.750000476837158,
+          "fadeIn": 0,
+          "fadeOut": 0,
+          "filters": [],
+          "id": "c2",
+          "kind": "video",
+          "mediaId": "m1",
+          "name": "ccer-long-source-20261029.mp4",
+          "offsetX": 0,
+          "offsetY": 0,
+          "opacity": 1,
+          "preservePitch": true,
+          "rotation": 0,
+          "scale": 1,
+          "sourceStart": 0,
+          "speed": 1,
+          "start": 3.4000000953674316,
+          "trackId": "T4",
+          "videoEffects": [],
+          "volume": 1
+        },
+        {
+          "duration": 88.03882694244385,
+          "fadeIn": 0,
+          "fadeOut": 0,
+          "filters": [],
+          "id": "c3",
+          "kind": "video",
+          "mediaId": "m1",
+          "name": "ccer-long-source-20261029.mp4",
+          "offsetX": 0,
+          "offsetY": 0,
+          "opacity": 1,
+          "preservePitch": true,
+          "rotation": 0,
+          "scale": 1,
+          "sourceStart": 11.750000476837158,
+          "speed": 1,
+          "start": 15.15000057220459,
+          "trackId": "T4",
+          "videoEffects": [],
+          "volume": 1
+        },
+        {
+          "duration": 80.27417258071898,
+          "fadeIn": 0,
+          "fadeOut": 0,
+          "filters": [],
+          "id": "c5",
+          "kind": "video",
+          "mediaId": "m1",
+          "name": "ccer-long-source-20261029.mp4",
+          "offsetX": 0,
+          "offsetY": 0,
+          "opacity": 1,
+          "preservePitch": true,
+          "rotation": 0,
+          "scale": 1,
+          "sourceStart": 99.788827419281,
+          "speed": 1,
+          "start": 103.18882751464844,
+          "trackId": "T4",
+          "videoEffects": [],
+          "volume": 1
+        }
+      ],
+      "id": "TL1",
+      "name": "Timeline 1",
+      "tracks": [
+        {
+          "id": "T1",
+          "muted": false,
+          "visible": true
+        },
+        {
+          "id": "T2",
+          "muted": false,
+          "visible": true
+        },
+        {
+          "id": "T3",
+          "muted": false,
+          "visible": true
+        },
+        {
+          "id": "T4",
+          "muted": false,
+          "visible": true
+        }
+      ],
+      "video": {
+        "height": 1080,
+        "rateDen": 1,
+        "rateNum": 24,
+        "width": 1920
+      }
+    }
+  ],
+  "tracks": [
+    {
+      "id": "T1",
+      "muted": false,
+      "visible": true
+    },
+    {
+      "id": "T2",
+      "muted": false,
+      "visible": true
+    },
+    {
+      "id": "T3",
+      "muted": false,
+      "visible": true
+    },
+    {
+      "id": "T4",
+      "muted": false,
+      "visible": true
+    }
+  ],
+  "version": 1,
+  "video": {
+    "height": 1080,
+    "rateDen": 1,
+    "rateNum": 24,
+    "width": 1920
+  }
+}
