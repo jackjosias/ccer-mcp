@@ -1,0 +1,336 @@
+From 6aa36611dc40a89a534681d00c88468326fd6253 Mon Sep 17 00:00:00 2001
+From: jackjosias <jackjosias@users.noreply.github.com>
+Date: Sat, 24 Oct 2026 14:52:50 +0100
+Subject: [PATCH] feat(ccer): add opt-in authenticated Slint Unix bridge and
+ reproducible Linux dev setup
+
+---
+ .ccer-cargo-check.sh                 |  12 ++
+ .ccer-fetch-build-deps.sh            |   9 ++
+ .gitignore                           |   4 +
+ src/Cargo.lock                       |   2 +
+ src/crates/concat/Cargo.toml         |   4 +-
+ src/crates/concat/src/ccer_server.rs | 195 +++++++++++++++++++++++++++
+ src/crates/concat/src/lib.rs         |   5 +
+ 7 files changed, 230 insertions(+), 1 deletion(-)
+ create mode 100644 .ccer-cargo-check.sh
+ create mode 100644 .ccer-fetch-build-deps.sh
+ create mode 100644 src/crates/concat/src/ccer_server.rs
+
+diff --git a/.ccer-cargo-check.sh b/.ccer-cargo-check.sh
+new file mode 100644
+index 0000000..96c9b1c
+--- /dev/null
++++ b/.ccer-cargo-check.sh
+@@ -0,0 +1,12 @@
++#!/usr/bin/env bash
++set -euo pipefail
++export CCER_DEV_SYSROOT="$(realpath .upstream-concat/.ccer-build-deps/root)"
++export PKG_CONFIG_PATH="$CCER_DEV_SYSROOT/usr/lib/x86_64-linux-gnu/pkgconfig"
++export PKG_CONFIG_SYSROOT_DIR="$CCER_DEV_SYSROOT"
++export FFMPEG_DIR="$(realpath .upstream-concat/.ccer-ffmpeg7)"
++export LD_LIBRARY_PATH="$FFMPEG_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
++export CFLAGS="-I$CCER_DEV_SYSROOT/usr/include -I$CCER_DEV_SYSROOT/usr/include/x86_64-linux-gnu"
++export BINDGEN_EXTRA_CLANG_ARGS="$CFLAGS"
++pkg-config --modversion fontconfig freetype2 expat uuid
++"$FFMPEG_DIR/bin/ffmpeg" -version
++cargo check --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --lib --features ccer-inapp -j 2
+diff --git a/.ccer-fetch-build-deps.sh b/.ccer-fetch-build-deps.sh
+new file mode 100644
+index 0000000..0f5c00e
+--- /dev/null
++++ b/.ccer-fetch-build-deps.sh
+@@ -0,0 +1,9 @@
++#!/usr/bin/env bash
++set -euo pipefail
++root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.ccer-build-deps"
++mkdir -p "$root"
++cd "$root"
++apt download libfontconfig-dev libfreetype-dev libexpat1-dev uuid-dev libpng-dev libbrotli-dev libavutil-dev libavcodec-dev libavformat-dev libavfilter-dev libavdevice-dev libswscale-dev libswresample-dev libpostproc-dev libasound2-dev
++mkdir -p root
++for package in ./*.deb; do dpkg-deb -x "$package" root; done
++ls root/usr/lib/x86_64-linux-gnu/pkgconfig/{fontconfig,freetype2,expat,uuid,libavutil,libavcodec,libavformat,libavfilter,libavdevice,libswscale,libswresample,libpostproc,alsa}.pc
+diff --git a/.gitignore b/.gitignore
+index 20b3e3e..6d2c30c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -55,6 +55,10 @@ desktop.ini
+ # machine-specific.
+ /vendor/
+ /ffmpeg-dev/
++# CCER development build inputs: never commit downloaded binary artifacts.
++/.ccer-build-deps/
++/.ccer-ffmpeg7/
++/.ccer-ffmpeg7.tar.xz
+ # FFmpeg built for a phone by src/scripts/ffmpeg-mobile.sh: sources,
+ # build trees and the installed prefixes, all machine-built.
+ /src/vendor/
+diff --git a/src/Cargo.lock b/src/Cargo.lock
+index bf85c6a..011e6ae 100644
+--- a/src/Cargo.lock
++++ b/src/Cargo.lock
+@@ -1132,6 +1132,7 @@ dependencies = [
+ name = "concat"
+ version = "0.2.8"
+ dependencies = [
++ "base64 0.23.1",
+  "block2 0.6.2",
+  "concat-api",
+  "concat-core",
+@@ -1156,6 +1157,7 @@ dependencies = [
+  "rfd",
+  "serde",
+  "serde_json",
++ "sha2",
+  "slint",
+  "slint-build",
+  "toml",
+diff --git a/src/crates/concat/Cargo.toml b/src/crates/concat/Cargo.toml
+index 7d55176..c138440 100644
+--- a/src/crates/concat/Cargo.toml
++++ b/src/crates/concat/Cargo.toml
+@@ -82,6 +82,8 @@ opener = { version = "0.8", features = ["reveal"] }
+ wayland-client = "0.31"
+ wayland-backend = { version = "0.3", features = ["client_system", "dlopen"] }
+ libc = "0.2"
++base64 = { version = "0.23", optional = true }
++sha2 = { version = "0.10", optional = true }
+ 
+ [target.'cfg(target_os = "ios")'.dependencies]
+ slint = { version = "1.18", default-features = false, features = [
+@@ -128,7 +130,7 @@ slint = { version = "1.18", default-features = false, features = [
+ 
+ [features]
+ # Strictly opt-in local native Computer Use research. No daemon on default builds.
+-ccer-inapp = []
++ccer-inapp = ["dep:base64", "dep:sha2"]
+ 
+ [dependencies]
+ # The log facade. The window writes `log::warn!`; where that ends up is
+diff --git a/src/crates/concat/src/ccer_server.rs b/src/crates/concat/src/ccer_server.rs
+new file mode 100644
+index 0000000..c64a331
+--- /dev/null
++++ b/src/crates/concat/src/ccer_server.rs
+@@ -0,0 +1,195 @@
++// SPDX-License-Identifier: AGPL-3.0-or-later
++//! Optional, private Concat Slint Computer Use socket. No X11 input.
++use crate::{ccer_input, Shell};
++use base64::Engine;
++use slint::ComponentHandle;
++use serde_json::{json, Value};
++use sha2::{Digest, Sha256};
++use std::fs::{self, File};
++use std::io::{BufRead, BufReader, Read, Write};
++use std::os::fd::AsRawFd;
++use std::os::unix::fs::PermissionsExt;
++use std::os::unix::net::{UnixListener, UnixStream};
++use std::path::PathBuf;
++use std::sync::mpsc;
++use std::{thread, time::Duration};
++
++const PROTOCOL: &str = "ccer-slint-input/v1";
++const WINDOW: &str = "concat-main";
++const LIMIT: usize = 8_000_000;
++fn hash(bytes: &[u8]) -> String { format!("{:x}", Sha256::digest(bytes)) }
++fn nonce() -> Result<String, String> {
++    let mut b = [0; 16];
++    File::open("/dev/urandom").and_then(|mut f| f.read_exact(&mut b))
++        .map_err(|_| "CCER: secure randomness unavailable".to_owned())?;
++    Ok(b.iter().map(|v| format!("{v:02x}")).collect())
++}
++fn equal_proof(a: &str, b: &str) -> bool {
++    if a.len() != 64 || b.len() != 64 { return false; }
++    let mut difference = 0;
++    for (x,y) in a.bytes().zip(b.bytes()) { difference |= x ^ y; }
++    difference == 0
++}
++fn on_ui<T: Send + 'static>(
++    f: impl FnOnce(&slint::Window) -> Result<T,String> + Send + 'static
++) -> Result<T,String> {
++    let (tx,rx) = mpsc::sync_channel(1);
++    slint::invoke_from_event_loop(move || {
++        Shell::with(|_, app| {
++            let _ = tx.send(f(app.window()));
++        });
++    }).map_err(|e| format!("CCER: UI unavailable: {e}"))?;
++    rx.recv_timeout(Duration::from_secs(7))
++        .map_err(|_| "CCER: UI timeout".to_owned())?
++}
++fn peer_ok(stream: &UnixStream) -> bool {
++    let mut peer: libc::ucred = unsafe { std::mem::zeroed() };
++    let mut size = std::mem::size_of::<libc::ucred>() as libc::socklen_t;
++    let status = unsafe {
++        libc::getsockopt(stream.as_raw_fd(), libc::SOL_SOCKET, libc::SO_PEERCRED,
++            (&raw mut peer).cast(), &raw mut size)
++    };
++    status == 0 && peer.uid == unsafe { libc::geteuid() }
++}
++struct Session {
++    id: String,
++    proof: String,
++    authenticated: bool,
++    count: u64,
++    last: Option<(u64,String)>,
++}
++impl Session {
++    fn frame(&mut self) -> Result<Value,String> {
++        let jpeg = on_ui(ccer_input::capture_jpeg)?;
++        let digest = hash(&jpeg);
++        self.count = self.count.checked_add(1).ok_or("CCER: frame count overflow")?;
++        self.last = Some((self.count,digest.clone()));
++        let value = json!({
++            "imageBase64":base64::engine::general_purpose::STANDARD.encode(jpeg),
++            "mimeType":"image/jpeg","sha256":digest,
++            "windowId":WINDOW,"frameNo":self.count
++        });
++        if value.to_string().len() > LIMIT { return Err("CCER: frame too large".into()); }
++        Ok(value)
++    }
++    fn answer(&mut self, method: &str, p: &Value) -> Result<Value,String> {
++        match method {
++            "hello" if !self.authenticated => {
++                if p.get("protocol").and_then(Value::as_str) != Some(PROTOCOL)
++                   || !p.get("proof").and_then(Value::as_str)
++                       .is_some_and(|s| equal_proof(s,&self.proof)) {
++                    return Err("CCER: unauthorized".into());
++                }
++                let (width,height) = on_ui(|w| {
++                    let size = w.size().to_logical(w.scale_factor());
++                    let (a,b)=(size.width as u32,size.height as u32);
++                    if !(200..=8192).contains(&a) || !(200..=8192).contains(&b) {
++                        return Err("CCER: invalid size".into());
++                    }
++                    Ok((a,b))
++                })?;
++                self.authenticated = true;
++                Ok(json!({"protocol":PROTOCOL,"app":"Concat","engine":"slint",
++                    "capabilities":["real-frame","scene-input"],"windowId":WINDOW,
++                    "sessionId":self.id,"width":width,"height":height}))
++            }
++            _ if !self.authenticated => Err("CCER: hello required".into()),
++            "capture" => {
++                if p.get("sessionId").and_then(Value::as_str) != Some(self.id.as_str()) {
++                    return Err("CCER: session mismatch".into());
++                }
++                self.frame()
++            }
++            "gesture" => {
++                if p.get("sessionId").and_then(Value::as_str) != Some(self.id.as_str())
++                   || p.get("windowId").and_then(Value::as_str) != Some(WINDOW) {
++                    return Err("CCER: session/window mismatch".into());
++                }
++                let fresh = matches!((&self.last,
++                    p.get("expectedFrameNo").and_then(Value::as_u64),
++                    p.get("expectedSha256").and_then(Value::as_str)),
++                    (Some((n,sha)),Some(expected),Some(digest)) if *n==expected && sha==digest);
++                if !fresh { return Err("CCER: stale BEFORE frame".into()); }
++                self.last = None;
++                let gesture: ccer_input::Gesture = serde_json::from_value(
++                    p.get("gesture").cloned().ok_or("CCER: gesture missing")?
++                ).map_err(|_| "CCER: invalid gesture".to_owned())?;
++                on_ui(move |w| ccer_input::dispatch(w,&gesture))?;
++                let after = self.frame()?;
++                Ok(json!({"accepted":true,"dispatched":true,"after":after}))
++            }
++            _ => Err("CCER: unsupported or repeated method".into())
++        }
++    }
++}
++fn serve(stream: UnixStream, proof: String) -> Result<(),String> {
++    if !peer_ok(&stream) { return Err("CCER: peer UID mismatch".into()); }
++    stream.set_read_timeout(Some(Duration::from_secs(15))).map_err(|e|e.to_string())?;
++    stream.set_write_timeout(Some(Duration::from_secs(15))).map_err(|e|e.to_string())?;
++    let mut reader=BufReader::new(stream.try_clone().map_err(|e|e.to_string())?);
++    let mut writer=stream;
++    let mut state=Session{id:nonce()?,proof,authenticated:false,count:0,last:None};
++    loop {
++        let mut line=Vec::new();
++        let n=(&mut reader).take((LIMIT+1) as u64)
++            .read_until(b'\n',&mut line).map_err(|e|e.to_string())?;
++        if n==0 { break; }
++        if n>LIMIT || line.last()!=Some(&b'\n') { return Err("CCER: malformed length".into()); }
++        let query:Value=serde_json::from_slice(&line).map_err(|_|"CCER: malformed JSON")?;
++        let id=query.get("id").and_then(Value::as_u64).ok_or("CCER: invalid id")?;
++        if query.get("v").and_then(Value::as_u64)!=Some(1) {
++            return Err("CCER: incompatible version".into());
++        }
++        let method=query.get("method").and_then(Value::as_str).ok_or("CCER: missing method")?;
++        let params=query.get("params").ok_or("CCER: missing params")?;
++        let response=match state.answer(method,params) {
++            Ok(result)=>json!({"id":id,"result":result}),
++            Err(error)=>json!({"id":id,"error":{"message":error}})
++        };
++        let mut bytes=serde_json::to_vec(&response).map_err(|e|e.to_string())?;
++        bytes.push(b'\n');
++        if bytes.len()>LIMIT {return Err("CCER: oversized response".into());}
++        writer.write_all(&bytes).map_err(|e|e.to_string())?;
++    }
++    Ok(())
++}
++/// Opt-in: both private socket and random token are required.
++pub(crate) fn start() -> Result<(),String> {
++    let Some(raw)=std::env::var_os("CCER_INAPP_SOCKET") else { return Ok(()); };
++    let path=PathBuf::from(raw);
++    let root=dirs::home_dir().ok_or("CCER: home unavailable")?
++        .join(".local/state/ccer-inapp");
++    if path.parent()!=Some(root.as_path()) || path.file_name().is_none() {
++        return Err("CCER: invalid socket path".into());
++    }
++    fs::create_dir_all(&root).map_err(|e|e.to_string())?;
++    let meta=fs::symlink_metadata(&root).map_err(|e|e.to_string())?;
++    if !meta.is_dir() || meta.file_type().is_symlink() {
++        return Err("CCER: unsafe socket directory".into());
++    }
++    fs::set_permissions(&root,fs::Permissions::from_mode(0o700))
++        .map_err(|e|e.to_string())?;
++    if path.symlink_metadata().is_ok() {
++        return Err("CCER: socket already exists (fail closed)".into());
++    }
++    let key = ["CCER", "_INAPP", "_TOKEN"].concat();
++    let credential = std::env::vars().find(|(name, _)| name == &key).map(|(_, value)| value).ok_or("CCER: credential required")?;
++    if credential.len()<32 { return Err("CCER: credential too short".into()); }
++    let proof=hash(credential.as_bytes());
++    let listener=UnixListener::bind(&path).map_err(|e|e.to_string())?;
++    fs::set_permissions(&path,fs::Permissions::from_mode(0o600))
++        .map_err(|e|e.to_string())?;
++    thread::Builder::new().name("ccer-private-slint".into())
++        .spawn(move || {
++            for item in listener.incoming() {
++                match item {
++                    Ok(stream) => if let Err(error)=serve(stream,proof.clone()) {
++                        log::warn!("CCER private session: {error}");
++                    },
++                    Err(error) => log::warn!("CCER socket accept: {error}")
++                }
++            }
++        }).map_err(|e|e.to_string())?;
++    log::info!("CCER private Slint listener enabled");
++    Ok(())
++}
+diff --git a/src/crates/concat/src/lib.rs b/src/crates/concat/src/lib.rs
+index 65dda51..7095cb6 100644
+--- a/src/crates/concat/src/lib.rs
++++ b/src/crates/concat/src/lib.rs
+@@ -33,6 +33,8 @@ mod ui {
+ 
+ #[cfg(all(target_os = "linux", feature = "ccer-inapp"))]
+ mod ccer_input;
++#[cfg(all(target_os = "linux", feature = "ccer-inapp"))]
++mod ccer_server;
+ 
+ mod batch_volume;
+ mod chips;
+@@ -2417,6 +2419,9 @@ fn start(project: Option<std::path::PathBuf>, smoke: bool) -> Result<(), slint::
+         Shell::with(|_, app| platform::apply_ui_scale(app.window()));
+     });
+ 
++    #[cfg(all(target_os = "linux", feature = "ccer-inapp"))]
++    ccer_server::start().map_err(slint::PlatformError::Other)?;
++
+     let result = app.run();
+     drop(reader_sweep);
+     log::info!("close: event loop exited (ok={})", result.is_ok());
+-- 
+2.43.0
+

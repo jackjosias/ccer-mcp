@@ -1,0 +1,13 @@
+[Unit]
+Description=Periodic recovery of CCER-managed temporary files
+
+[Timer]
+# Reuse a single service for expired desktop JPEGs and abandoned scratch.
+# Desktop receipts expire after 30 minutes; run a sweep every 15 minutes.
+OnCalendar=*:0/15
+Persistent=true
+RandomizedDelaySec=30s
+Unit=ccer-scratch-gc.service
+
+[Install]
+WantedBy=timers.target

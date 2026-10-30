@@ -1,0 +1,12 @@
+# CCER — Connexion directe, un seul Concat visible
+
+Le client `python3 -m ccer.direct_cli --access control --mode window` est **GUI-FIRST**, non pas un second éditeur.
+
+- Par défaut, le client utilise le bureau X11 actuellement attribué au processus; il ne se rattache **pas** à un écran Xvfb privé et ne démarre **aucun** Concat pour la découverte d'outils.
+- Les outils `ccer_desktop_status`, `ccer_desktop_capture`, `ccer_desktop_act`, `ccer_asr_status` et les outils d'analyse CCER restent accessibles. Les outils natifs qui exigent un second processus MCP ne sont volontairement **pas** exposés dans ce profil direct. Le transport natif `DeferredConcatTransport` reste utilisable par les autres tâches en mode normal.
+- Le mode privé reste disponible **uniquement** via `--isolated-session`, qui nécessite une session préexistante autorisée. Ce mode n'est pas celui à utiliser pour une démonstration visible sur le bureau de l'utilisateur.
+- La capture native Slint authentifiée est obligatoire avant toute action et sa preuve est consommée à chaque geste. Les captures X11 de secours servent **seulement** à observer, jamais à autoriser un clic. Aucun recours à des modifications de timeline invisibles ou au pointeur physique X11.
+- L'ouverture de Concat relève de la procédure native `visible_desktop launch`, avec vérification d'une seule fenêtre et d'un PID stable. Un **préflight ressources** refuse toute nouvelle fenêtre si `MemAvailable` est inférieur à **2 Gio**, si la charge système moyenne sur 1 minute par processeur logique dépasse **2,0**, ou si ces métriques Linux sont indisponibles. Le refus intervient **avant `Popen`** ; il n'arrête pas les applications existantes. `visible_desktop status` publie `launchReady` et `launchBlocker` pour informer l'opérateur sans démarrer quoi que ce soit. Ce seuil est conservateur, ne constitue ni une garantie de performance ni une validation de Whisper. Ne pas démarrer la GUI en boucle. Si une action expire avec résultat inconnu, observer les journaux/projet avant toute répétition.
+- Le nettoyage géré par CCER supprime les captures temporaires après revue ou expiration. Il ne doit jamais supprimer les originaux, les projets, les exports, les données cloud de ChatGPT ou des preuves hors de son périmètre connu.
+
+**Limite de certification :** cette configuration et les tests locaux n'attestent pas que l'app/plugin CCER soit connecté au ChatGPT distant ; la présence des actions dans l'inventaire du client reste à vérifier séparément.

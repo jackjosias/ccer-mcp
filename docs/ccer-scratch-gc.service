@@ -1,0 +1,15 @@
+# CCER crash recovery: only CCER-owned scratch jobs older than 24h,
+# only if their owning process is no longer active.
+[Unit]
+Description=CCER managed scratch cleanup (owner verified)
+ConditionPathExists=%h/Videos/CCER/.ccer
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/WORKSPACE-LOGICIEL/concat/ccer-mcp
+ExecStart=/usr/bin/python3 -m ccer.temp_lifecycle sweep --root %h/Videos/CCER --confirm
+# Reuse the existing daily timer for recognized expired desktop receipts.
+ExecStart=/usr/bin/python3 -m ccer.visible_desktop cleanup
+NoNewPrivileges=yes
+PrivateTmp=yes
+UMask=0077

@@ -1,0 +1,157 @@
+From ea7294e07a4c6617a2281e804e493264b58974fc Mon Sep 17 00:00:00 2001
+From: jackjosias <jackjosias@users.noreply.github.com>
+Date: Sat, 24 Oct 2026 15:36:16 +0100
+Subject: [PATCH] feat(ccer): paced native Slint drag and controlled build mode
+
+---
+ .ccer-cargo-check.sh                 |  8 +++-
+ src/crates/concat/src/ccer_input.rs  | 68 ++++++++++++++++++++++++++++
+ src/crates/concat/src/ccer_server.rs | 23 +++++++++-
+ 3 files changed, 97 insertions(+), 2 deletions(-)
+
+diff --git a/.ccer-cargo-check.sh b/.ccer-cargo-check.sh
+index 96c9b1c..3a51366 100644
+--- a/.ccer-cargo-check.sh
++++ b/.ccer-cargo-check.sh
+@@ -9,4 +9,10 @@ export CFLAGS="-I$CCER_DEV_SYSROOT/usr/include -I$CCER_DEV_SYSROOT/usr/include/x
+ export BINDGEN_EXTRA_CLANG_ARGS="$CFLAGS"
+ pkg-config --modversion fontconfig freetype2 expat uuid
+ "$FFMPEG_DIR/bin/ffmpeg" -version
+-cargo check --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --lib --features ccer-inapp -j 2
++mode="${1:-check}"
++case "$mode" in
++  check) cargo check --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --lib --features ccer-inapp -j 2 ;;
++  build) cargo build --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --bin concat --features ccer-inapp -j 1 ;;
++  test) cargo test --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --lib --features ccer-inapp -j 1 ;;
++  *) echo "CCER: unsupported Cargo mode" >&2; exit 2 ;;
++esac
+diff --git a/src/crates/concat/src/ccer_input.rs b/src/crates/concat/src/ccer_input.rs
+index c30c99f..ef79d16 100644
+--- a/src/crates/concat/src/ccer_input.rs
++++ b/src/crates/concat/src/ccer_input.rs
+@@ -5,6 +5,8 @@
+ //! BEFORE screenshot, then return a real AFTER screenshot.
+ 
+ use serde::Deserialize;
++use crate::Shell;
++use slint::ComponentHandle;
+ use slint::platform::{Key, PointerEventButton, WindowEvent};
+ use slint::{LogicalPosition, Window};
+ 
+@@ -128,6 +130,72 @@ pub(crate) fn dispatch(window: &Window, gesture: &Gesture) -> Result<(), String>
+     }
+ }
+ 
++/// An observable Slint drag: let the scene paint between pointer steps.
++pub(crate) fn dispatch_timed_drag(
++    window: &Window,
++    gesture: &Gesture,
++    done: Box<dyn FnOnce(Result<(), String>)>,
++) {
++    let outcome = (|| -> Result<((f32, f32), (f32, f32), u32), String> {
++        let Gesture::Drag { x, y, target_x, target_y, duration } = gesture else {
++            return Err("CCER: expected a drag gesture".into());
++        };
++        let source = checked_position(window, *x, *y)?;
++        checked_position(window, *target_x, *target_y)?;
++        if !duration.is_finite() || !(0.15..=4.0).contains(duration) {
++            return Err("CCER: invalid drag duration".into());
++        }
++        send(window, WindowEvent::PointerMoved { position: source })?;
++        send(window, WindowEvent::PointerPressed {
++            position: source,
++            button: PointerEventButton::Left,
++        })?;
++        let steps = (*duration * 20.0).ceil() as u32;
++        Ok(((*x, *y), (*target_x, *target_y), steps.max(3)))
++    })();
++    match outcome {
++        Ok((source, target, total)) => drag_step(source, target, 1, total, done),
++        Err(error) => done(Err(error)),
++    }
++}
++
++fn drag_step(
++    source: (f32, f32),
++    target: (f32, f32),
++    index: u32,
++    total: u32,
++    done: Box<dyn FnOnce(Result<(), String>)>,
++) {
++    // A separate Slint timer allows intermediate scene paints.
++    slint::Timer::single_shot(std::time::Duration::from_millis(50), move || {
++        let fraction = index as f32 / total as f32;
++        let position = LogicalPosition::new(
++            source.0 + (target.0 - source.0) * fraction,
++            source.1 + (target.1 - source.1) * fraction,
++        );
++        let mut result = Ok(());
++        Shell::with(|_, app| {
++            let window = app.window();
++            result = send(window, WindowEvent::PointerMoved { position });
++            if index == total || result.is_err() {
++                // Never leave a pressed pointer after a failed step.
++                let release = send(window, WindowEvent::PointerReleased {
++                    position,
++                    button: PointerEventButton::Left,
++                });
++                if result.is_ok() {
++                    result = release;
++                }
++            }
++        });
++        if result.is_ok() && index < total {
++            drag_step(source, target, index + 1, total, done);
++        } else {
++            done(result);
++        }
++    });
++}
++
+ /// Real Slint window RGBA snapshot -> JPEG, no X server screen scraping.
+ pub(crate) fn capture_jpeg(window: &Window) -> Result<Vec<u8>, String> {
+     let frame = window
+diff --git a/src/crates/concat/src/ccer_server.rs b/src/crates/concat/src/ccer_server.rs
+index c64a331..ffcf9a4 100644
+--- a/src/crates/concat/src/ccer_server.rs
++++ b/src/crates/concat/src/ccer_server.rs
+@@ -51,6 +51,27 @@ fn peer_ok(stream: &UnixStream) -> bool {
+     };
+     status == 0 && peer.uid == unsafe { libc::geteuid() }
+ }
++fn dispatch_gesture(gesture: ccer_input::Gesture) -> Result<(), String> {
++    if matches!(&gesture, ccer_input::Gesture::Drag { .. }) {
++        let (tx, rx) = mpsc::sync_channel(1);
++        slint::invoke_from_event_loop(move || {
++            Shell::with(|_, app| {
++                ccer_input::dispatch_timed_drag(
++                    app.window(),
++                    &gesture,
++                    Box::new(move |result| {
++                        let _ = tx.send(result);
++                    }),
++                );
++            });
++        }).map_err(|error| format!("CCER: drag UI unavailable: {error}"))?;
++        rx.recv_timeout(Duration::from_secs(12))
++            .map_err(|_| "CCER: timed drag did not finish".to_owned())?
++    } else {
++        on_ui(move |window| ccer_input::dispatch(window, &gesture))
++    }
++}
++
+ struct Session {
+     id: String,
+     proof: String,
+@@ -114,7 +135,7 @@ impl Session {
+                 let gesture: ccer_input::Gesture = serde_json::from_value(
+                     p.get("gesture").cloned().ok_or("CCER: gesture missing")?
+                 ).map_err(|_| "CCER: invalid gesture".to_owned())?;
+-                on_ui(move |w| ccer_input::dispatch(w,&gesture))?;
++                dispatch_gesture(gesture)?;
+                 let after = self.frame()?;
+                 Ok(json!({"accepted":true,"dispatched":true,"after":after}))
+             }
+-- 
+2.43.0
+

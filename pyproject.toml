@@ -1,0 +1,17 @@
+[build-system]
+requires=["setuptools>=65"]
+build-backend="setuptools.build_meta"
+
+[project]
+name="ccer-mcp"
+version="0.1.0"
+requires-python=">=3.10"
+dependencies=[]
+
+[project.scripts]
+ccer-mcp="ccer.cli:main"
+ccer-direct-mcp="ccer.direct_cli:main"
+ccer-tunnel-setup="ccer.tunnel_setup:main"
+
+[tool.setuptools.packages.find]
+include=["ccer*"]

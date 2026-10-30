@@ -1,0 +1,622 @@
+From 9c5987fd88e4f4a06d13185f244c95b67824e0d0 Mon Sep 17 00:00:00 2001
+From: jackjosias <jackjosias@users.noreply.github.com>
+Date: Sat, 24 Oct 2026 20:17:43 +0100
+Subject: [PATCH] feat(ccer): guarded scene media drop and export folder
+ through Concat UI
+
+---
+ src/crates/concat/src/ccer_input.rs  |  43 +++-
+ src/crates/concat/src/ccer_server.rs | 307 ++++++++++++++++++++-------
+ src/crates/concat/src/lib.rs         |  65 +++---
+ 3 files changed, 303 insertions(+), 112 deletions(-)
+
+diff --git a/src/crates/concat/src/ccer_input.rs b/src/crates/concat/src/ccer_input.rs
+index ef79d16..65cf7f6 100644
+--- a/src/crates/concat/src/ccer_input.rs
++++ b/src/crates/concat/src/ccer_input.rs
+@@ -4,8 +4,8 @@
+ //! Dispatch only from Concat's Slint event-loop thread after an authorized
+ //! BEFORE screenshot, then return a real AFTER screenshot.
+ 
+-use serde::Deserialize;
+ use crate::Shell;
++use serde::Deserialize;
+ use slint::ComponentHandle;
+ use slint::platform::{Key, PointerEventButton, WindowEvent};
+ use slint::{LogicalPosition, Window};
+@@ -39,6 +39,12 @@ pub(crate) enum Gesture {
+         target_y: f32,
+         duration: f32,
+     },
++    #[serde(rename = "file_drop")]
++    FileDrop {
++        path: String,
++    },
++    #[serde(rename = "select_export_folder")]
++    SelectExportFolder,
+ }
+ 
+ fn checked_position(window: &Window, x: f32, y: f32) -> Result<LogicalPosition, String> {
+@@ -111,6 +117,10 @@ pub(crate) fn dispatch(window: &Window, gesture: &Gesture) -> Result<(), String>
+             send(window, WindowEvent::KeyPressed { text: code.into() })?;
+             send(window, WindowEvent::KeyReleased { text: code.into() })
+         }
++        Gesture::FileDrop { .. } => {
++            Err("CCER: file drop must use Concat shared drop handler".into())
++        }
++        Gesture::SelectExportFolder => Err("CCER: export folder must use Concat UI handler".into()),
+         Gesture::Drag {
+             x,
+             y,
+@@ -137,7 +147,14 @@ pub(crate) fn dispatch_timed_drag(
+     done: Box<dyn FnOnce(Result<(), String>)>,
+ ) {
+     let outcome = (|| -> Result<((f32, f32), (f32, f32), u32), String> {
+-        let Gesture::Drag { x, y, target_x, target_y, duration } = gesture else {
++        let Gesture::Drag {
++            x,
++            y,
++            target_x,
++            target_y,
++            duration,
++        } = gesture
++        else {
+             return Err("CCER: expected a drag gesture".into());
+         };
+         let source = checked_position(window, *x, *y)?;
+@@ -146,10 +163,13 @@ pub(crate) fn dispatch_timed_drag(
+             return Err("CCER: invalid drag duration".into());
+         }
+         send(window, WindowEvent::PointerMoved { position: source })?;
+-        send(window, WindowEvent::PointerPressed {
+-            position: source,
+-            button: PointerEventButton::Left,
+-        })?;
++        send(
++            window,
++            WindowEvent::PointerPressed {
++                position: source,
++                button: PointerEventButton::Left,
++            },
++        )?;
+         let steps = (*duration * 20.0).ceil() as u32;
+         Ok(((*x, *y), (*target_x, *target_y), steps.max(3)))
+     })();
+@@ -179,10 +199,13 @@ fn drag_step(
+             result = send(window, WindowEvent::PointerMoved { position });
+             if index == total || result.is_err() {
+                 // Never leave a pressed pointer after a failed step.
+-                let release = send(window, WindowEvent::PointerReleased {
+-                    position,
+-                    button: PointerEventButton::Left,
+-                });
++                let release = send(
++                    window,
++                    WindowEvent::PointerReleased {
++                        position,
++                        button: PointerEventButton::Left,
++                    },
++                );
+                 if result.is_ok() {
+                     result = release;
+                 }
+diff --git a/src/crates/concat/src/ccer_server.rs b/src/crates/concat/src/ccer_server.rs
+index ffcf9a4..27a00af 100644
+--- a/src/crates/concat/src/ccer_server.rs
++++ b/src/crates/concat/src/ccer_server.rs
+@@ -1,10 +1,10 @@
+ // SPDX-License-Identifier: AGPL-3.0-or-later
+ //! Optional, private Concat Slint Computer Use socket. No X11 input.
+-use crate::{ccer_input, Shell};
++use crate::{Shell, ccer_input};
+ use base64::Engine;
+-use slint::ComponentHandle;
+-use serde_json::{json, Value};
++use serde_json::{Value, json};
+ use sha2::{Digest, Sha256};
++use slint::ComponentHandle;
+ use std::fs::{self, File};
+ use std::io::{BufRead, BufReader, Read, Write};
+ use std::os::fd::AsRawFd;
+@@ -12,46 +12,152 @@ use std::os::unix::fs::PermissionsExt;
+ use std::os::unix::net::{UnixListener, UnixStream};
+ use std::path::PathBuf;
+ use std::sync::mpsc;
+-use std::{thread, time::Duration};
++use std::{
++    thread,
++    time::{Duration, Instant},
++};
+ 
+ const PROTOCOL: &str = "ccer-slint-input/v1";
+ const WINDOW: &str = "concat-main";
+ const LIMIT: usize = 8_000_000;
+-fn hash(bytes: &[u8]) -> String { format!("{:x}", Sha256::digest(bytes)) }
++fn hash(bytes: &[u8]) -> String {
++    format!("{:x}", Sha256::digest(bytes))
++}
+ fn nonce() -> Result<String, String> {
+     let mut b = [0; 16];
+-    File::open("/dev/urandom").and_then(|mut f| f.read_exact(&mut b))
++    File::open("/dev/urandom")
++        .and_then(|mut f| f.read_exact(&mut b))
+         .map_err(|_| "CCER: secure randomness unavailable".to_owned())?;
+     Ok(b.iter().map(|v| format!("{v:02x}")).collect())
+ }
+ fn equal_proof(a: &str, b: &str) -> bool {
+-    if a.len() != 64 || b.len() != 64 { return false; }
++    if a.len() != 64 || b.len() != 64 {
++        return false;
++    }
+     let mut difference = 0;
+-    for (x,y) in a.bytes().zip(b.bytes()) { difference |= x ^ y; }
++    for (x, y) in a.bytes().zip(b.bytes()) {
++        difference |= x ^ y;
++    }
+     difference == 0
+ }
+ fn on_ui<T: Send + 'static>(
+-    f: impl FnOnce(&slint::Window) -> Result<T,String> + Send + 'static
+-) -> Result<T,String> {
+-    let (tx,rx) = mpsc::sync_channel(1);
++    f: impl FnOnce(&slint::Window) -> Result<T, String> + Send + 'static,
++) -> Result<T, String> {
++    let (tx, rx) = mpsc::sync_channel(1);
+     slint::invoke_from_event_loop(move || {
+         Shell::with(|_, app| {
+             let _ = tx.send(f(app.window()));
+         });
+-    }).map_err(|e| format!("CCER: UI unavailable: {e}"))?;
++    })
++    .map_err(|e| format!("CCER: UI unavailable: {e}"))?;
+     rx.recv_timeout(Duration::from_secs(7))
+         .map_err(|_| "CCER: UI timeout".to_owned())?
+ }
++/// Run an application gesture on the Slint thread without nesting Shell::with.
++fn on_app<T: Send + 'static>(
++    f: impl FnOnce() -> Result<T, String> + Send + 'static,
++) -> Result<T, String> {
++    let (tx, rx) = mpsc::sync_channel(1);
++    slint::invoke_from_event_loop(move || {
++        let _ = tx.send(f());
++    })
++    .map_err(|e| format!("CCER: application UI unavailable: {e}"))?;
++    rx.recv_timeout(Duration::from_secs(12))
++        .map_err(|_| "CCER: application action timed out".to_owned())?
++}
+ fn peer_ok(stream: &UnixStream) -> bool {
+     let mut peer: libc::ucred = unsafe { std::mem::zeroed() };
+     let mut size = std::mem::size_of::<libc::ucred>() as libc::socklen_t;
+     let status = unsafe {
+-        libc::getsockopt(stream.as_raw_fd(), libc::SOL_SOCKET, libc::SO_PEERCRED,
+-            (&raw mut peer).cast(), &raw mut size)
++        libc::getsockopt(
++            stream.as_raw_fd(),
++            libc::SOL_SOCKET,
++            libc::SO_PEERCRED,
++            (&raw mut peer).cast(),
++            &raw mut size,
++        )
+     };
+     status == 0 && peer.uid == unsafe { libc::geteuid() }
+ }
++fn approved_drop_path(raw: &str) -> Result<PathBuf, String> {
++    if raw.is_empty() || raw.len() > 4096 {
++        return Err("CCER: invalid media path".into());
++    }
++    let root = PathBuf::from(
++        std::env::var_os("CCER_INAPP_MEDIA_ROOT")
++            .ok_or("CCER: approved media directory required")?,
++    );
++    let root_meta =
++        fs::symlink_metadata(&root).map_err(|_| "CCER: approved media directory missing")?;
++    if !root.is_absolute() || !root_meta.is_dir() || root_meta.file_type().is_symlink() {
++        return Err("CCER: unsafe approved media directory".into());
++    }
++    let path = PathBuf::from(raw);
++    if !path.is_absolute() {
++        return Err("CCER: media file requires absolute path".into());
++    }
++    let metadata = fs::symlink_metadata(&path).map_err(|_| "CCER: media file unavailable")?;
++    if !metadata.is_file() || metadata.file_type().is_symlink() {
++        return Err("CCER: media path is not a regular file".into());
++    }
++    let allowed_root = root
++        .canonicalize()
++        .map_err(|_| "CCER: media root unavailable")?;
++    let media = path
++        .canonicalize()
++        .map_err(|_| "CCER: media file unavailable")?;
++    if !media.starts_with(&allowed_root) {
++        return Err("CCER: media file outside approved directory".into());
++    }
++    let extension = media
++        .extension()
++        .and_then(|v| v.to_str())
++        .unwrap_or("")
++        .to_ascii_lowercase();
++    if ![
++        "mp4", "mov", "mkv", "webm", "avi", "m4v", "mp3", "wav", "aac", "m4a", "flac", "ogg",
++        "png", "jpg", "jpeg", "webp", "gif", "bmp", "tif", "tiff",
++    ]
++    .contains(&extension.as_str())
++    {
++        return Err("CCER: unsupported media extension".into());
++    }
++    Ok(media)
++}
++
++fn approved_export_folder() -> Result<String, String> {
++    let path = PathBuf::from(
++        std::env::var_os("CCER_INAPP_EXPORT_ROOT")
++            .ok_or("CCER: approved output directory required")?,
++    );
++    let metadata = fs::symlink_metadata(&path).map_err(|_| "CCER: output directory unavailable")?;
++    if !path.is_absolute() || !metadata.is_dir() || metadata.file_type().is_symlink() {
++        return Err("CCER: unsafe output directory".into());
++    }
++    let resolved = path
++        .canonicalize()
++        .map_err(|_| "CCER: output directory unavailable")?;
++    Ok(resolved
++        .to_str()
++        .ok_or("CCER: output directory encoding unsupported")?
++        .to_owned())
++}
++
+ fn dispatch_gesture(gesture: ccer_input::Gesture) -> Result<(), String> {
++    if matches!(&gesture, ccer_input::Gesture::SelectExportFolder) {
++        let folder = approved_export_folder()?;
++        return on_app(move || {
++            crate::choose_visible_export_folder(folder);
++            Ok(())
++        });
++    }
++    if let ccer_input::Gesture::FileDrop { path } = &gesture {
++        let media = approved_drop_path(path)?;
++        return on_app(move || {
++            crate::import_visible_drop(vec![media]);
++            Ok(())
++        });
++    }
+     if matches!(&gesture, ccer_input::Gesture::Drag { .. }) {
+         let (tx, rx) = mpsc::sync_channel(1);
+         slint::invoke_from_event_loop(move || {
+@@ -64,7 +170,8 @@ fn dispatch_gesture(gesture: ccer_input::Gesture) -> Result<(), String> {
+                     }),
+                 );
+             });
+-        }).map_err(|error| format!("CCER: drag UI unavailable: {error}"))?;
++        })
++        .map_err(|error| format!("CCER: drag UI unavailable: {error}"))?;
+         rx.recv_timeout(Duration::from_secs(12))
+             .map_err(|_| "CCER: timed drag did not finish".to_owned())?
+     } else {
+@@ -77,37 +184,45 @@ struct Session {
+     proof: String,
+     authenticated: bool,
+     count: u64,
+-    last: Option<(u64,String)>,
++    last: Option<(u64, String, Instant)>,
+ }
+ impl Session {
+-    fn frame(&mut self) -> Result<Value,String> {
++    fn frame(&mut self) -> Result<Value, String> {
+         let jpeg = on_ui(ccer_input::capture_jpeg)?;
+         let digest = hash(&jpeg);
+-        self.count = self.count.checked_add(1).ok_or("CCER: frame count overflow")?;
+-        self.last = Some((self.count,digest.clone()));
++        self.count = self
++            .count
++            .checked_add(1)
++            .ok_or("CCER: frame count overflow")?;
++        self.last = Some((self.count, digest.clone(), Instant::now()));
+         let value = json!({
+             "imageBase64":base64::engine::general_purpose::STANDARD.encode(jpeg),
+             "mimeType":"image/jpeg","sha256":digest,
+             "windowId":WINDOW,"frameNo":self.count
+         });
+-        if value.to_string().len() > LIMIT { return Err("CCER: frame too large".into()); }
++        if value.to_string().len() > LIMIT {
++            return Err("CCER: frame too large".into());
++        }
+         Ok(value)
+     }
+-    fn answer(&mut self, method: &str, p: &Value) -> Result<Value,String> {
++    fn answer(&mut self, method: &str, p: &Value) -> Result<Value, String> {
+         match method {
+             "hello" if !self.authenticated => {
+                 if p.get("protocol").and_then(Value::as_str) != Some(PROTOCOL)
+-                   || !p.get("proof").and_then(Value::as_str)
+-                       .is_some_and(|s| equal_proof(s,&self.proof)) {
++                    || !p
++                        .get("proof")
++                        .and_then(Value::as_str)
++                        .is_some_and(|s| equal_proof(s, &self.proof))
++                {
+                     return Err("CCER: unauthorized".into());
+                 }
+-                let (width,height) = on_ui(|w| {
++                let (width, height) = on_ui(|w| {
+                     let size = w.size().to_logical(w.scale_factor());
+-                    let (a,b)=(size.width as u32,size.height as u32);
++                    let (a, b) = (size.width as u32, size.height as u32);
+                     if !(200..=8192).contains(&a) || !(200..=8192).contains(&b) {
+                         return Err("CCER: invalid size".into());
+                     }
+-                    Ok((a,b))
++                    Ok((a, b))
+                 })?;
+                 self.authenticated = true;
+                 Ok(json!({"protocol":PROTOCOL,"app":"Concat","engine":"slint",
+@@ -123,94 +238,134 @@ impl Session {
+             }
+             "gesture" => {
+                 if p.get("sessionId").and_then(Value::as_str) != Some(self.id.as_str())
+-                   || p.get("windowId").and_then(Value::as_str) != Some(WINDOW) {
++                    || p.get("windowId").and_then(Value::as_str) != Some(WINDOW)
++                {
+                     return Err("CCER: session/window mismatch".into());
+                 }
+                 let fresh = matches!((&self.last,
+                     p.get("expectedFrameNo").and_then(Value::as_u64),
+                     p.get("expectedSha256").and_then(Value::as_str)),
+-                    (Some((n,sha)),Some(expected),Some(digest)) if *n==expected && sha==digest);
+-                if !fresh { return Err("CCER: stale BEFORE frame".into()); }
++                    (Some((n,sha,seen)),Some(expected),Some(digest)) if *n==expected && sha==digest && seen.elapsed() <= Duration::from_secs(75));
++                if !fresh {
++                    return Err("CCER: stale BEFORE frame".into());
++                }
+                 self.last = None;
+                 let gesture: ccer_input::Gesture = serde_json::from_value(
+-                    p.get("gesture").cloned().ok_or("CCER: gesture missing")?
+-                ).map_err(|_| "CCER: invalid gesture".to_owned())?;
++                    p.get("gesture").cloned().ok_or("CCER: gesture missing")?,
++                )
++                .map_err(|_| "CCER: invalid gesture".to_owned())?;
+                 dispatch_gesture(gesture)?;
+                 let after = self.frame()?;
+                 Ok(json!({"accepted":true,"dispatched":true,"after":after}))
+             }
+-            _ => Err("CCER: unsupported or repeated method".into())
++            _ => Err("CCER: unsupported or repeated method".into()),
+         }
+     }
+ }
+-fn serve(stream: UnixStream, proof: String) -> Result<(),String> {
+-    if !peer_ok(&stream) { return Err("CCER: peer UID mismatch".into()); }
+-    stream.set_read_timeout(Some(Duration::from_secs(15))).map_err(|e|e.to_string())?;
+-    stream.set_write_timeout(Some(Duration::from_secs(15))).map_err(|e|e.to_string())?;
+-    let mut reader=BufReader::new(stream.try_clone().map_err(|e|e.to_string())?);
+-    let mut writer=stream;
+-    let mut state=Session{id:nonce()?,proof,authenticated:false,count:0,last:None};
++fn serve(stream: UnixStream, proof: String) -> Result<(), String> {
++    if !peer_ok(&stream) {
++        return Err("CCER: peer UID mismatch".into());
++    }
++    stream
++        .set_read_timeout(Some(Duration::from_secs(15)))
++        .map_err(|e| e.to_string())?;
++    stream
++        .set_write_timeout(Some(Duration::from_secs(15)))
++        .map_err(|e| e.to_string())?;
++    let mut reader = BufReader::new(stream.try_clone().map_err(|e| e.to_string())?);
++    let mut writer = stream;
++    let mut state = Session {
++        id: nonce()?,
++        proof,
++        authenticated: false,
++        count: 0,
++        last: None,
++    };
+     loop {
+-        let mut line=Vec::new();
+-        let n=(&mut reader).take((LIMIT+1) as u64)
+-            .read_until(b'\n',&mut line).map_err(|e|e.to_string())?;
+-        if n==0 { break; }
+-        if n>LIMIT || line.last()!=Some(&b'\n') { return Err("CCER: malformed length".into()); }
+-        let query:Value=serde_json::from_slice(&line).map_err(|_|"CCER: malformed JSON")?;
+-        let id=query.get("id").and_then(Value::as_u64).ok_or("CCER: invalid id")?;
+-        if query.get("v").and_then(Value::as_u64)!=Some(1) {
++        let mut line = Vec::new();
++        let n = (&mut reader)
++            .take((LIMIT + 1) as u64)
++            .read_until(b'\n', &mut line)
++            .map_err(|e| e.to_string())?;
++        if n == 0 {
++            break;
++        }
++        if n > LIMIT || line.last() != Some(&b'\n') {
++            return Err("CCER: malformed length".into());
++        }
++        let query: Value = serde_json::from_slice(&line).map_err(|_| "CCER: malformed JSON")?;
++        let id = query
++            .get("id")
++            .and_then(Value::as_u64)
++            .ok_or("CCER: invalid id")?;
++        if query.get("v").and_then(Value::as_u64) != Some(1) {
+             return Err("CCER: incompatible version".into());
+         }
+-        let method=query.get("method").and_then(Value::as_str).ok_or("CCER: missing method")?;
+-        let params=query.get("params").ok_or("CCER: missing params")?;
+-        let response=match state.answer(method,params) {
+-            Ok(result)=>json!({"id":id,"result":result}),
+-            Err(error)=>json!({"id":id,"error":{"message":error}})
++        let method = query
++            .get("method")
++            .and_then(Value::as_str)
++            .ok_or("CCER: missing method")?;
++        let params = query.get("params").ok_or("CCER: missing params")?;
++        let response = match state.answer(method, params) {
++            Ok(result) => json!({"id":id,"result":result}),
++            Err(error) => json!({"id":id,"error":{"message":error}}),
+         };
+-        let mut bytes=serde_json::to_vec(&response).map_err(|e|e.to_string())?;
++        let mut bytes = serde_json::to_vec(&response).map_err(|e| e.to_string())?;
+         bytes.push(b'\n');
+-        if bytes.len()>LIMIT {return Err("CCER: oversized response".into());}
+-        writer.write_all(&bytes).map_err(|e|e.to_string())?;
++        if bytes.len() > LIMIT {
++            return Err("CCER: oversized response".into());
++        }
++        writer.write_all(&bytes).map_err(|e| e.to_string())?;
+     }
+     Ok(())
+ }
+ /// Opt-in: both private socket and random token are required.
+-pub(crate) fn start() -> Result<(),String> {
+-    let Some(raw)=std::env::var_os("CCER_INAPP_SOCKET") else { return Ok(()); };
+-    let path=PathBuf::from(raw);
+-    let root=dirs::home_dir().ok_or("CCER: home unavailable")?
++pub(crate) fn start() -> Result<(), String> {
++    let Some(raw) = std::env::var_os("CCER_INAPP_SOCKET") else {
++        return Ok(());
++    };
++    let path = PathBuf::from(raw);
++    let root = dirs::home_dir()
++        .ok_or("CCER: home unavailable")?
+         .join(".local/state/ccer-inapp");
+-    if path.parent()!=Some(root.as_path()) || path.file_name().is_none() {
++    if path.parent() != Some(root.as_path()) || path.file_name().is_none() {
+         return Err("CCER: invalid socket path".into());
+     }
+-    fs::create_dir_all(&root).map_err(|e|e.to_string())?;
+-    let meta=fs::symlink_metadata(&root).map_err(|e|e.to_string())?;
++    fs::create_dir_all(&root).map_err(|e| e.to_string())?;
++    let meta = fs::symlink_metadata(&root).map_err(|e| e.to_string())?;
+     if !meta.is_dir() || meta.file_type().is_symlink() {
+         return Err("CCER: unsafe socket directory".into());
+     }
+-    fs::set_permissions(&root,fs::Permissions::from_mode(0o700))
+-        .map_err(|e|e.to_string())?;
++    fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).map_err(|e| e.to_string())?;
+     if path.symlink_metadata().is_ok() {
+         return Err("CCER: socket already exists (fail closed)".into());
+     }
+     let key = ["CCER", "_INAPP", "_TOKEN"].concat();
+-    let credential = std::env::vars().find(|(name, _)| name == &key).map(|(_, value)| value).ok_or("CCER: credential required")?;
+-    if credential.len()<32 { return Err("CCER: credential too short".into()); }
+-    let proof=hash(credential.as_bytes());
+-    let listener=UnixListener::bind(&path).map_err(|e|e.to_string())?;
+-    fs::set_permissions(&path,fs::Permissions::from_mode(0o600))
+-        .map_err(|e|e.to_string())?;
+-    thread::Builder::new().name("ccer-private-slint".into())
++    let credential = std::env::vars()
++        .find(|(name, _)| name == &key)
++        .map(|(_, value)| value)
++        .ok_or("CCER: credential required")?;
++    if credential.len() < 32 {
++        return Err("CCER: credential too short".into());
++    }
++    let proof = hash(credential.as_bytes());
++    let listener = UnixListener::bind(&path).map_err(|e| e.to_string())?;
++    fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).map_err(|e| e.to_string())?;
++    thread::Builder::new()
++        .name("ccer-private-slint".into())
+         .spawn(move || {
+             for item in listener.incoming() {
+                 match item {
+-                    Ok(stream) => if let Err(error)=serve(stream,proof.clone()) {
+-                        log::warn!("CCER private session: {error}");
+-                    },
+-                    Err(error) => log::warn!("CCER socket accept: {error}")
++                    Ok(stream) => {
++                        if let Err(error) = serve(stream, proof.clone()) {
++                            log::warn!("CCER private session: {error}");
++                        }
++                    }
++                    Err(error) => log::warn!("CCER socket accept: {error}"),
+                 }
+             }
+-        }).map_err(|e|e.to_string())?;
++        })
++        .map_err(|e| e.to_string())?;
+     log::info!("CCER private Slint listener enabled");
+     Ok(())
+ }
+diff --git a/src/crates/concat/src/lib.rs b/src/crates/concat/src/lib.rs
+index 7095cb6..c05aae9 100644
+--- a/src/crates/concat/src/lib.rs
++++ b/src/crates/concat/src/lib.rs
+@@ -197,6 +197,44 @@ pub(crate) fn close_window(
+     result
+ }
+ 
++/// Shared visible import action for OS and authorized native scene file drops.
++pub(crate) fn import_visible_drop(paths: Vec<std::path::PathBuf>) {
++    Shell::with(|shell, app| {
++        {
++            let mut studio = shell.studio.borrow_mut();
++            // Sound files dropped while the library shows its
++            // Audio page go into the user's own sounds, as its
++            // Import would take them; anything else, or the page
++            // not up, into the project's bin.
++            let to_library = studio.sounds.shown
++                && !paths.is_empty()
++                && paths.iter().all(|path| concat_host::sounds::is_sound(path));
++            if studio.on_start {
++                // On the launch screen there is no project to
++                // import into: a dropped project opens, and media
++                // starts one.
++                studio.handle(Msg::Start(StartMsg::Dropped(paths)));
++            } else if to_library {
++                studio.handle(Msg::Sounds(SoundsMsg::Import(paths)));
++            } else {
++                studio.handle(Msg::Media(MediaMsg::Import(paths)));
++            }
++        }
++        shell.studio.borrow_mut().refresh_art();
++        shell.studio.borrow().publish(&app, &shell.models);
++    });
++}
++
++/// Apply a selected output folder through the same Concat message as Browse.
++#[cfg(all(target_os = "linux", feature = "ccer-inapp"))]
++pub(crate) fn choose_visible_export_folder(folder: String) {
++    Shell::with(|shell, app| {
++        let mut studio = shell.studio.borrow_mut();
++        studio.handle(Msg::Export(ExportMsg::FolderChosen(folder)));
++        studio.publish(&app, &shell.models);
++    });
++}
++
+ /// [`run_with_project`], or [`smoke`] when `smoke` is set.
+ fn start(project: Option<std::path::PathBuf>, smoke: bool) -> Result<(), slint::PlatformError> {
+     // What Import and a finished export reach on an iPhone. Android's own
+@@ -224,32 +262,7 @@ fn start(project: Option<std::path::PathBuf>, smoke: bool) -> Result<(), slint::
+     // dropped file gets the same probe, the same failure notice, and the
+     // same "no project open yet" no-op that a picked one does.
+     let gpu = platform::select_backend(
+-        |paths| {
+-            Shell::with(|shell, app| {
+-                {
+-                    let mut studio = shell.studio.borrow_mut();
+-                    // Sound files dropped while the library shows its
+-                    // Audio page go into the user's own sounds, as its
+-                    // Import would take them; anything else, or the page
+-                    // not up, into the project's bin.
+-                    let to_library = studio.sounds.shown
+-                        && !paths.is_empty()
+-                        && paths.iter().all(|path| concat_host::sounds::is_sound(path));
+-                    if studio.on_start {
+-                        // On the launch screen there is no project to
+-                        // import into: a dropped project opens, and media
+-                        // starts one.
+-                        studio.handle(Msg::Start(StartMsg::Dropped(paths)));
+-                    } else if to_library {
+-                        studio.handle(Msg::Sounds(SoundsMsg::Import(paths)));
+-                    } else {
+-                        studio.handle(Msg::Media(MediaMsg::Import(paths)));
+-                    }
+-                }
+-                shell.studio.borrow_mut().refresh_art();
+-                shell.studio.borrow().publish(&app, &shell.models);
+-            });
+-        },
++        |paths| import_visible_drop(paths),
+         // A press anywhere but the field being typed into takes the focus
+         // back, the way a browser does; the field commits on the way out.
+         // See the handler in platform.rs for why this is a raw event and
+-- 
+2.43.0
+

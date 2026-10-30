@@ -1,0 +1,25 @@
+From a6d2a3190c037ebdc51201285dcaf87a2bccf74f Mon Sep 17 00:00:00 2001
+From: jackjosias <jackjosias@users.noreply.github.com>
+Date: Sat, 24 Oct 2026 18:06:39 +0100
+Subject: [PATCH] build(ccer): use two Cargo jobs for native desktop binary
+
+---
+ .ccer-cargo-check.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/.ccer-cargo-check.sh b/.ccer-cargo-check.sh
+index 3a51366..3d385c6 100644
+--- a/.ccer-cargo-check.sh
++++ b/.ccer-cargo-check.sh
+@@ -12,7 +12,7 @@ pkg-config --modversion fontconfig freetype2 expat uuid
+ mode="${1:-check}"
+ case "$mode" in
+   check) cargo check --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --lib --features ccer-inapp -j 2 ;;
+-  build) cargo build --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --bin concat --features ccer-inapp -j 1 ;;
++  build) cargo build --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --bin concat --features ccer-inapp -j 2 ;;
+   test) cargo test --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --lib --features ccer-inapp -j 1 ;;
+   *) echo "CCER: unsupported Cargo mode" >&2; exit 2 ;;
+ esac
+-- 
+2.43.0
+

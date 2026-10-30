@@ -1,0 +1,222 @@
+From 3a63096134e6bce14b425c69f0e1c4f17c70e706 Mon Sep 17 00:00:00 2001
+From: jackjosias <jackjosias@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 21:20:13 +0100
+Subject: [PATCH] feat(concat): stage opt-in Slint computer-use events and real
+ snapshots
+
+---
+ src/crates/concat/Cargo.toml        |   4 +
+ src/crates/concat/src/ccer_input.rs | 171 ++++++++++++++++++++++++++++
+ src/crates/concat/src/lib.rs        |   3 +
+ 3 files changed, 178 insertions(+)
+ create mode 100644 src/crates/concat/src/ccer_input.rs
+
+diff --git a/src/crates/concat/Cargo.toml b/src/crates/concat/Cargo.toml
+index f9d4442..7d55176 100644
+--- a/src/crates/concat/Cargo.toml
++++ b/src/crates/concat/Cargo.toml
+@@ -126,6 +126,10 @@ slint = { version = "1.18", default-features = false, features = [
+     "unstable-fontique-011",
+ ] }
+ 
++[features]
++# Strictly opt-in local native Computer Use research. No daemon on default builds.
++ccer-inapp = []
++
+ [dependencies]
+ # The log facade. The window writes `log::warn!`; where that ends up is
+ # concat-host's logs.rs, opened by whichever entry point started this run.
+diff --git a/src/crates/concat/src/ccer_input.rs b/src/crates/concat/src/ccer_input.rs
+new file mode 100644
+index 0000000..c30c99f
+--- /dev/null
++++ b/src/crates/concat/src/ccer_input.rs
+@@ -0,0 +1,171 @@
++// SPDX-License-Identifier: AGPL-3.0-or-later
++//! Optional real Slint UI Computer Use primitives.
++//! Inert by default: this module opens no socket and touches no X11 cursor.
++//! Dispatch only from Concat's Slint event-loop thread after an authorized
++//! BEFORE screenshot, then return a real AFTER screenshot.
++
++use serde::Deserialize;
++use slint::platform::{Key, PointerEventButton, WindowEvent};
++use slint::{LogicalPosition, Window};
++
++#[derive(Debug, Deserialize, PartialEq)]
++#[serde(tag = "type", rename_all = "lowercase", deny_unknown_fields)]
++pub(crate) enum Gesture {
++    Click {
++        x: f32,
++        y: f32,
++    },
++    Move {
++        x: f32,
++        y: f32,
++    },
++    Scroll {
++        x: f32,
++        y: f32,
++        #[serde(rename = "deltaY")]
++        delta_y: f32,
++    },
++    Key {
++        key: String,
++    },
++    Drag {
++        x: f32,
++        y: f32,
++        #[serde(rename = "targetX")]
++        target_x: f32,
++        #[serde(rename = "targetY")]
++        target_y: f32,
++        duration: f32,
++    },
++}
++
++fn checked_position(window: &Window, x: f32, y: f32) -> Result<LogicalPosition, String> {
++    let size = window.size().to_logical(window.scale_factor());
++    if !x.is_finite() || !y.is_finite() || x < 0.0 || y < 0.0 || x >= size.width || y >= size.height
++    {
++        return Err("CCER: pointer outside Slint scene".into());
++    }
++    Ok(LogicalPosition::new(x, y))
++}
++
++fn send(window: &Window, event: WindowEvent) -> Result<(), String> {
++    window
++        .dispatch_event_with_result(event)
++        .map(|_result| ())
++        .map_err(|err| format!("CCER: Slint event failed: {err}"))
++}
++
++/// The only actions that can touch the real UI are Slint WindowEvents.
++/// This function MUST run on the owning Slint event loop thread.
++pub(crate) fn dispatch(window: &Window, gesture: &Gesture) -> Result<(), String> {
++    match gesture {
++        Gesture::Move { x, y } => send(
++            window,
++            WindowEvent::PointerMoved {
++                position: checked_position(window, *x, *y)?,
++            },
++        ),
++        Gesture::Click { x, y } => {
++            let position = checked_position(window, *x, *y)?;
++            send(window, WindowEvent::PointerMoved { position })?;
++            send(
++                window,
++                WindowEvent::PointerPressed {
++                    position,
++                    button: PointerEventButton::Left,
++                },
++            )?;
++            send(
++                window,
++                WindowEvent::PointerReleased {
++                    position,
++                    button: PointerEventButton::Left,
++                },
++            )
++        }
++        Gesture::Scroll { x, y, delta_y } => {
++            let position = checked_position(window, *x, *y)?;
++            if !delta_y.is_finite() || delta_y.abs() > 120.0 {
++                return Err("CCER: invalid scroll magnitude".into());
++            }
++            send(
++                window,
++                WindowEvent::PointerScrolled {
++                    position,
++                    delta_x: 0.0,
++                    delta_y: *delta_y,
++                },
++            )
++        }
++        Gesture::Key { key } => {
++            let code = match key.as_str() {
++                "Escape" => Key::Escape,
++                "Left" => Key::LeftArrow,
++                "Right" => Key::RightArrow,
++                "Up" => Key::UpArrow,
++                "Down" => Key::DownArrow,
++                _ => return Err("CCER: key is not allowlisted".into()),
++            };
++            send(window, WindowEvent::KeyPressed { text: code.into() })?;
++            send(window, WindowEvent::KeyReleased { text: code.into() })
++        }
++        Gesture::Drag {
++            x,
++            y,
++            target_x,
++            target_y,
++            duration,
++        } => {
++            checked_position(window, *x, *y)?;
++            checked_position(window, *target_x, *target_y)?;
++            if !duration.is_finite() || !(0.15..=4.0).contains(duration) {
++                return Err("CCER: invalid drag duration".into());
++            }
++            // No invisible burst of mouse events. Requires an asynchronous
++            // timer that allows the scene to paint intermediate frames.
++            Err("CCER: timed observable drag is not implemented yet".into())
++        }
++    }
++}
++
++/// Real Slint window RGBA snapshot -> JPEG, no X server screen scraping.
++pub(crate) fn capture_jpeg(window: &Window) -> Result<Vec<u8>, String> {
++    let frame = window
++        .take_snapshot()
++        .map_err(|err| format!("CCER: Slint snapshot failed: {err}"))?;
++    let (width, height) = (frame.width(), frame.height());
++    if !(200..=8192).contains(&width) || !(200..=8192).contains(&height) {
++        return Err("CCER: invalid framebuffer dimensions".into());
++    }
++    let raw = image::RgbaImage::from_raw(width, height, frame.as_bytes().to_vec())
++        .ok_or_else(|| "CCER: invalid pixel buffer".to_string())?;
++    let rgb = image::DynamicImage::ImageRgba8(raw).into_rgb8();
++    let mut out = Vec::new();
++    image::codecs::jpeg::JpegEncoder::new_with_quality(&mut out, 78)
++        .encode(rgb.as_raw(), width, height, image::ExtendedColorType::Rgb8)
++        .map_err(|err| format!("CCER: JPEG compression failed: {err}"))?;
++    if out.len() < 512 {
++        return Err("CCER: empty Slint frame".into());
++    }
++    Ok(out)
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    #[test]
++    fn strict_payloads_refuse_extra_commands() {
++        let good = serde_json::json!({"type":"click", "x":20.0,"y":30.0});
++        assert_eq!(
++            serde_json::from_value::<Gesture>(good).unwrap(),
++            Gesture::Click { x: 20.0, y: 30.0 }
++        );
++        for bad in [
++            serde_json::json!({"type":"click","x":20.0,"y":30.0,"shell":"x"}),
++            serde_json::json!({"type":"project_create"}),
++            serde_json::json!({"type":"windowactivate"}),
++        ] {
++            assert!(serde_json::from_value::<Gesture>(bad).is_err());
++        }
++    }
++}
+diff --git a/src/crates/concat/src/lib.rs b/src/crates/concat/src/lib.rs
+index 3d8dfcd..65dda51 100644
+--- a/src/crates/concat/src/lib.rs
++++ b/src/crates/concat/src/lib.rs
+@@ -31,6 +31,9 @@ mod ui {
+     slint::include_modules!();
+ }
+ 
++#[cfg(all(target_os = "linux", feature = "ccer-inapp"))]
++mod ccer_input;
++
+ mod batch_volume;
+ mod chips;
+ mod dock;
+-- 
+2.43.0
+
