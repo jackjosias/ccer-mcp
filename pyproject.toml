@@ -10,6 +10,7 @@ dependencies=[]
 
 [project.scripts]
 ccer-mcp="ccer.cli:main"
+ccer-concat="ccer.concat_setup:main"
 ccer-direct-mcp="ccer.direct_cli:main"
 ccer-tunnel-setup="ccer.tunnel_setup:main"
 

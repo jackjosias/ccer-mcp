@@ -18,41 +18,51 @@ A guarded, **local-first** MCP gateway for **Concat Desktop** on Linux, macOS an
 - Explicit `window` or `headless` mode, no silent fallback, sandboxed write paths, bounded subprocess waits.
 - No Python runtime dependencies beyond the standard library. FFmpeg and FFprobe are optional for media QA.
 
-## Install on Ubuntu
+## CCER + Concat: install both
 
-From this directory:
+**[Concat](https://github.com/jub0t/Concat)** is the upstream, open-source video editor (AGPL-3.0-or-later). **CCER** is an independent MCP integration and does **not** bundle or claim ownership of Concat. Both programs are needed. See the [official releases](https://github.com/jub0t/Concat/releases/latest) and [installation guide](https://concat.standalones.org/guides/install/).
 
-    python3 -m pip install --user --no-build-isolation -e .
+### Ubuntu / Linux (x86_64 or aarch64)
 
-Or directly, without installing:
+```bash
+sudo apt update
+sudo apt install -y python3 python3-venv ffmpeg
+git clone https://github.com/jackjosias/ccer-mcp.git
+cd ccer-mcp
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -e .
+ccer-concat --check      # latest official version; no writes
+ccer-concat --install    # install or update signed-by-checksum official AppImage
+ccer-concat --status     # find installed executable, without network
+```
 
-    python3 -m ccer --concat-bin /home/your-user/WORKSPACE-LOGICIEL/concat/Concat-0.2.8-x86_64.AppImage --mode window
+The installer chooses the latest *official stable* GitHub release for Linux and your CPU architecture (latest verified: `v0.2.8` on 30 October 2026), checks the GitHub SHA-256 digest and file size, and installs under `~/.local/share/ccer/concat/`. `--install` is **explicit and idempotent**. Neither `--check` nor MCP startup downloads or changes software. A running Concat process or a manually installed / instrumented Concat binary is **never closed, overwritten or restarted** by the installer.
 
-Concat Desktop must be open with Settings → Automation → Scripts and apps **enabled**.
-The Concat MCP subprocess obtains its loopback token from the local owner-only `automation.json`. Never paste it into configurations or logs.
+On Windows or macOS, install [Concat from upstream](https://github.com/jub0t/Concat/releases/latest), and configure `CCER_CONCAT_BIN` with its absolute executable path. On Linux, an existing executable can be selected with `export CCER_CONCAT_BIN=/absolute/path/to/concat`; this overrides the managed AppImage.
 
-## Client configuration
+### Standard MCP versus CCER native GUI
 
-Place this in the MCP client's local configuration (adjust paths):
+- **Official Concat / standard MCP:** enable **Settings → Automation → Scripts and apps** and launch `ccer-mcp --mode window`. This uses Concat's own MCP engine, which does *not* control an already-open timeline in Concat's desktop window.
+- **Live GUI control via Slint:** `ccer-direct-mcp --access control` requires a **CCER-instrumented Concat build**. The official AppImage does *not* contain CCER's private authenticated Slint bridge. See [Native Slint](docs/CCER_NATIVE_SLINT.md) and [Visible Desktop](docs/CCER_VISIBLE_DESKTOP.md) before setting `CCER_CONCAT_BIN` to your custom build. The direct mode does not launch a second editor.
+- **Version updates:** `ccer-concat --check` checks GitHub without downloading; `ccer-concat --install` explicitly installs the verified official latest version. For a patched build, apply the documented patches to a compatible source release only; never hot-swap a running patched editor.
 
-    {
-      "mcpServers": {
-        "ccer": {
-          "command": "/usr/bin/python3",
-          "args": [
-            "-m", "ccer",
-            "--concat-bin", "/home/your-user/WORKSPACE-LOGICIEL/concat/Concat-0.2.8-x86_64.AppImage",
-            "--mode", "window",
-            "--root", "/home/your-user/Videos/CCER"
-          ],
-          "env": {
-            "PYTHONPATH": "/home/your-user/WORKSPACE-LOGICIEL/concat/ccer-mcp"
-          }
-        }
-      }
+## MCP client configuration
+
+After Linux setup, use this standard MCP example (replace the absolute path with your own checkout):
+
+```json
+{
+  "mcpServers": {
+    "ccer": {
+      "command": "/absolute/path/to/ccer-mcp/.venv/bin/ccer-mcp",
+      "args": ["--mode", "window"]
     }
+  }
+}
+```
 
-`--root` scopes project creation, editing and export to a dedicated folder. Keep production source clips in that folder or explicitly import them into it first. The gateway creates the root if absent. No public network listener is opened.
+Or run `python -m ccer --concat-bin /absolute/path/to/concat --mode window`. CCER reports an actionable error if the selected executable does not exist. The gateway's `--root` scopes writes to a dedicated media folder (default `~/Videos/CCER`); do not paste Concat automation tokens into configs or Git.
 
 ## Production workflow — developer-only native Gateway
 
