@@ -23,8 +23,8 @@ from .inapp_protocol import InAppComputerUse
 
 HOME = Path.home()
 PROJECT = Path(__file__).resolve().parent.parent
-EXE = PROJECT / ".upstream-concat/src/target/debug/concat"
-LIBS = PROJECT / ".upstream-concat/.ccer-ffmpeg7/lib"
+EXE = Path(os.environ.get("CCER_NATIVE_BIN", str(PROJECT / ".upstream-concat/src/target/debug/concat"))).expanduser()
+LIBS = Path(os.environ.get("CCER_NATIVE_LIB_DIR", str(PROJECT / ".upstream-concat/.ccer-ffmpeg7/lib"))).expanduser()
 ROOT = HOME / ".local/state/ccer-inapp"
 STATE = ROOT / "desktop.json"
 EVIDENCE = PROJECT / ".runtime/ccer-desktop-evidence"
