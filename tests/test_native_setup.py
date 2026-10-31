@@ -74,6 +74,13 @@ class NativeSetupTests(unittest.TestCase):
             with self.assertRaisesRegex(setup.SetupError, "certified native fork"):
                 setup.verify(self.dest, patches=self.digests)
 
+    def test_network_opt_in_requires_build_and_forwards_choice(self):
+        with patch.object(setup, "patches_verified", return_value=[]):
+            self.assertEqual(setup.main(["--check", "--allow-downloads"]), 1)
+            with patch.object(setup, "build", return_value=self.root / "concat") as build:
+                self.assertEqual(setup.main(["--build", "--allow-downloads"]), 0)
+                build.assert_called_once_with(setup.DEST, None, True)
+
     def test_dirty_source_refused(self):
         self.file.write_text("unsaved\n")
         with self.assertRaisesRegex(setup.SetupError, "local edits"):

@@ -145,15 +145,17 @@ def fetch_source():
     return verify_source(target)
 
 
-def build(target=DEST, target_cache=None):
+def build(target=DEST, target_cache=None, allow_downloads=False):
     """Explicit Cargo build; no launch, kill, switch or system package install."""
     target = verify(target)
     cargo = shutil.which("cargo")
     if not cargo:
         raise SetupError("Cargo missing; install the Rust toolchain first")
     args = [cargo, "build", "--manifest-path", str(target / "src/Cargo.toml"),
-            "--locked", "--offline", "-p", "concat", "--bin", "concat",
+            "--locked", "-p", "concat", "--bin", "concat",
             "--features", "ccer-inapp", "-j", "2"]
+    if not allow_downloads:
+        args.append("--offline")
     env = dict(os.environ)
     vendor = SOURCE / ".ccer-ffmpeg7"
     sysroot = SOURCE / ".ccer-build-deps/root"
@@ -192,6 +194,7 @@ def main(argv=None):
     parser.add_argument("--source", type=Path, default=SOURCE)
     parser.add_argument("--dest", type=Path, default=DEST)
     parser.add_argument("--target-cache", type=Path, help="Existing Cargo target directory inside CCER; only for --build")
+    parser.add_argument("--allow-downloads", action="store_true", help="Explicitly permit Cargo to retrieve missing crates during --build")
     parser.add_argument("--fetch", action="store_true",
                         help="Network opt-in: clone pinned official Concat v0.2.8")
     args = parser.parse_args(argv)
@@ -200,6 +203,8 @@ def main(argv=None):
             raise SetupError("--fetch only allowed with --prepare")
         if args.target_cache and not args.build:
             raise SetupError("--target-cache only allowed with --build")
+        if args.allow_downloads and not args.build:
+            raise SetupError("--allow-downloads only allowed with --build")
         files = patches_verified()
         if args.check:
             print(f"CCER native: {len(files)} verified patches; base {BASE[:12]}")
@@ -214,7 +219,7 @@ def main(argv=None):
         elif args.verify:
             print("VERIFIED", verify(args.dest))
         else:
-            print("BUILT", build(args.dest, args.target_cache))
+            print("BUILT", build(args.dest, args.target_cache, args.allow_downloads))
         return 0
     except (SetupError, OSError, ValueError) as exc:
         print("CCER native setup refused:", exc, file=sys.stderr)
