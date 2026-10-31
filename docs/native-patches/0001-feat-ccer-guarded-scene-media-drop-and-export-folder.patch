@@ -1,5 +1,5 @@
 From 9c5987fd88e4f4a06d13185f244c95b67824e0d0 Mon Sep 17 00:00:00 2001
-From: jackjosias <jackjosias@users.noreply.github.com>
+From: CCER Contributors <noreply@users.noreply.github.com>
 Date: Sat, 24 Oct 2026 20:17:43 +0100
 Subject: [PATCH] feat(ccer): guarded scene media drop and export folder
  through Concat UI

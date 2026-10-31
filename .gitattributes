@@ -1,0 +1,3 @@
+# Preserve native Git patch whitespace exactly for SHA-256 reproducibility.
+# Patch text has intentional '+ ' lines from the pinned Concat fork.
+docs/native-patches/*.patch -whitespace

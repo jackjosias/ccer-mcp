@@ -1,5 +1,5 @@
 From 3a63096134e6bce14b425c69f0e1c4f17c70e706 Mon Sep 17 00:00:00 2001
-From: jackjosias <jackjosias@users.noreply.github.com>
+From: CCER Contributors <noreply@users.noreply.github.com>
 Date: Fri, 23 Oct 2026 21:20:13 +0100
 Subject: [PATCH] feat(concat): stage opt-in Slint computer-use events and real
  snapshots

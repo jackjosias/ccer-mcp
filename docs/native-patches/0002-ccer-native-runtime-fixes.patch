@@ -1,0 +1,189 @@
+diff --git a/.ccer-cargo-check.sh b/.ccer-cargo-check.sh
+index 3d385c6..6350758 100644
+--- a/.ccer-cargo-check.sh
++++ b/.ccer-cargo-check.sh
+@@ -13,6 +13,9 @@ mode="${1:-check}"
+ case "$mode" in
+   check) cargo check --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --lib --features ccer-inapp -j 2 ;;
+   build) cargo build --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --bin concat --features ccer-inapp -j 2 ;;
++  build-bfd) cargo rustc --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --bin concat --features ccer-inapp -j 2 -- -C linker=cc -C link-arg=-fuse-ld=bfd ;;
++  build-lite) cargo --config 'profile.dev.package.concat.opt-level=0' --config 'profile.dev.package.concat.debug=0' --config 'profile.dev.package.concat.codegen-units=256' rustc --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --bin concat --features ccer-inapp -j 1 -- -C linker=cc -C link-arg=-fuse-ld=bfd ;;
+   test) cargo test --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --lib --features ccer-inapp -j 1 ;;
++  test-lite) cargo --config 'profile.test.package.concat.debug=0' --config 'profile.test.package.concat.opt-level=0' test --manifest-path .upstream-concat/src/Cargo.toml --offline --locked -p concat --lib --features ccer-inapp -j 1 ;;
+   *) echo "CCER: unsupported Cargo mode" >&2; exit 2 ;;
+ esac
+diff --git a/.ccer-fetch-build-deps.sh b/.ccer-fetch-build-deps.sh
+index 0f5c00e..e3ff344 100644
+--- a/.ccer-fetch-build-deps.sh
++++ b/.ccer-fetch-build-deps.sh
+@@ -3,7 +3,10 @@ set -euo pipefail
+ root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.ccer-build-deps"
+ mkdir -p "$root"
+ cd "$root"
+-apt download libfontconfig-dev libfreetype-dev libexpat1-dev uuid-dev libpng-dev libbrotli-dev libavutil-dev libavcodec-dev libavformat-dev libavfilter-dev libavdevice-dev libswscale-dev libswresample-dev libpostproc-dev libasound2-dev
++apt download libfontconfig-dev libfreetype-dev libexpat1-dev uuid-dev libpng-dev libbrotli-dev libavutil-dev libavcodec-dev libavformat-dev libavfilter-dev libavdevice-dev libswscale-dev libswresample-dev libpostproc-dev libasound2-dev libasound2t64 libfreetype6 libbrotli1 libpng16-16t64 libexpat1 libfontconfig1 libuuid1
+ mkdir -p root
+ for package in ./*.deb; do dpkg-deb -x "$package" root; done
+ ls root/usr/lib/x86_64-linux-gnu/pkgconfig/{fontconfig,freetype2,expat,uuid,libavutil,libavcodec,libavformat,libavfilter,libavdevice,libswscale,libswresample,libpostproc,alsa}.pc
++for library in libasound.so libfreetype.so libbrotlidec.so libbrotlicommon.so libpng16.so libexpat.so libfontconfig.so libuuid.so; do
++  test -f "root/usr/lib/x86_64-linux-gnu/$library" || { echo "CCER: unresolved shared library $library" >&2; exit 1; }
++done
+diff --git a/src/crates/concat/src/ccer_input.rs b/src/crates/concat/src/ccer_input.rs
+index 65cf7f6..bc6698e 100644
+--- a/src/crates/concat/src/ccer_input.rs
++++ b/src/crates/concat/src/ccer_input.rs
+@@ -30,6 +30,10 @@ pub(crate) enum Gesture {
+     Key {
+         key: String,
+     },
++    #[serde(rename = "type_text")]
++    TypeText {
++        text: String,
++    },
+     Drag {
+         x: f32,
+         y: f32,
+@@ -106,6 +110,26 @@ pub(crate) fn dispatch(window: &Window, gesture: &Gesture) -> Result<(), String>
+             )
+         }
+         Gesture::Key { key } => {
++            if key == "SelectAll" {
++                // Modifiers belong to this Slint window, not the physical desktop.
++                send(
++                    window,
++                    WindowEvent::KeyPressed {
++                        text: Key::Control.into(),
++                    },
++                )?;
++                let selection = (|| {
++                    send(window, WindowEvent::KeyPressed { text: "a".into() })?;
++                    send(window, WindowEvent::KeyReleased { text: "a".into() })
++                })();
++                let release = send(
++                    window,
++                    WindowEvent::KeyReleased {
++                        text: Key::Control.into(),
++                    },
++                );
++                return selection.and(release);
++            }
+             let code = match key.as_str() {
+                 "Escape" => Key::Escape,
+                 "Left" => Key::LeftArrow,
+@@ -117,6 +141,31 @@ pub(crate) fn dispatch(window: &Window, gesture: &Gesture) -> Result<(), String>
+             send(window, WindowEvent::KeyPressed { text: code.into() })?;
+             send(window, WindowEvent::KeyReleased { text: code.into() })
+         }
++        Gesture::TypeText { text } => {
++            let count = text.chars().count();
++            if count == 0
++                || count > 160
++                || text.len() > 1024
++                || text
++                    .chars()
++                    .any(|c| c.is_control() || (c.is_whitespace() && c != ' '))
++            {
++                return Err("CCER: text input must be 1..160 printable characters".into());
++            }
++            // Slint needs individual Unicode key events. One authorized gesture,
++            // one BEFORE/AFTER receipt, and no X11 fallback.
++            for character in text.chars() {
++                let key = character.to_string();
++                send(
++                    window,
++                    WindowEvent::KeyPressed {
++                        text: key.clone().into(),
++                    },
++                )?;
++                send(window, WindowEvent::KeyReleased { text: key.into() })?;
++            }
++            Ok(())
++        }
+         Gesture::FileDrop { .. } => {
+             Err("CCER: file drop must use Concat shared drop handler".into())
+         }
+@@ -219,8 +268,8 @@ fn drag_step(
+     });
+ }
+ 
+-/// Real Slint window RGBA snapshot -> JPEG, no X server screen scraping.
+-pub(crate) fn capture_jpeg(window: &Window) -> Result<Vec<u8>, String> {
++/// Snapshot only on the Slint event loop; JPEG encoding runs on the socket worker.
++pub(crate) fn capture_pixels(window: &Window) -> Result<(u32, u32, Vec<u8>), String> {
+     let frame = window
+         .take_snapshot()
+         .map_err(|err| format!("CCER: Slint snapshot failed: {err}"))?;
+@@ -228,7 +277,12 @@ pub(crate) fn capture_jpeg(window: &Window) -> Result<Vec<u8>, String> {
+     if !(200..=8192).contains(&width) || !(200..=8192).contains(&height) {
+         return Err("CCER: invalid framebuffer dimensions".into());
+     }
+-    let raw = image::RgbaImage::from_raw(width, height, frame.as_bytes().to_vec())
++    Ok((width, height, frame.as_bytes().to_vec()))
++}
++
++/// CPU-heavy conversion never blocks Slint's event loop.
++pub(crate) fn encode_jpeg(width: u32, height: u32, pixels: Vec<u8>) -> Result<Vec<u8>, String> {
++    let raw = image::RgbaImage::from_raw(width, height, pixels)
+         .ok_or_else(|| "CCER: invalid pixel buffer".to_string())?;
+     let rgb = image::DynamicImage::ImageRgba8(raw).into_rgb8();
+     let mut out = Vec::new();
+diff --git a/src/crates/concat/src/ccer_server.rs b/src/crates/concat/src/ccer_server.rs
+index 27a00af..81b8163 100644
+--- a/src/crates/concat/src/ccer_server.rs
++++ b/src/crates/concat/src/ccer_server.rs
+@@ -188,7 +188,8 @@ struct Session {
+ }
+ impl Session {
+     fn frame(&mut self) -> Result<Value, String> {
+-        let jpeg = on_ui(ccer_input::capture_jpeg)?;
++        let (width, height, pixels) = on_ui(ccer_input::capture_pixels)?;
++        let jpeg = ccer_input::encode_jpeg(width, height, pixels)?;
+         let digest = hash(&jpeg);
+         self.count = self
+             .count
+diff --git a/src/crates/concat/src/panes/monitor.rs b/src/crates/concat/src/panes/monitor.rs
+index fea68d6..5303b1e 100644
+--- a/src/crates/concat/src/panes/monitor.rs
++++ b/src/crates/concat/src/panes/monitor.rs
+@@ -138,6 +138,12 @@ impl Cadence {
+     }
+ }
+ 
++/// Only continuous playback uses the GPU texture compositor.
++/// A static seek uses the existing CPU RGBA path, one frame at a time.
++fn gpu_preview_for(moving: bool, gpu_available: bool) -> bool {
++    moving && gpu_available
++}
++
+ impl MonitorPane {
+     /// Applies one message. The studio is the rest of the window; while
+     /// this runs the studio's copy of the pane is a blank it must not read.
+@@ -262,7 +268,12 @@ impl MonitorPane {
+             move || {
+                 // On the window's device the frame stays a texture; without
+                 // one it comes back as pixels and is uploaded here.
+-                let frame = if monitor.has_gpu() {
++                // A single paused seek must produce an independently drawable
++                // image. On some Intel/Mesa desktops, the GPU texture route
++                // may show no still frame until playback starts advancing.
++                // Keep GPU composition for continuous playback; render only
++                // discrete paused frames into bounded RGBA pixels instead.
++                let frame = if gpu_preview_for(spec.moving, monitor.has_gpu()) {
+                     monitor
+                         .frame_sources(Arc::clone(&clips), &settings, spec)
+                         .map(Picture::Sources)
+@@ -301,6 +312,14 @@ impl MonitorPane {
+ mod tests {
+     use super::*;
+ 
++    #[test]
++    fn paused_seek_uses_bounded_rgba_without_gpu_texture() {
++        assert!(!gpu_preview_for(false, true));
++        assert!(!gpu_preview_for(false, false));
++        assert!(!gpu_preview_for(true, false));
++        assert!(gpu_preview_for(true, true));
++    }
++
+     #[test]
+     fn a_frame_is_even_sided_and_never_vanishes() {
+         assert_eq!(MonitorPane::frame_size(0, (1920, 1080)), (1920, 1080));

@@ -1,5 +1,5 @@
 From a6d2a3190c037ebdc51201285dcaf87a2bccf74f Mon Sep 17 00:00:00 2001
-From: jackjosias <jackjosias@users.noreply.github.com>
+From: CCER Contributors <noreply@users.noreply.github.com>
 Date: Sat, 24 Oct 2026 18:06:39 +0100
 Subject: [PATCH] build(ccer): use two Cargo jobs for native desktop binary
 

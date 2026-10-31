@@ -1,5 +1,5 @@
 From ea7294e07a4c6617a2281e804e493264b58974fc Mon Sep 17 00:00:00 2001
-From: jackjosias <jackjosias@users.noreply.github.com>
+From: CCER Contributors <noreply@users.noreply.github.com>
 Date: Sat, 24 Oct 2026 15:36:16 +0100
 Subject: [PATCH] feat(ccer): paced native Slint drag and controlled build mode
 

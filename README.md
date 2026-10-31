@@ -86,6 +86,21 @@ python3 docs/render_architecture.py --write
 python3 docs/render_architecture.py --check
 ```
 
+## Installer le pont natif Rust/Slint
+
+Pour le **contrôle réel de la fenêtre Concat**, l'AppImage officielle seule ne suffit pas. CCER propose une préparation reproductible du Concat instrumenté à partir des sources officielles épinglées et de **six patchs vérifiés** :
+
+```bash
+ccer-native --check
+ccer-native --prepare --fetch   # réseau explicite
+ccer-native --verify
+ccer-native --build             # compilation Cargo explicite
+```
+
+Si un clone Git officiel propre existe déjà, utilisez `ccer-native --prepare --source /CHEMIN/VERS/CONCAT` pour éviter le téléchargement. La préparation crée un *worktree* distinct, sans remplacer les montages ni démarrer Concat.
+
+**[Guide CCER Native Setup V1 : prérequis, compilation et vérification](docs/CCER_NATIVE_SETUP.md)**
+
 ## Tests et sécurité
 
 ```bash
