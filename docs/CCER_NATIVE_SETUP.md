@@ -41,7 +41,13 @@ Le nouvel arbre de travail utilise `git worktree` sous `.runtime/concat-native-p
 ccer-native --build
 ```
 
-Cette commande utilise Cargo avec `--locked --offline --features ccer-inapp -j 2`. Elle exige que les dépendances de développement et le cache Cargo soient disponibles ; elle ne lance et ne ferme jamais Concat.
+Cette commande utilise Cargo avec `--locked --offline --features ccer-inapp -j 2`. Elle exige que les dépendances de développement et le cache Cargo soient disponibles ; elle ne lance et ne ferme jamais Concat. Si le cache des crates est vide sur un nouveau poste, autorisez **explicitement** leur téléchargement lors de la compilation :
+
+```bash
+ccer-native --build --allow-downloads
+```
+
+Le réseau reste désactivé par défaut ; cette option peut télécharger les dépendances Rust et leur chaîne de compilation, mais ne lance toujours pas Concat.
 
 Pour réutiliser volontairement un cache Cargo existant au lieu de produire une seconde copie volumineuse :
 
@@ -50,7 +56,7 @@ export CCER_NATIVE_CARGO_TARGET_DIR=/CHEMIN/CCER/.upstream-concat/src/target
 ccer-native --build
 ```
 
-Le chemin du cache doit correspondre à un dossier réel du dépôt CCER. Sans cache personnalisé, le binaire attendu est `.runtime/concat-native-prepared/src/target/debug/concat`.
+Le chemin du cache doit correspondre à un dossier réel du dépôt CCER. **Attention : un cache Cargo partagé peut régénérer et remplacer ses artefacts de compilation, y compris son binaire `debug/concat`. N'utilisez ce mode que si aucune instance de ce binaire n'est en cours d'exécution.** Sans cache personnalisé, le binaire attendu est `.runtime/concat-native-prepared/src/target/debug/concat`.
 
 ## Utiliser la version instrumentée
 
