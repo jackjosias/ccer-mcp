@@ -1,285 +1,290 @@
-# CCER — Creative Engineering Runtime
+<div align="center">
 
-<p align="center"><strong>Passerelle MCP pour Concat Desktop · Montage contrôlé, preuves visuelles et analyse audiovisuelle locale.</strong></p>
+# CCER
+### Creative Engineering Runtime
 
-<p align="center"><a href="https://www.python.org/"><img alt="Python 3.10+" src="https://img.shields.io/badge/Python-3.10%2B-3776AB"></a> <a href="https://modelcontextprotocol.io/"><img alt="MCP" src="https://img.shields.io/badge/Interface-MCP-118D83"></a> <a href="https://github.com/jub0t/Concat"><img alt="Concat" src="https://img.shields.io/badge/Éditeur-Concat-243B56"></a> <img alt="Développement" src="https://img.shields.io/badge/Statut-en%20développement-E9A23B"></p>
+**ChatGPT ↔ MCP ↔ Concat Desktop.** Montage vidéo observable, inspection audiovisuelle locale, gestes autorisés et vérification des résultats.
 
-**CCER** relie les clients MCP à [Concat Desktop](https://github.com/jub0t/Concat). Il utilise des contrôles locaux, FFmpeg/FFprobe et, avec Concat instrumenté, des captures et gestes vérifiés dans la fenêtre native.
+![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB)
+![MCP](https://img.shields.io/badge/Protocol-MCP-2563EB)
+![Concat](https://img.shields.io/badge/Editor-Concat-374151)
+![Statut](https://img.shields.io/badge/Statut-en%20d%C3%A9veloppement-E9A23B)
+
+**[📒 CHANGELOG — historique chronologique des fonctionnalités, incidents et corrections](CHANGELOG.md)**
+
+[Vision](#vision) · [Diagrammes](#diagrammes) · [Fonctionnement](#fonctionnement) · [Architecture](#architecture) · [Installation](#installation) · [Intelligence A/V](#intelligence-av) · [Sécurité](#securite) · [Documentation](#documentation)
+
+</div>
+
+### Documentation du projet — accès direct
+
+| [README](README.md) | **[📒 CHANGELOG](CHANGELOG.md)** | [Code de conduite](CODE_OF_CONDUCT.md) | [Contribuer](CONTRIBUTING.md) | [Sécurité](SECURITY.md) |
+|:---:|:---:|:---:|:---:|:---:|
+| Vision, fonctionnement, installation | Historique vérifié, récent en premier | Règles communautaires | Git, tests, PR | Permissions et protection des médias |
 
 > [!IMPORTANT]
-> **CCER et Concat sont complémentaires mais indépendants.** La release officielle permet le MCP standard. Le contrôle visuel natif requiert un **Concat instrumenté avec pont Slint**. Aucun téléchargement ou redémarrage automatique n'est effectué au lancement.
+> **CCER et Concat sont indépendants.** [Concat Desktop](https://github.com/jub0t/Concat) est l'éditeur vidéo en amont. La passerelle MCP standard ne contrôle **pas automatiquement** la timeline déjà ouverte dans la fenêtre de l'utilisateur. Le contrôle direct d'une fenêtre Concat exige une **version instrumentée avec pont Slint** et une session authentifiée.
 
-## Sommaire
+---
 
-- [Vision](#vision)
-- [Fonctionnalités](#fonctionnalités)
-- [Prérequis et installation](#prérequis-et-installation)
-- [Architecture](#architecture)
-- [Configuration MCP](#client-configuration)
-- [Tests et sécurité](#tests-et-sécurité)
-- [Licence](#license)
-
+<a id="vision"></a>
 ## Vision
 
-**Automatiser sans intervenir à l'aveugle.** CCER vise un contrôle du montage observable, vérifiable et non destructif, tout en préservant les médias originaux. Les contrôles techniques ne remplacent pas une appréciation créative.
+**Observer → comprendre → autoriser → agir → vérifier.**
 
-## Fonctionnalités
+CCER (*Creative Engineering Runtime*) relie un client compatible [Model Context Protocol](https://modelcontextprotocol.io/) à Concat Desktop. Il vise une assistance au montage **visible et vérifiable**, sans agir sur les rushs originaux ni prendre le contrôle du bureau humain à l'insu de son propriétaire.
 
-| Domaine | Capacités | Précision |
-| --- | --- | --- |
-| MCP | Outils natifs de Concat et analyses CCER | Le mode standard peut utiliser un processus distinct |
-| Bureau visible | Captures et gestes natifs Slint | Nécessite Concat instrumenté |
-| Média | FFmpeg, FFprobe, timecodes, images et audio | Analyse technique, pas vision autonome |
-| Sûreté | Autorisations, périmètres, avant/après, timeouts | Pas de rejeu aveugle d'une action incertaine |
+| Domaine | Capacité | Limite |
+|---|---|---|
+| **MCP** | Outils Concat et modules CCER | Dépend du binaire et du profil d'accès |
+| **Vidéo** | FFmpeg/FFprobe, images horodatées et événements | Pas de vision continue exhaustive garantie |
+| **Audio** | Pistes, silences, niveaux, impulsions | Indices techniques, non jugement artistique |
+| **Whisper / SRT** | Vérification du modèle intégré, analyses de sous-titres | Modèle présent ≠ transcription exécutée |
+| **Bureau visible** | Captures, gestes Slint et preuves avant/après | Build Concat instrumenté requis |
+| **Production** | Préparation, outils de rendu et QA | Mutation invisible interdite dans ChatGPT Direct |
+| **Sûreté** | Consentement, chemins bornés, audit et rétention | Résultat incertain ≠ action annulée |
 
-**RÈGLE PERMANENTE POUR CHATGPT : montage visuel manuel obligatoire.**
-Chaque action modifiant Concat exige une capture avant, un geste réel souris/clavier,
-puis une capture après. Aucune mutation headless n'est permise via le connecteur.
-Voir [CCER GUI-FIRST](docs/CCER_GUI_FIRST_CONTRACT.md) et
-[isolation focus/souris](docs/CCER_FOCUS_ISOLATION.md).
-**Aucune action CCER n'est autorisée sur le focus ou le pointeur du bureau
-humain.** Le rendu Concat dans un Xvfb isolé reste bloqué par Vulkan/DRI3.
+**Statut :** package Python `0.1.0` ([`pyproject.toml`](pyproject.toml)), en développement. CCER ne revendique **ni la parité complète avec CapCut ni l'autonomie d'un monteur humain**. Pour les résultats datés, voir le [CHANGELOG](CHANGELOG.md).
 
-A guarded, **local-first** MCP gateway for **Concat Desktop** on Linux, macOS and Windows.
+<a id="diagrammes"></a>
+## Atlas visuel des diagrammes
 
-## Implemented
+À la différence de WCER, le dépôt CCER versionne actuellement **un schéma d'architecture** (source Mermaid + SVG). Deux flux complémentaires sont dessinés directement dans ce README ; aucun autre SVG n'est présenté comme déjà disponible.
 
-- Dynamically exposes every native Concat MCP tool (42 in the tested Concat 0.2.8).
-- Adds 43 CCER tools: governed editing, creative planning, local audio/video inspection, subtitle preparation, offline English speech, directed rendering, and complete studio production: preflight, project inspection, checkpoints, rollback, timeline QA, transactional batch editing, media probe, audio QA, export QA, mission status, safe recovery and tamper-evident audit.
-- Uses the **same native Concat engine** over MCP stdio; does not attempt to edit Concat's open on-screen project (upstream v0.2.8 constraint).
-- Explicit `window` or `headless` mode, no silent fallback, sandboxed write paths, bounded subprocess waits.
-- No Python runtime dependencies beyond the standard library. FFmpeg and FFprobe are optional for media QA.
+| Sujet | Accès | Explication |
+|---|---|---|
+| Architecture globale | [SVG](docs/architecture.svg) · [source Mermaid](docs/architecture.mmd) | Modules, passerelle MCP et Concat |
+| Contrôle de la fenêtre | [Flux GUI-FIRST](#fonctionnement) | Permission et preuve de l'action |
+| Intelligence média | [Flux A/V](#intelligence-av) | Décodage, analyse et contrôle du rendu |
 
-## Prérequis et installation
+Index détaillé : [docs/README.md](docs/README.md).
 
-| Composant | Exigence |
-| --- | --- |
-| Python | 3.10+ avec `venv` |
-| Git | Récupération du dépôt |
-| Concat Desktop | [Releases officielles](https://github.com/jub0t/Concat/releases/latest) |
-| FFmpeg et FFprobe | Contrôles audio/vidéo |
+<a id="architecture"></a>
+## Architecture
+
+![Architecture CCER et Concat](docs/architecture.svg)
+
+*Diagramme versionné : [architecture.mmd](docs/architecture.mmd).*
+
+```text
+Client MCP (ChatGPT ou autre)
+  │
+  ├─ ccer-mcp (standard) ──────────> moteur MCP Concat distinct
+  │
+  └─ ccer-direct-mcp ──────────────> DirectGateway
+                                      ├─ observer / capturer la fenêtre Slint
+                                      ├─ vérifier session + consentement
+                                      └─ geste natif → image après action
+
+CCER lecture / QA ────> FFmpeg / FFprobe
+                       ├─ images et événements horodatés
+                       └─ audio, SRT, plans et vérification des exports
+```
+
+### Organisation des sources
+
+| Modules | Responsabilité |
+|---|---|
+| `ccer/cli.py`, `ccer/server.py`, `ccer/transport.py` | CLI et protocole MCP standard |
+| `ccer/direct_cli.py`, `ccer/direct_gateway.py` | Mode Direct et garde-fous |
+| `ccer/inapp_protocol.py`, `ccer/native_desktop.py` | Attestation, captures et gestes Slint |
+| `ccer/desktop_gui.py`, `ccer/focus_isolation.py` | Observation graphique et non-interférence |
+| `ccer/production.py`, `ccer/studio_pipeline.py` | Workflows de production et QA |
+| `ccer/timecoded_review.py`, `ccer/av_event_cursor.py` | Preuves temporelles A/V |
+| `ccer/av_replay_poll.py`, `ccer/audio_evidence.py` | Lecture bornée et indices audio |
+| `ccer/asr_readiness.py`, `ccer/av_timeline.py` | Whisper intégré, transcriptions/SRT |
+| `ccer/controls.py`, `ccer/evidence_retention.py` | Sécurité, audit et rétention |
+
+**Nombre d'outils :** consulter le catalogue réel du serveur MCP, pas les anciens décomptes incrémentés au fil du développement.
+
+<a id="fonctionnement"></a>
+## Fonctionnement : de la capture à la vérification
+
+```mermaid
+flowchart LR
+    A["Demande"] --> B["Capturer Concat"]
+    B --> C{"Session native attestée ?"}
+    C -->|Non| X["Refuser / diagnostiquer"]
+    C -->|Oui| D["Vérifier l'autorisation"]
+    D --> E["Un geste Slint"]
+    E --> F["Capturer après"]
+    F --> G{"Résultat observé ?"}
+    G -->|Non| X
+    G -->|Oui| H["Continuer ou livrer"]
+```
+
+**MCP standard :** expose un moteur Concat accessible par MCP et des outils CCER. Il peut utiliser un processus **distinct** de l'éditeur personnel.
+
+**MCP Direct GUI-FIRST :** n'agit que sur une session instrumentée attestée, capture une image **AVANT** chaque geste, exécute une action autorisée, puis inspecte l'image **APRÈS**. `observe` est en lecture seule ; `control` reste strictement GUI-FIRST.
+
+| Étape | Contrôle |
+|---|---|
+| Préflight | Processus, fenêtre, capabilities et authentification |
+| Observation | Image réelle récente, identifiant de fenêtre et reçu |
+| Consentement | Confirmation explicite si requise |
+| Action | Une interaction native, sans souris physique |
+| Vérification | Capture après et résultat indépendant |
+| Erreur / timeout | Arrêt, inspection, jamais rejeu aveugle |
+
+Contrats : [GUI-FIRST](docs/CCER_GUI_FIRST_CONTRACT.md), [pont Slint](docs/CCER_NATIVE_SLINT.md), [bureau visible](docs/CCER_VISIBLE_DESKTOP.md), [focus](docs/CCER_FOCUS_ISOLATION.md).
+
+<a id="installation"></a>
+## Installation
+
+### Prérequis
+
+| Outil | Requis pour |
+|---|---|
+| **Python 3.10+**, `venv`, Git | Installer et exécuter CCER |
+| **Concat Desktop** | Éditeur vidéo distinct de la passerelle |
+| **FFmpeg / FFprobe** | Inspection audio/vidéo et vérification |
+| **Rust, Cargo, bibliothèques natives** | Compiler Concat instrumenté |
+| **Session graphique Linux compatible** | Pont Slint natif actuel |
+| **Client MCP** | Envoyer les commandes au serveur stdio |
+
+**[`requirements.txt`](requirements.txt)** est présent et volontairement minimal : **aucune dépendance pip tierce obligatoire**. Concat, FFmpeg et Rust sont des prérequis système distincts.
+
+### Ubuntu / Linux — installation de CCER
 
 ```bash
 sudo apt update
 sudo apt install -y git python3 python3-venv ffmpeg
+
 git clone https://github.com/jackjosias/ccer-mcp.git
 cd ccer-mcp
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m pip install -e .
+```
+
+Le package expose `ccer-mcp`, `ccer-concat`, `ccer-native`, `ccer-direct-mcp` et `ccer-tunnel-setup`. **Cela n'installe pas automatiquement Concat.**
+
+### Concat officiel (Linux)
+
+```bash
 ccer-concat --check
-ccer-concat --install
+ccer-concat --install   # installation explicite
 ccer-concat --status
 ```
 
-Le [`requirements.txt`](requirements.txt) indique qu'aucune dépendance Python tierce n'est obligatoire. Concat et FFmpeg sont installés séparément. L'AppImage est vérifiée par SHA-256, sans mise à jour silencieuse.
+L'installation vérifie le téléchargement par SHA-256 ; **une somme de contrôle n'est pas une signature d'éditeur**. Ne pas substituer silencieusement un nouveau binaire au Concat en cours d'exécution.
 
-## Architecture
-
-![Architecture CCER et Concat](docs/architecture.svg)
-
-[Source Mermaid](docs/architecture.mmd) · [SVG versionné](docs/architecture.svg). Régénération déterministe :
+Pour réutiliser un binaire existant :
 
 ```bash
-python3 docs/render_architecture.py --write
-python3 docs/render_architecture.py --check
+export CCER_CONCAT_BIN=/chemin/absolu/vers/concat
 ```
 
-## Installer le pont natif Rust/Slint
+Sur **macOS/Windows**, installer [Concat officiellement](https://github.com/jub0t/Concat/releases/latest) et utiliser le chemin du binaire approprié ; le flux AppImage n'est pas multiplateforme.
 
-Pour le **contrôle réel de la fenêtre Concat**, l'AppImage officielle seule ne suffit pas. CCER propose une préparation reproductible du Concat instrumenté à partir des sources officielles épinglées et de **six patchs vérifiés** :
-
-```bash
-ccer-native --check
-ccer-native --prepare --fetch   # réseau explicite
-ccer-native --verify
-ccer-native --build             # compilation Cargo explicite
-```
-
-Si un clone Git officiel propre existe déjà, utilisez `ccer-native --prepare --source /CHEMIN/VERS/CONCAT` pour éviter le téléchargement. La préparation crée un *worktree* distinct, sans remplacer les montages ni démarrer Concat.
-
-**[Guide CCER Native Setup V1 : prérequis, compilation et vérification](docs/CCER_NATIVE_SETUP.md)**
-
-## Tests et sécurité
-
-```bash
-python3 -m unittest discover -s tests -p 'test_*.py' -q
-python3 docs/render_architecture.py --check
-```
-
-> [!CAUTION]
-> Ne publiez jamais les fichiers `.env`, les clés API, `automation.json`, les vidéos personnelles ou des chemins locaux nominatifs. `git config user.name` et `git config user.email` se configurent uniquement sur votre ordinateur.
-
-## CCER + Concat: install both
-
-**[Concat](https://github.com/jub0t/Concat)** is the upstream, open-source video editor (AGPL-3.0-or-later). **CCER** is an independent MCP integration and does **not** bundle or claim ownership of Concat. Both programs are needed. See the [official releases](https://github.com/jub0t/Concat/releases/latest) and [installation guide](https://concat.standalones.org/guides/install/).
-
-### Ubuntu / Linux (x86_64 or aarch64)
-
-```bash
-sudo apt update
-sudo apt install -y python3 python3-venv ffmpeg
-git clone https://github.com/jackjosias/ccer-mcp.git
-cd ccer-mcp
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install -e .
-ccer-concat --check      # latest official version; no writes
-ccer-concat --install    # install or update signed-by-checksum official AppImage
-ccer-concat --status     # find installed executable, without network
-```
-
-The installer chooses the latest *official stable* GitHub release for Linux and your CPU architecture (latest verified: `v0.2.8` on 30 October 2026), checks the GitHub SHA-256 digest and file size, and installs under `~/.local/share/ccer/concat/`. `--install` is **explicit and idempotent**. Neither `--check` nor MCP startup downloads or changes software. A running Concat process or a manually installed / instrumented Concat binary is **never closed, overwritten or restarted** by the installer.
-
-On Windows or macOS, install [Concat from upstream](https://github.com/jub0t/Concat/releases/latest), and configure `CCER_CONCAT_BIN` with its absolute executable path. On Linux, an existing executable can be selected with `export CCER_CONCAT_BIN=/absolute/path/to/concat`; this overrides the managed AppImage.
-
-### Standard MCP versus CCER native GUI
-
-- **Official Concat / standard MCP:** enable **Settings → Automation → Scripts and apps** and launch `ccer-mcp --mode window`. This uses Concat's own MCP engine, which does *not* control an already-open timeline in Concat's desktop window.
-- **Live GUI control via Slint:** `ccer-direct-mcp --access control` requires a **CCER-instrumented Concat build**. The official AppImage does *not* contain CCER's private authenticated Slint bridge. See [Native Slint](docs/CCER_NATIVE_SLINT.md) and [Visible Desktop](docs/CCER_VISIBLE_DESKTOP.md) before setting `CCER_CONCAT_BIN` to your custom build. The direct mode does not launch a second editor.
-- **Version updates:** `ccer-concat --check` checks GitHub without downloading; `ccer-concat --install` explicitly installs the verified official latest version. For a patched build, apply the documented patches to a compatible source release only; never hot-swap a running patched editor.
-
-## MCP client configuration
-
-After Linux setup, use this standard MCP example (replace the absolute path with your own checkout):
+### Configuration du client MCP
 
 ```json
 {
   "mcpServers": {
     "ccer": {
-      "command": "/absolute/path/to/ccer-mcp/.venv/bin/ccer-mcp",
+      "command": "/chemin/absolu/ccer-mcp/.venv/bin/ccer-mcp",
       "args": ["--mode", "window"]
     }
   }
 }
 ```
 
-Or run `python -m ccer --concat-bin /absolute/path/to/concat --mode window`. CCER reports an actionable error if the selected executable does not exist. The gateway's `--root` scopes writes to a dedicated media folder (default `~/Videos/CCER`); do not paste Concat automation tokens into configs or Git.
+Concat peut nécessiter **Settings → Automation → Scripts and apps**. `ccer-mcp` parle **MCP sur stdio** et attend les requêtes d'un client.
 
-## Production workflow — developer-only native Gateway
+### Choisir le mode
 
-Ces appels automatiques sont conservés pour les tests internes. Ils sont
-**interdits dans le connecteur ChatGPT Direct**, même en mode control. Toute
-mission vidéo de l'utilisateur doit passer par la fenêtre Concat visible.
+| Mode | Commande | Portée |
+|---|---|---|
+| Standard graphique | `ccer-mcp --mode window` | Processus Concat MCP distinct |
+| Standard isolé | `ccer-mcp --mode headless` | Tests internes explicitement isolés |
+| Direct observation | `ccer-direct-mcp --access observe` | Lecture seule, captures |
+| Direct contrôle | `ccer-direct-mcp --access control` | Gestes GUI-FIRST sur Concat instrumenté |
 
+Options : `--concat-bin` pour l'exécutable, `--root` pour la racine de médias (défaut `~/Videos/CCER`), `--mode` pour le standard, `--access` pour Direct.
 
-1. Call `ccer_preflight` and inspect versions and disk capacity.
-2. Use `project_create` then `timeline_read` on a **CCER-owned** project.
-3. Use `media_probe`, `media_import`, `clip_add`, `title_add`, `captions_add`, effects/keyframes and `edit_apply`.
-4. `ccer_checkpoint_create` before disruptive edits; `ccer_batch_edit` wraps commands into Concat's native atomic batch.
-5. `ccer_timeline_validate`; inspect `preview_frame`.
-6. `project_save`, `export_start`, `export_wait`, `ccer_export_verify`. For a complete recipe, call `ccer_produce` with `name`, `shots`, `profile`, optional `captions`, `titles`, `music`, and `export`.
-7. Call `ccer_caption_validate` for readability, `ccer_visual_scan` for black/frozen frames and `ccer_delivery_transcode` for verified square, vertical or landscape deliveries.
-8. Use `ccer_audit_report` to check the local journal chain.
+### Compiler le pont Rust/Slint
 
-### Safety contract
+L'AppImage Concat officielle **n'inclut pas** le pont CCER. Pour préparer le binaire instrumenté :
 
-- `ccer_checkpoint_restore` requires `confirm=true`, validates checkpoint SHA, and **refuses any existing concat.lock**. Close the project in every window and API session first. The displaced project stays in an explicit restore-backup folder.
-- Timeouts report **UNKNOWN outcome**, never automatically replay potentially destructive edits.
-- `ccer_mission_recover` provides guidance, not an unsafe blind retry.
-- Native tool argument fields `path`, `location` and `output` must remain under CCER_ROOT. A read-only `file` media input is not currently sandboxed; it may be outside the root.
-- The SHA-linked audit detects accidental or partial edits but is **not a cryptographically authenticated record**: an attacker with filesystem write access could replace the entire journal.
-- Media QA is diagnostic, not proof of artistic quality; human creative review remains valuable.
+```bash
+ccer-native --check
+ccer-native --prepare --fetch   # téléchargement explicite
+ccer-native --verify
+ccer-native --build             # compilation Cargo explicite
+```
 
-## Testing
+Le guide permet aussi de réutiliser un clone amont propre. Ne pas écraser ni remplacer à chaud Concat et ses projets. [Guide complet](docs/CCER_NATIVE_SETUP.md).
 
-    python3 -m compileall -q ccer
-    python3 -m unittest discover -s tests -v
+> [!WARNING]
+> Un build réussi ou un test de protocole Python **ne prouve pas** la réussite d'un montage visible : la validation finale exige une interaction native observée, la non-interférence et un export réel.
 
-## Creative studio V2
+### ChatGPT Direct via tunnel
 
-Documentation détaillée : [CCER V2 Studio](docs/CCER_V2_STUDIO.md).
+Le profil `tunnel-client` est distinct de la passerelle standard. Un tunnel réel, une authentification et une autorisation côté client sont nécessaires. Créer le profil ne prouve **pas** que ChatGPT est connecté. Consulter [CCER Direct Tunnel](docs/CCER_DIRECT_TUNNEL.md) ; aucun jeton ou mot de passe ne doit être committé.
 
-New MCP tools: `ccer_voice_flite` (English-only offline FFmpeg speech) and
-`ccer_studio_produce` (reviewable script/storyboard, optional real narration,
-music ducking, frame-timed rendering, SRT subtitles and technical QA).
-Start with `ccer_tts_status` to verify whether `ffmpeg-flite` is available.
+<a id="intelligence-av"></a>
+## Intelligence audiovisuelle : ce qui est réellement analysé
 
-For French, use a prerecorded French narration through `narrationFile`.
-Do not pretend English `flite` can narrate French naturally. Audio/text alignment
-is currently estimated, not forced-aligned to speech. The studio renderer uses
-FFmpeg as a complementary engine; Concat Desktop stays accessible through MCP.
+```mermaid
+flowchart TD
+    A["Média autorisé"] --> B["FFprobe : durée et pistes"]
+    A --> C["FFmpeg : images et audio bornés"]
+    B --> D["Événements horodatés"]
+    C --> D
+    D --> E["Inspection des preuves"]
+    E --> F["Proposition de montage"]
+    F --> G["Action Concat visible et consentie"]
+    G --> H["Export et contrôle QA"]
+```
 
-## Rhythm and subtitle timing (75 MCP tools total)
+- **Image :** vrais JPEG horodatés, repères de scènes, noirs/gels, statistiques colorimétriques. Échantillonner des images ≠ regarder toute la vidéo en continu.
+- **Audio :** pistes, niveaux, silences, impulsions, événements et fenêtres temporelles bornées.
+- **Parole :** contrôle de disponibilité du **Whisper intégré à Concat** ; une transcription réelle doit être exécutée et vérifiée séparément.
+- **Sous-titres :** lecture SRT et analyse des timings, sans alignement forcé mot à mot garanti.
+- **Livraison :** QA des codecs, dimensions/durée et inspection du résultat final ; qualité créative non garantie automatiquement.
 
-- `ccer_silence_map`: find quiet/nonquiet passages with FFmpeg.
-- `ccer_beat_candidates`: identify rhythmic audio impulses, tentative BPM and confidence.
-- `ccer_cut_plan`: propose shot boundaries near supplied impulses. This changes **no project**.
-- `ccer_caption_timing_hint`: allocate supplied phrases to nonsilent intervals. This is
-  **not** a transcript, word-level alignment, or a substitute for listening review.
+La direction retenue privilégie **FFmpeg/FFprobe + captures réelles + Whisper Concat**, **sans modèle Qwen/Ollama/VLM local ajouté**.
 
-The tested workflow uses `ccer_cut_plan` to construct a reviewed storyboard,
-then reuses `ccer_directed_render` to output an isolated MP4.
+**Stockage :** les images A/V peuvent être transmises en mémoire. Les nettoyages automatiques se limitent aux artefacts temporaires CCER reconnus : **jamais les rushs ni les exports utilisateurs**.
 
-`python3 -m tests.live_rhythm` certifies these steps on a synthetic 120 BPM audio
-track under `~/Videos/CCER`, never on a user's existing production project.
+Guides : [timecodes](docs/CCER_TIMECODED_REVIEW.md), [replay](docs/CCER_AV_REPLAY_POLL_20261028.md), [Whisper](docs/CCER_ASR_READINESS.md), [index documentaire](docs/README.md).
 
-## Visual editing and verification (78 MCP tools total)
+## Tests et validation
 
-- `ccer_color_report`: sampled FFmpeg signalstats luminance, saturation and U/V metrics.
-- `ccer_reframe_export`: padded "contain" or non-distorting "cover" crop with focus.
-- `ccer_transition_export`: new two-clip MP4 with a fade, wipe or slide.
-  Original source audio is **not** mixed by this function; optional external soundtrack only.
-- `python3 -m tests.live_visual` generates two isolated colored videos, exports
-  a vertical crop and a crossfade, and verifies the resulting MP4 files.
-- Every rendering tool rejects output overwrites and verifies delivered duration
-  and frame dimensions. These controls are not a substitute for artistic review.
+```bash
+python3 -m compileall -q ccer
+python3 -m unittest discover -s tests -p 'test_*.py' -q
+python3 docs/render_architecture.py --check
+git diff --check
+```
 
-## Media intelligence (82 MCP tools total)
+Les tests `test_*.py` couvrent les contrats Python ; les scripts `tests/live_*.py` requièrent des médias de test et des autorisations. **Source committée, tests réussis, binaire activé, gestes natifs vérifiés et export final** sont cinq niveaux de preuve différents. Lire le [CHANGELOG](CHANGELOG.md) pour les jalons datés.
 
-- Human-annotated footage catalog with optional existing FFmpeg scene cuts.
-- Keyword search across editor-provided descriptions and tags, with provenance.
-- Match script storyboard scenes to annotated source clips (including mediaStart).
-- Execute approved matching via existing CCER renderer and export QA.
+<a id="securite"></a>
+## Sécurité et confidentialité
 
-This is metadata/annotation-based retrieval, NOT trained automatic visual recognition.
-Detailed guide: docs/CCER_MEDIA_INTELLIGENCE.md.
-Reproducible live test: python3 -m tests.live_media_catalog
+- **Avant/après :** capture native vérifiée pour chaque geste Direct.
+- **Non-interférence :** pas d'injection sur la souris physique ou le focus humain.
+- **Chemins :** modifications limitées à la racine autorisée.
+- **Timeouts :** un retour incertain ne justifie jamais le rejeu d'une action sensible.
+- **Audit :** SHA chaîné utile pour la détection, sans preuve cryptographique de l'auteur.
+- **Secrets :** pas de `.env`, clés, jetons, chemins personnels ou vidéos privées dans Git.
+- **Rétention :** préserver les médias et exports, ne supprimer que les fichiers temporaires CCER reconnus.
 
-## Direct Concat Desktop GUI control (85 MCP tools)
+Politique : [SECURITY.md](SECURITY.md) ; [contrat GUI-FIRST](docs/CCER_GUI_FIRST_CONTRACT.md) ; [focus](docs/CCER_FOCUS_ISOLATION.md).
 
-ChatGPT GPT-6 can orchestrate the existing CCER editor plus a Concat-specific
-X11 visual bridge without any local LLM. Three tools are implemented:
-`ccer_desktop_status`, `ccer_desktop_capture` (MCP JPEG image content), and
-`ccer_desktop_act` (approved scoped click/key/type/scroll and post-action screenshot).
-The window must be verified by exact class/PID, all actions must carry a fresh
-window ID and `confirm=true`; this integration is **X11-only**.
-Detailed instructions and safeguards: [CCER Desktop Control](docs/CCER_DESKTOP_CONTROL.md).
-Live acceptance: `python3 -m tests.live_direct_control`.
-Le glisser-déposer est limité au pointeur d'un Xvfb privé attesté ;
-il ne doit jamais déplacer la souris physique de l'utilisateur.
-Le dialogue GTK « Importer des médias » est pris en charge après vérification
-stricte de sa classe, de son titre et de son processus (aucune autre fenêtre).
+<a id="documentation"></a>
+## Documentation, contribution et licences
 
-## Direct ChatGPT MCP connectivity (independent of WCER)
+| Ressource | Description |
+|---|---|
+| **[CHANGELOG.md](CHANGELOG.md)** | Journal du plus récent au plus ancien |
+| [Index technique](docs/README.md) | Guides CCER classés par sujet |
+| [Installation native](docs/CCER_NATIVE_SETUP.md) | Rust, Slint et prérequis |
+| [Sécurité](SECURITY.md) | Signalement et protection des projets |
+| [Contribuer](CONTRIBUTING.md) | Tests, Git, revue et PR |
+| [Code de conduite](CODE_OF_CONDUCT.md) | Règles pour les contributeurs |
 
-The standalone entrypoint `ccer_direct_stdio.py` serves the existing CCER
-MCP gateway over stdio for the official OpenAI `tunnel-client`.
-
-- `observe` (default) exposes 34 review and inspection tools, including
-  real Concat screenshots. Writing commands are rejected server-side.
-- `control` : l'accès direct ChatGPT est **GUI-FIRST** : outils de lecture
-  et `ccer_desktop_act` seulement. Toutes les mutations MCP invisibles sont
-  refusées au niveau du serveur. Une capture avant/après chaque geste est
-  obligatoire. Le moteur natif conserve ses 85 outils pour les tests internes.
-- `python3 -m ccer.tunnel_setup --tunnel-id <real-tunnel-id>` creates a
-  separate CCER profile with **no API credentials in Git**.
-- `tunnel-client doctor --profile ccer-direct` and
-  `tunnel-client run --profile ccer-direct` authenticate that profile.
-
-For an **existing** observe tunnel, use `python3 -m ccer.profile_access --access control --apply`, then restart only the `ccer-direct` process in its original terminal and refresh ChatGPT's connector. Do not recreate the tunnel or disclose secrets.
-
-See [CCER Direct setup](docs/CCER_DIRECT_TUNNEL.md). Verify locally with
-`python3 -m tests.live_direct_stdio` (observe) and
-`python3 -m tests.live_direct_control` (full control).
-The remote ChatGPT app must still be registered and authorized before any
-claim of direct ChatGPT operation.
-
-## Scope and roadmap
-
-This is **v0.1.0 foundation**, not an end-to-end self-directed production agent. Automatic understanding of all desktop UI states, full color-grading intelligence, LLM-based creative direction, b-roll discovery, robust beat tracking for varied real-world music, speech forced-alignment, visual continuity understanding and distributed rendering remain subsequent features. Deterministic storyboarding, English flite voice and studio orchestration are implemented. Upstream Concat also limits what's currently possible. No claim of complete CapCut functional parity is made.
-
-## License
-
-This CCER gateway is original code. Concat is a separate upstream project under AGPL-3.0-or-later; its license applies to modifications or redistribution of that upstream as required by the license.
+**Concat** est indépendant et soumis à **AGPL-3.0-or-later** ([source amont](https://github.com/jub0t/Concat)). CCER ne revendique ni propriété ni affiliation officielle avec Concat. Aucun fichier de licence autonome CCER n'a été identifié à la racine lors de l'audit : **un dépôt accessible n'est pas, à lui seul, une autorisation de réutilisation**. Vérifier les permissions et les obligations amont avant toute redistribution.
