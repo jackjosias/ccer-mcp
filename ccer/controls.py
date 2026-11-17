@@ -4,6 +4,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import threading
 import time
@@ -28,6 +29,23 @@ def confirm(value):
         raise PolicyError("Explicit confirm=true required")
 
 
+def private_dir(path: Path, *, create: bool = False) -> Path:
+    """Create or attest a user-owned private CCER folder; never loosen permissions."""
+    path = Path(path).expanduser()
+    if path.is_symlink():
+        raise PolicyError("CCER scratch symlink directory refused")
+    if create:
+        path.mkdir(mode=0o700, parents=False, exist_ok=True)
+    if not path.is_dir():
+        raise PolicyError("CCER scratch directory missing")
+    st = path.stat()
+    if st.st_uid != os.getuid() or not stat.S_ISDIR(st.st_mode):
+        raise PolicyError("CCER scratch directory ownership invalid")
+    if stat.S_IMODE(st.st_mode) & 0o077:
+        raise PolicyError("CCER scratch directory must be private 0700")
+    return path
+
+
 def atomic_json(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -49,7 +67,7 @@ class Journal:
 
     def append(self, event, data):
         with self.lock:
-            self.path.parent.mkdir(parents=True, exist_ok=True)
+            private_dir(self.path.parent, create=True)
             prev = "0" * 64
             if self.path.exists():
                 for line in self.path.read_text(encoding="utf-8").splitlines():

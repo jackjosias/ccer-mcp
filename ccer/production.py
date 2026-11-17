@@ -8,7 +8,7 @@ import time
 import uuid
 from pathlib import Path
 
-from .controls import Journal, PolicyError, atomic_json, audio_analyze, confirm, inside, media_probe
+from .controls import Journal, PolicyError, atomic_json, audio_analyze, confirm, inside, media_probe, private_dir
 from .transport import structured
 
 
@@ -107,6 +107,8 @@ class Production:
         return inside(self.root, raw, must_exist=must_exist)
 
     def _mission(self, kind, data):
+        private_dir(self.meta, create=True)
+        private_dir(self.meta / "missions", create=True)
         ident = uuid.uuid4().hex
         value = {"id": ident, "kind": kind, "state": "running",
                  "started": time.time(), "data": data}

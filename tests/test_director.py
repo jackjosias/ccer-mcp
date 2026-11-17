@@ -1,3 +1,5 @@
+import os
+import stat
 import shutil
 import subprocess
 import tempfile
@@ -7,6 +9,7 @@ from pathlib import Path
 from ccer.controls import PolicyError, media_probe
 from ccer.production import Production
 from ccer.director_render import render
+from ccer.temp_lifecycle import sweep
 
 
 class DirectorTests(unittest.TestCase):
@@ -36,6 +39,40 @@ class DirectorTests(unittest.TestCase):
                                        if s["codec_type"] == "video"))
             jobs = root / ".ccer" / "scratch-jobs"
             self.assertEqual([], list(jobs.iterdir()))
+
+    def test_metadata_private_even_with_permissive_ci_umask(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            old_umask = os.umask(0o022)
+            try:
+                root = Path(tmp)
+                engine = Production(None, root)
+                self.assertFalse(engine.meta.exists())  # read-only init stays side-effect free
+                engine._mission("fixture", {})
+                self.assertEqual(stat.S_IMODE(engine.meta.stat().st_mode), 0o700)
+                self.assertEqual(stat.S_IMODE((engine.meta / "missions").stat().st_mode), 0o700)
+                self.assertEqual(0, sweep(root, dry_run=True)["deleted"])
+            finally:
+                os.umask(old_umask)
+
+    def test_existing_insecure_metadata_refused_without_permission_change(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            metadata = Path(tmp) / ".ccer"
+            metadata.mkdir(mode=0o700)
+            metadata.chmod(0o755)
+            with self.assertRaisesRegex(PolicyError, "0700"):
+                Production(None, Path(tmp))._mission("fixture", {})
+            self.assertEqual(stat.S_IMODE(metadata.stat().st_mode), 0o755)
+
+    def test_direct_audit_journal_creates_private_metadata_only_when_written(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            old_umask = os.umask(0o022)
+            try:
+                engine = Production(None, Path(tmp))
+                self.assertFalse(engine.meta.exists())
+                engine.journal.append("fixture.audit", {"approved": True})
+                self.assertEqual(stat.S_IMODE(engine.meta.stat().st_mode), 0o700)
+            finally:
+                os.umask(old_umask)
 
     def test_refuse_missing_approved_scene(self):
         with tempfile.TemporaryDirectory() as tmp:

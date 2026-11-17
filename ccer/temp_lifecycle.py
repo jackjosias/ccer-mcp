@@ -16,7 +16,7 @@ import uuid
 from contextlib import contextmanager
 from pathlib import Path
 
-from .controls import PolicyError, atomic_json
+from .controls import PolicyError, atomic_json, private_dir
 
 MARKER = "CCER_MANAGED_SCRATCH_V1"
 PREFIX = "job-"
@@ -27,20 +27,8 @@ MIN_FREE_BYTES = 2 * 1024 * 1024 * 1024  # refuse new renders on low disk
 MARKER_FILE = ".ccer-scratch.json"
 
 
-def _user_dir(path: Path, *, create: bool = False) -> Path:
-    path = Path(path).expanduser()
-    if path.is_symlink():
-        raise PolicyError("CCER scratch symlink directory refused")
-    if create:
-        path.mkdir(mode=0o700, parents=False, exist_ok=True)
-    if not path.is_dir():
-        raise PolicyError("CCER scratch directory missing")
-    st = path.stat()
-    if st.st_uid != os.getuid() or not stat.S_ISDIR(st.st_mode):
-        raise PolicyError("CCER scratch directory ownership invalid")
-    if stat.S_IMODE(st.st_mode) & 0o077:
-        raise PolicyError("CCER scratch directory must be private 0700")
-    return path
+# Preserve the existing helper name for callers; one shared security policy.
+_user_dir = private_dir
 
 
 def _base(project_root: Path, *, create: bool) -> Path:
