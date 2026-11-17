@@ -386,8 +386,11 @@ class Production:
                 raise PolicyError("Not a saved Concat project directory")
             self.upstream.tool("project_save", {"path": str(path)})
             ident = uuid.uuid4().hex
+            private_dir(self.meta, create=True)
+            private_dir(self.meta / "checkpoints", create=True)
             target = self.meta / "checkpoints" / ident / "project"
-            target.parent.mkdir(parents=True, exist_ok=False)
+            target.parent.mkdir(mode=0o700, exist_ok=False)
+            private_dir(target.parent)
             try:
                 self._copy_project(path, target)
                 checksum = hashlib.sha256((target / "concat.json").read_bytes()).hexdigest()
@@ -417,7 +420,7 @@ class Production:
                 raise PolicyError("Restore staging path already exists")
             self._copy_project(saved, stage)
             backup = self.meta / "restore-backups" / (ident + "-" + uuid.uuid4().hex[:6])
-            backup.parent.mkdir(parents=True, exist_ok=True)
+            private_dir(backup.parent, create=True)
             moved = False
             try:
                 if destination.exists():

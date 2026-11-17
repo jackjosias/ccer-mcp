@@ -1,5 +1,7 @@
 import io
 import json
+import os
+import stat
 import tempfile
 import unittest
 from pathlib import Path
@@ -102,6 +104,25 @@ class ControlsTests(unittest.TestCase):
             with self.assertRaises(PolicyError):
                 g.production.run("ccer_checkpoint_restore", {
                     "checkpointId": "a" * 32, "confirm": False})
+
+    def test_checkpoint_and_backup_private_under_permissive_umask(self):
+        with tempfile.TemporaryDirectory() as td:
+            old_umask = os.umask(0o022)
+            try:
+                root = Path(td)
+                project = root / "project"
+                project.mkdir()
+                (project / "concat.json").write_text('{"cut":1}')
+                engine = Production(FakeConcat(), root)
+                snapshot = engine.run("ccer_checkpoint_create", {"path": str(project)})
+                base = root / ".ccer"
+                private_paths = [base, base / "checkpoints", base / "checkpoints" / snapshot["id"]]
+                for directory in private_paths:
+                    self.assertEqual(stat.S_IMODE(directory.stat().st_mode), 0o700)
+                engine.run("ccer_checkpoint_restore", {"checkpointId": snapshot["id"], "confirm": True})
+                self.assertEqual(stat.S_IMODE((base / "restore-backups").stat().st_mode), 0o700)
+            finally:
+                os.umask(old_umask)
 
     def test_checkpoint_protects_existing_project(self):
         with tempfile.TemporaryDirectory() as td:
