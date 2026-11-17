@@ -79,7 +79,29 @@ class NativeSetupTests(unittest.TestCase):
             self.assertEqual(setup.main(["--check", "--allow-downloads"]), 1)
             with patch.object(setup, "build", return_value=self.root / "concat") as build:
                 self.assertEqual(setup.main(["--build", "--allow-downloads"]), 0)
-                build.assert_called_once_with(setup.DEST, None, True)
+                build.assert_called_once_with(setup.DEST, None, True, False)
+
+    def test_lite_build_reuses_native_fork_flags(self):
+        with patch.object(setup, "patches_verified", return_value=[]):
+            self.assertEqual(setup.main(["--check", "--lite"]), 1)
+        self.prepare()
+        cache = self.root / "cache"
+        binary = cache / "debug/concat"
+        binary.parent.mkdir(parents=True)
+        binary.write_bytes(b"synthetic-executable")
+        with patch.object(setup.subprocess, "run") as runner, patch.object(setup.shutil, "which", return_value="/usr/bin/cargo"), patch.object(setup, "verify", return_value=self.dest):
+            actual = setup.build(self.dest, cache, False, True)
+        self.assertEqual(actual, binary)
+        command = runner.call_args.args[0]
+        self.assertEqual(command[0], "/usr/bin/cargo")
+        self.assertIn("rustc", command)
+        self.assertIn("profile.dev.package.concat.debug=0", command)
+        self.assertIn("profile.dev.package.concat.codegen-units=256", command)
+        self.assertIn("--offline", command)
+        self.assertEqual(command[command.index("-j") + 1], "1")
+        self.assertEqual(command[-4:], ["-C", "linker=cc", "-C", "link-arg=-fuse-ld=bfd"])
+        self.assertTrue(runner.call_args.kwargs["check"])
+        self.assertEqual(runner.call_args.kwargs["env"]["CARGO_TARGET_DIR"], str(cache))
 
     def test_dirty_source_refused(self):
         self.file.write_text("unsaved\n")
