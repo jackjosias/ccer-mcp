@@ -83,8 +83,10 @@ class ManagedScratchTests(unittest.TestCase):
     def test_malicious_or_unregistered_dir_does_not_get_swept(self):
         with tempfile.TemporaryDirectory() as base:
             root = Path(base)
-            jobs = root / ".ccer" / "scratch-jobs"
-            jobs.mkdir(parents=True, mode=0o700)
+            parent = root / ".ccer"
+            parent.mkdir(mode=0o700)  # secure fixture regardless of CI umask
+            jobs = parent / "scratch-jobs"
+            jobs.mkdir(mode=0o700)
             stranger = jobs / "personal-media"
             stranger.mkdir()
             (stranger / "original.mp4").write_bytes(b"my video")

@@ -59,6 +59,8 @@ class DesktopReconcileTests(unittest.TestCase):
              patch.object(desktop, "_windows", side_effect=[[self.WINDOW], []]), \
              patch.object(subject, "_verified_official", return_value=10485) as validate, \
              patch.object(desktop, "_verify_launch_resources", return_value={}) as ready, \
+              patch.object(desktop, "EXE", Path(__file__)), \
+              patch.object(desktop, "LIBS", Path(__file__).parent), \
              patch.object(subject, "_close_official") as close, \
              patch.object(desktop, "_launch_unlocked", return_value=launched) as spawn:
             result = subject.reconcile(Path("/Videos"), Path("/Videos"),
@@ -96,6 +98,8 @@ class DesktopReconcileTests(unittest.TestCase):
              patch.object(desktop, "_windows", side_effect=[windows, []]), \
              patch.object(subject, "_verified_official") as attest, \
              patch.object(desktop, "_verify_launch_resources", return_value={}), \
+              patch.object(desktop, "EXE", Path(__file__)), \
+              patch.object(desktop, "LIBS", Path(__file__).parent), \
              patch.object(subject, "_close_official") as close, \
              patch.object(desktop, "_launch_unlocked",
                           return_value={"launched": True}) as launch:
