@@ -41,7 +41,13 @@ Le nouvel arbre de travail utilise `git worktree` sous `.runtime/concat-native-p
 ccer-native --build
 ```
 
-Cette commande utilise Cargo avec `--locked --offline --features ccer-inapp -j 2`. Elle exige que les dépendances de développement et le cache Cargo soient disponibles ; elle ne lance et ne ferme jamais Concat. Si le cache des crates est vide sur un nouveau poste, autorisez **explicitement** leur téléchargement lors de la compilation :
+Cette commande utilise Cargo avec `--locked --offline --features ccer-inapp -j 2`. Sur une machine chargée, CCER reprend **le profil léger du fork** :
+
+```bash
+ccer-native --build --lite --target-cache /CHEMIN/CCER/.upstream-concat/src/target
+```
+
+Le mode `--lite` utilise un seul job, un profil de compilation Rust allégé et le linker BFD. Il conserve `--offline` par défaut et ne démarre pas Concat. Elle exige que les dépendances de développement et le cache Cargo soient disponibles ; elle ne lance et ne ferme jamais Concat. Si le cache des crates est vide sur un nouveau poste, autorisez **explicitement** leur téléchargement lors de la compilation :
 
 ```bash
 ccer-native --build --allow-downloads
