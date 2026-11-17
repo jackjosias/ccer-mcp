@@ -1,0 +1,58 @@
+name: CCER Native Setup reproducibility
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ccer-native-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-regressions:
+    name: Python, docs and patch integrity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout CCER
+        uses: actions/checkout@v4
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Unit tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -q
+      - name: Architecture diagram consistency
+        run: python3 docs/render_architecture.py --check
+      - name: Native patch SHA-256 integrity
+        run: python3 -m ccer.native_setup --check
+
+  native-source-reproduction:
+    name: Native Rust patch reproduction (source only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout CCER
+        uses: actions/checkout@v4
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch exact official Concat v0.2.8 source
+        run: |
+          mkdir -p .runtime
+          git clone --filter=blob:none --branch v0.2.8 --single-branch https://github.com/jub0t/Concat.git .runtime/concat-official-cache
+          test "$(git -C .runtime/concat-official-cache rev-parse HEAD)" = "79116bd0f9a103c633d888603ad27890e929dbdc"
+      - name: Apply and verify all pinned CCER native patches
+        run: |
+          python3 -m ccer.native_setup --prepare --source .runtime/concat-official-cache
+          python3 -m ccer.native_setup --verify
+      - name: Verify idempotent repeat
+        run: python3 -m ccer.native_setup --prepare --source .runtime/concat-official-cache
+
+# Source reproduction only: no Cargo build or GUI certification is implied.
