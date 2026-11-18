@@ -49,3 +49,5 @@ Une ligne des tests indique `current.AppImage (missing)` dans un scénario ; cel
 6. **Garde-fous** : rollback sans rejouer une action inconnue, nettoyage borné des seules preuves, préservation des médias sources, des projets et des exports finals.
 
 **Décision :** QA source automatisée **PASS** ; homologation de montage réel **EN ATTENTE**. Préserver l'architecture légère FFmpeg + captures réelles + Whisper intégré à Concat : **ne pas ajouter Qwen/Ollama/VLM**.
+
+**Complément natif du 18 novembre 2026 :** sur le commit local `196749f`, 269 tests Python PASS (192,893 s, exit 0) dans un clone indépendant ; les six patchs passent `ccer.native_setup --check` et l'arbre préparé passe `--verify` ; FFprobe confirme un MP4 jetable H.264/AAC 640×360 de 2 s. Build Cargo `--lite --jobs 2` déjà actif auprès de l'agent parallèle ; aucun second build ni Concat lancé. Le diagnostic visible donne `nativeBridge=false`, aucune fenêtre sur `:1`, `launchReady=false` (garde-fou de charge) : certification GUI réelle toujours EN ATTENTE. CI du commit GitHub `aa680e7` : success.
