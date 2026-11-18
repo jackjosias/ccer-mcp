@@ -79,7 +79,7 @@ class NativeSetupTests(unittest.TestCase):
             self.assertEqual(setup.main(["--check", "--allow-downloads"]), 1)
             with patch.object(setup, "build", return_value=self.root / "concat") as build:
                 self.assertEqual(setup.main(["--build", "--allow-downloads"]), 0)
-                build.assert_called_once_with(setup.DEST, None, True, False)
+                build.assert_called_once_with(setup.DEST, None, True, False, None)
 
     def test_lite_build_reuses_native_fork_flags(self):
         with patch.object(setup, "patches_verified", return_value=[]):
@@ -102,6 +102,24 @@ class NativeSetupTests(unittest.TestCase):
         self.assertEqual(command[-4:], ["-C", "linker=cc", "-C", "link-arg=-fuse-ld=bfd"])
         self.assertTrue(runner.call_args.kwargs["check"])
         self.assertEqual(runner.call_args.kwargs["env"]["CARGO_TARGET_DIR"], str(cache))
+
+    def test_build_jobs_explicit_opt_in_and_validation(self):
+        with patch.object(setup, "patches_verified", return_value=[]):
+            self.assertEqual(setup.main(["--check", "--jobs", "2"]), 1)
+            with patch.object(setup, "build", return_value=self.root / "concat") as builder:
+                self.assertEqual(setup.main(["--build", "--lite", "--jobs", "3"]), 0)
+                builder.assert_called_once_with(setup.DEST, None, False, True, 3)
+            self.assertEqual(setup.main(["--build", "--jobs", "0"]), 1)
+            self.assertEqual(setup.main(["--build", "--jobs", "17"]), 1)
+        self.prepare()
+        cache = self.root / "cache"
+        binary = cache / "debug/concat"
+        binary.parent.mkdir(parents=True)
+        binary.write_bytes(b"synthetic-executable")
+        with patch.object(setup.subprocess, "run") as runner, patch.object(setup.shutil, "which", return_value="/usr/bin/cargo"), patch.object(setup, "verify", return_value=self.dest):
+            self.assertEqual(setup.build(self.dest, cache, False, True, 3), binary)
+        cmd = runner.call_args.args[0]
+        self.assertEqual(cmd[cmd.index("-j") + 1], "3")
 
     def test_dirty_source_refused(self):
         self.file.write_text("unsaved\n")

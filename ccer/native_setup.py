@@ -145,9 +145,11 @@ def fetch_source():
     return verify_source(target)
 
 
-def build(target=DEST, target_cache=None, allow_downloads=False, lite=False):
+def build(target=DEST, target_cache=None, allow_downloads=False, lite=False, jobs=None):
     """Explicit Cargo build; no launch, kill, switch or system package install."""
     target = verify(target)
+    if jobs is not None and (type(jobs) is not int or not 1 <= jobs <= 16):
+        raise SetupError("Cargo --jobs must be an integer between 1 and 16")
     cargo = shutil.which("cargo")
     if not cargo:
         raise SetupError("Cargo missing; install the Rust toolchain first")
@@ -160,7 +162,7 @@ def build(target=DEST, target_cache=None, allow_downloads=False, lite=False):
     args.extend(["rustc" if lite else "build", "--manifest-path",
                  str(target / "src/Cargo.toml"), "--locked", "-p", "concat",
                  "--bin", "concat", "--features", "ccer-inapp",
-                 "-j", "1" if lite else "2"])
+                 "-j", str(jobs if jobs is not None else (1 if lite else 2))])
     if not allow_downloads:
         args.append("--offline")
     if lite:
@@ -203,7 +205,8 @@ def main(argv=None):
     parser.add_argument("--source", type=Path, default=SOURCE)
     parser.add_argument("--dest", type=Path, default=DEST)
     parser.add_argument("--target-cache", type=Path, help="Existing Cargo target directory inside CCER; only for --build")
-    parser.add_argument("--lite", action="store_true", help="Reuse the fork single-job low-memory Cargo profile during --build")
+    parser.add_argument("--lite", action="store_true", help="Reuse the fork low-memory Cargo profile during --build")
+    parser.add_argument("--jobs", type=int, help="Explicit parallel Cargo jobs (1..16); default 1 lite, 2 standard")
     parser.add_argument("--allow-downloads", action="store_true", help="Explicitly permit Cargo to retrieve missing crates during --build")
     parser.add_argument("--fetch", action="store_true",
                         help="Network opt-in: clone pinned official Concat v0.2.8")
@@ -217,6 +220,11 @@ def main(argv=None):
             raise SetupError("--allow-downloads only allowed with --build")
         if args.lite and not args.build:
             raise SetupError("--lite only allowed with --build")
+        if args.jobs is not None:
+            if not args.build:
+                raise SetupError("--jobs only allowed with --build")
+            if not 1 <= args.jobs <= 16:
+                raise SetupError("--jobs must be between 1 and 16")
         files = patches_verified()
         if args.check:
             print(f"CCER native: {len(files)} verified patches; base {BASE[:12]}")
@@ -231,7 +239,7 @@ def main(argv=None):
         elif args.verify:
             print("VERIFIED", verify(args.dest))
         else:
-            print("BUILT", build(args.dest, args.target_cache, args.allow_downloads, args.lite))
+            print("BUILT", build(args.dest, args.target_cache, args.allow_downloads, args.lite, args.jobs))
         return 0
     except (SetupError, OSError, ValueError) as exc:
         print("CCER native setup refused:", exc, file=sys.stderr)

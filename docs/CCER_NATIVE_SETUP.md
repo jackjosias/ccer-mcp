@@ -47,7 +47,13 @@ Cette commande utilise Cargo avec `--locked --offline --features ccer-inapp -j 2
 ccer-native --build --lite --target-cache /CHEMIN/CCER/.upstream-concat/src/target
 ```
 
-Le mode `--lite` utilise un seul job, un profil de compilation Rust allégé et le linker BFD. Il conserve `--offline` par défaut et ne démarre pas Concat. Elle exige que les dépendances de développement et le cache Cargo soient disponibles ; elle ne lance et ne ferme jamais Concat. Si le cache des crates est vide sur un nouveau poste, autorisez **explicitement** leur téléchargement lors de la compilation :
+Le mode `--lite` utilise un job par défaut, un profil de compilation Rust allégé et le linker BFD. Le propriétaire peut choisir explicitement davantage de parallélisme sans changer le profil ni les artefacts déjà compilés :
+
+```bash
+ccer-native --build --lite --jobs 2 --target-cache /CHEMIN/CCER/.upstream-concat/src/target
+```
+
+La valeur `--jobs` est bornée à 1..16 et n’est disponible qu’avec `--build`. Sans option, les valeurs précédentes restent identiques : 1 job pour `--lite`, 2 en mode classique. Il conserve `--offline` par défaut et ne démarre pas Concat. Elle exige que les dépendances de développement et le cache Cargo soient disponibles ; elle ne lance et ne ferme jamais Concat. Si le cache des crates est vide sur un nouveau poste, autorisez **explicitement** leur téléchargement lors de la compilation :
 
 ```bash
 ccer-native --build --allow-downloads
