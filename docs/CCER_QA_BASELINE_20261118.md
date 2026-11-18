@@ -51,3 +51,28 @@ Une ligne des tests indique `current.AppImage (missing)` dans un scénario ; cel
 **Décision :** QA source automatisée **PASS** ; homologation de montage réel **EN ATTENTE**. Préserver l'architecture légère FFmpeg + captures réelles + Whisper intégré à Concat : **ne pas ajouter Qwen/Ollama/VLM**.
 
 **Complément natif du 18 novembre 2026 :** sur le commit local `196749f`, 269 tests Python PASS (192,893 s, exit 0) dans un clone indépendant ; les six patchs passent `ccer.native_setup --check` et l'arbre préparé passe `--verify` ; FFprobe confirme un MP4 jetable H.264/AAC 640×360 de 2 s. Build Cargo `--lite --jobs 2` déjà actif auprès de l'agent parallèle ; aucun second build ni Concat lancé. Le diagnostic visible donne `nativeBridge=false`, aucune fenêtre sur `:1`, `launchReady=false` (garde-fou de charge) : certification GUI réelle toujours EN ATTENTE. CI du commit GitHub `aa680e7` : success.
+
+## Certification E2E graphique réelle — 18 novembre 2026 (complément post-baseline)
+
+**Statut de cette recette : PASS pour un montage audiovisuel synthétique de 5 secondes.** Ce complément actualise les états « en attente » du tableau historique ci-dessus ; il ne transforme pas les contrôles non exécutés (Whisper réel, rush long, pilotage du client MCP distant) en succès.
+
+| Jalon contrôlé | Preuve constatée | Verdict |
+| --- | --- | --- |
+| Concat visible | Instance instrumentée PID `949394`, fenêtre `0x03c00005`, `DISPLAY :1` sur le bureau réel ; aucune session Xvfb ni injection de pointeur X11 | **PASS** |
+| Projet / import | `CCER-Visual-QA-20261118`, média synthétique `source.mp4` ajouté par `file_drop` natif autorisé (`1 added, 0 failed`) | **PASS** |
+| Montage par l'UI | Titre de 0 à 3,00 s, vidéo `m5` de 3,00 à 5,00 s ; deux clips même timeline, sans trou, avec captures Slint avant/après les gestes | **PASS** |
+| Export Concat | Bouton Exporter de la fenêtre réelle ; `export: started` 16:24:03.537 UTC et `export: finished` 16:26:44.704 UTC, soit 161,167 s | **PASS** |
+| Sortie vidéo | MP4 H.264 High, 1920×1080, 24 ips, 120 images, exactement 5,000 s | **PASS** |
+| Sortie audio | AAC LC, 48 kHz, stéréo, piste de 4,970 s ; `silencedetect` 0–3,00004 s puis signal audible ; volume moyen −24,1 dB / crête −19,2 dB sur le segment 3–5 s | **PASS** |
+| Intégrité | FFprobe exit 0, décodage intégral FFmpeg exit 0, images inspectées à 1,0 s (titre) et 3,5 s (source vidéo) | **PASS** |
+| Préservation | Ancien export de titre seul conservé ; aucun média ni projet utilisateur tiers modifié ; dépôt de développement local inchangé | **PASS** |
+
+**Source :** `.runtime/ccer-smoke/source.mp4`, H.264 640×360 à 24 ips, AAC mono 48 kHz, 2,000 s, 437 676 octets. Seule cette fixture et le projet jetable dédié ont servi au montage.
+
+**Livrable local :** `.runtime/ccer-smoke/exports/CCER-Visual-QA-Final-20261118.mp4` sous `/home/jack-josias/WORKSPACE-LOGICIEL/concat/ccer-mcp/`. Taille : **4 008 833 octets** ; empreinte SHA-256 : `3e101619287bdd720d9eea283b436d7d5a20ff550fc9618eabc2a26c00b5dc11`.
+
+**Méthode GUI-FIRST :** chaque action mutante a été soumise à une capture Slint fraîche, un reçu et une capture après action ; l'état de la timeline a été recoupé avec le fichier de projet. Un drag court de 0,2 s depuis la carte média a créé le clip (`AddClip` dans le journal), puis des gestes natifs `MoveClips` ont supprimé les blancs. Aucun edit caché de `concat.json` n'a été utilisé.
+
+**Diagnostics sans impact sur ce PASS :** le rendu Intel HD 520 émet un avertissement de détection de l'ICD Vulkan Nvidia absent ; le moteur choisit ensuite l'iGPU Intel. Un seek direct à 3,5 s a émis `mmco: unref short failure`, mais le décodage séquentiel complet est passé avec exit 0 et la frame a été vérifiée visuellement.
+
+**Limites et prochains chantiers :** cette certification porte exclusivement sur ce scénario court et synthétique. La capture Slint de sécurité reste coûteuse (baseline médiane 8,13 s ; prévisualisation X11 en lecture seule 1,14 s, sans pouvoir d'action). La vitesse d'export de 161 s pour 5 s et les rushs longs/parlés avec Whisper, sous-titres, transitions, mixage complexe, et contrôle créatif intégral restent à qualifier ou optimiser. Ne jamais confondre réussite du smoke E2E et certification de l'ensemble du produit CCER.
