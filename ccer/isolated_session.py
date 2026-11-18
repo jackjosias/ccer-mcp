@@ -132,7 +132,9 @@ header{padding:14px}img{width:100%;height:auto;max-width:1400px}</style>
 <script>const p=new URL(location.href).searchParams.get('pass');
 const img=document.getElementById('v');
 function paint(){img.src='/image?pass='+encodeURIComponent(p)+'&r='+Date.now()}
-paint();setInterval(paint,650);</script>""").encode("utf-8")
+img.onload=()=>setTimeout(paint,1200);
+img.onerror=()=>setTimeout(paint,3000);
+paint();</script>""").encode("utf-8")
                 mime = "text/html; charset=utf-8"
             elif uri.path == "/image":
                 try:
