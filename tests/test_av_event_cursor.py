@@ -57,6 +57,101 @@ class EventCursorTests(unittest.TestCase):
         self.assertNotIn("scene_cut_candidate", kinds)
         self.assertNotIn("audio_silence_candidate", kinds)
 
+    def test_cross_modal_candidates_link_existing_proofs_without_claiming_semantics(self):
+        report = {
+            "window": {"startSeconds": 2, "endSeconds": 6},
+            "frames": [{"timeSeconds": 2.5, "mimeType": "image/jpeg",
+                        "imageBase64": "SECRET_JPEG"}],
+            "audioSilences": [{"start": 1.5, "end": 3.6}],
+            "findings": [
+                {"kind": "black_interval", "startSeconds": 2.8, "endSeconds": 3.4},
+                {"kind": "freeze_candidate", "timeSeconds": 4.1}],
+            "transcriptCues": [{"index": 0, "startSeconds": 2.2,
+                                "endSeconds": 4.5, "text": "unverified speech",
+                                "provenance": "external_srt_unverified"}],
+        }
+        first = event_page(report, page_size=2)
+        second = event_page(report, cursor=2, page_size=100)
+        review = first["editorialCandidates"]
+        self.assertEqual(3, first["editorialCandidateCount"])
+        self.assertEqual(review, second["editorialCandidates"])
+        self.assertFalse(first["editorialCandidatesTruncated"])
+        self.assertEqual(
+            ["caption_silence_overlap", "black_silence_overlap",
+             "freeze_under_caption"],
+            [item["kind"] for item in review])
+        self.assertEqual((2.2, 3.6),
+                         (review[0]["startSeconds"], review[0]["endSeconds"]))
+        self.assertEqual((2.8, 3.4),
+                         (review[1]["startSeconds"], review[1]["endSeconds"]))
+        event_ids = {event["id"] for event in first["events"] + second["events"]}
+        for item in review:
+            self.assertTrue(set(item["evidenceIds"]).issubset(event_ids))
+            self.assertTrue(item["reviewRequired"])
+            self.assertFalse(item["correctionVerified"])
+            self.assertIn("check", item["suggestedCheck"])
+        self.assertNotIn("SECRET_JPEG", str(first))
+        self.assertNotIn("unverified speech", str(review))
+        self.assertFalse(first["semanticUnderstandingPerformed"])
+
+    def test_cross_modal_only_real_overlaps_and_bounded_preview(self):
+        source = {
+            "window": {"startSeconds": 0, "endSeconds": 10},
+            "audioSilences": [{"start": 0, "end": 4} for _ in range(12)],
+            "findings": [{"kind": "black_interval", "startSeconds": 1,
+                          "endSeconds": 3} for _ in range(12)],
+        }
+        result = event_page(source, page_size=1)
+        self.assertEqual(144, result["editorialCandidateCount"])
+        self.assertEqual(40, len(result["editorialCandidates"]))
+        self.assertTrue(result["editorialCandidatesTruncated"])
+        self.assertTrue(all(v["endSeconds"] > v["startSeconds"]
+                            for v in result["editorialCandidates"]))
+        source["audioSilences"] = [{"start": 5, "end": 6}]
+        self.assertEqual([], event_page(source)["editorialCandidates"])
+
+    def test_real_detector_correlation_via_mcp_without_media_artifacts(self):
+        import shutil
+        import subprocess
+        import tempfile
+        from pathlib import Path
+        from ccer.direct_gateway import DirectGateway
+        if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+            self.skipTest("FFmpeg and FFprobe required")
+        class Backend:
+            def tools(self):
+                return []
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            video = root / "silent_black.mp4"
+            srt = root / "supplied.srt"
+            srt.write_text(
+                "1\n00:00:00,500 --> 00:00:01,500\nBonjour\n",
+                encoding="utf-8")
+            made = subprocess.run(
+                ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+                 "-f", "lavfi", "-i", "color=c=black:s=160x90:r=12",
+                 "-f", "lavfi", "-i", "anullsrc=r=16000:cl=mono",
+                 "-t", "3", "-c:v", "mpeg4", "-q:v", "9",
+                 "-c:a", "aac", "-shortest", str(video)],
+                capture_output=True, timeout=70)
+            self.assertEqual(0, made.returncode, made.stderr.decode(errors="replace"))
+            original = {p.name for p in root.iterdir()}
+            result = DirectGateway(Backend(), root).invoke(
+                "ccer_av_events", {"file": str(video), "transcriptFile": str(srt),
+                                    "seconds": 2, "frameCount": 2, "pageSize": 80})
+            self.assertFalse(result["isError"])
+            data = result["structuredContent"]
+            kinds = {item["kind"] for item in data["editorialCandidates"]}
+            self.assertIn("caption_silence_overlap", kinds)
+            self.assertIn("black_silence_overlap", kinds)
+            self.assertTrue(all(item["reviewRequired"]
+                                and not item["correctionVerified"]
+                                for item in data["editorialCandidates"]))
+            self.assertFalse(data["semanticUnderstandingPerformed"])
+            self.assertNotIn("imageBase64", str(data))
+            self.assertEqual(original, {p.name for p in root.iterdir()})
+
     def test_readonly_adapter_uses_existing_review_and_strips_jpeg(self):
         import tempfile
         from pathlib import Path

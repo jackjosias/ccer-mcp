@@ -15,7 +15,7 @@ mal placée à **un instant vérifiable**, avant toute suggestion d'édition.
 
 ```json
 {
-  "file": "/home/your-user/Videos/CCER/exemple.mp4",
+  "file": "/home/jack-josias/Videos/CCER/exemple.mp4",
   "startSeconds": 0,
   "seconds": 30,
   "frameCount": 6
@@ -56,7 +56,7 @@ Une commande locale **en lecture seule** permet de vérifier le décodage et
 le rapport technique, sans déverser les JPEG en base64 dans le terminal :
 
 ```bash
-cd /home/your-user/WORKSPACE-LOGICIEL/concat/ccer-mcp
+cd /home/jack-josias/WORKSPACE-LOGICIEL/concat/ccer-mcp
 python3 -m ccer.timecoded_review \
   --file "$HOME/Videos/CCER/ccer-review-validation-20261026.mp4" \
   --seconds 2.5 --frames 4
@@ -135,3 +135,18 @@ Ce module ne peut pas effacer les images déjà transmises côté cloud.
 `ccer_timed_caption_context` prend une liste de sous-titres fournis (1 à 2000 cues `start`/`duration`/`text`), un fichier média dans le dossier autorisé, `startSeconds`, `seconds` (0,5 à 120), `maxCues` (1 à 100) et `includeAudioSilence` (booléen). Les timecodes absolus sont conservés et la validation des chevauchements réutilise `captions_check`. Les silences de la plage viennent du `silence_map` FFmpeg existant. Une fenêtre trop dense est refusée sans troncature silencieuse.
 
 L’outil est en lecture seule. Il ne reconnaît pas la parole, n’effectue pas d’alignement forcé mot à mot, n’installe aucun modèle et ne crée aucune image ou cache audio local.
+
+## Corrélations techniques multimodales — 18 novembre 2026
+
+`ccer_av_events` réutilise désormais les preuves horodatées **déjà produites** par `timecoded_review`, `rhythm.silence_map` et le SRT fourni. Aucun nouveau décodeur, passage Whisper ou accès au bureau Concat n’est exécuté.
+
+Le champ `editorialCandidates` met en évidence trois rapprochements à inspecter :
+- `caption_silence_overlap` : un sous-titre **fourni et non vérifié** chevauche un silence FFmpeg ; contrôler manuellement l’alignement entre texte et voix ;
+- `black_silence_overlap` : noir vidéo et silence audio se chevauchent ; contrôler si le passage est une transition intentionnelle ;
+- `freeze_under_caption` : un détecteur signale le début d’une image figée pendant un sous-titre ; vérifier si le gel est volontaire.
+
+Chaque candidat porte ses timecodes absolus, ses `evidenceIds` (identifiants des événements de la **fenêtre entière**), `evidenceOrigins`, `suggestedCheck`, `reviewRequired: true` et `correctionVerified: false`. Aucun texte de sous-titre ni JPEG n’est dupliqué dans les candidats.
+
+`editorialCandidateCount` donne le nombre total de rapprochements ; `editorialCandidates` conserve **les 40 plus précoces** en ordre chronologique, et `editorialCandidatesTruncated: true` signale explicitement toute limite dépassée. `editorialCandidateScope: full_review_window_not_event_page` précise que ces résultats ne dépendent pas de `cursor` ni de `pageSize`. Les événements de base conservent leur pagination existante.
+
+Ce sont des **hypothèses de revue**, pas un diagnostic de synchronisation, une preuve de parole prononcée ou une commande de montage. Le test réel `tests/test_av_event_cursor.py` fabrique un clip noir et silencieux temporaire avec FFmpeg, associe un SRT fourni, vérifie les corrélations via le MCP et constate l’absence de nouveaux artefacts média.

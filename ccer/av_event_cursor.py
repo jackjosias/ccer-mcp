@@ -2,6 +2,7 @@
 
 No second decoder, transcription, VLM, media cache, or Concat mutation.
 """
+import heapq
 import math
 from .controls import PolicyError
 
@@ -9,6 +10,59 @@ def _sec(value):
     if type(value) not in (int, float) or not math.isfinite(value):
         raise PolicyError("Event time must be finite")
     return round(float(value), 3)
+
+def _editorial_candidates(events):
+    """Correlate existing evidence only; candidate != verified editing defect.
+
+    Keep the earliest 40 timecoded suggestions even for dense detector output.
+    Count all associations without retaining an unbounded candidate list.
+    """
+    by_kind = {}
+    for item in events:
+        by_kind.setdefault(item["kind"], []).append(item)
+    retained, count = [], 0
+    limit = 40
+
+    def add(kind, start, end, first, second, check):
+        nonlocal count
+        count += 1
+        candidate = {
+            "kind": kind, "startSeconds": round(start, 3),
+            "evidenceIds": [first["id"], second["id"]],
+            "evidenceOrigins": [first["origin"], second["origin"]],
+            "reviewRequired": True, "correctionVerified": False,
+            "semanticUnderstandingPerformed": False,
+            "suggestedCheck": check,
+        }
+        if end is not None:
+            candidate["endSeconds"] = round(end, 3)
+        key = (-start, -count, candidate)
+        if len(retained) < limit:
+            heapq.heappush(retained, key)
+        elif key[:2] > retained[0][:2]:
+            heapq.heapreplace(retained, key)
+
+    for kind, a, b, check in (
+        ("caption_silence_overlap", "supplied_caption", "audio_silence_candidate",
+         "check_caption_audio_alignment"),
+        ("black_silence_overlap", "black_interval", "audio_silence_candidate",
+         "check_audiovisual_transition"),
+    ):
+        for left in by_kind.get(a, ()):
+            for right in by_kind.get(b, ()):
+                start = max(left["timeSeconds"], right["timeSeconds"])
+                end = min(left["endSeconds"], right["endSeconds"])
+                if end - start > .001:
+                    add(kind, start, end, left, right, check)
+    for freeze in by_kind.get("freeze_candidate", ()):
+        for cue in by_kind.get("supplied_caption", ()):
+            t = freeze["timeSeconds"]
+            if cue["timeSeconds"] <= t < cue["endSeconds"]:
+                add("freeze_under_caption", t, None, freeze, cue,
+                    "check_freeze_during_caption")
+    preview = [row[2] for row in sorted(retained, key=lambda x: (-x[0], -x[1]))]
+    return preview, count
+
 
 def event_page(report, *, cursor=0, page_size=40):
     """Page absolute-time evidence; never mistake samples for continuous playback."""
@@ -71,10 +125,14 @@ def event_page(report, *, cursor=0, page_size=40):
     for i, item in enumerate(items):
         item["id"] = f"event-{i}"
     stop = min(cursor + page_size, len(items))
+    editorial, count = _editorial_candidates(items)
     return {"window": {"startSeconds": lo, "endSeconds": hi},
             "events": items[cursor:stop], "cursor": cursor,
             "nextCursor": stop if stop < len(items) else None,
             "totalEvents": len(items), "sampledFrames": len(report.get("frames", [])),
+            "editorialCandidates": editorial, "editorialCandidateCount": count,
+            "editorialCandidatesTruncated": count > len(editorial),
+            "editorialCandidateScope": "full_review_window_not_event_page",
             "readOnly": True, "transcriptionPerformed": False,
             "semanticUnderstandingPerformed": False,
             "continuousPlaybackPerformed": False, "mediaArtifactsCreated": False}
