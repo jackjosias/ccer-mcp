@@ -59,4 +59,4 @@ Un mock PASS n'est pas une preuve de geste dans Concat. Documenter séparément 
 5. Mettre à jour le guide `docs/` existant plutôt que dupliquer des instructions.
 6. Ouvrir une PR et solliciter une revue de [@jackjosias](https://github.com/jackjosias).
 
-Aucun `push --force`, merge dangereux, suppression de worktree non fusionné ou contournement d'un refus de sécurité. Le dépôt public n'accorde pas automatiquement une licence : vérifier les autorisations CCER et la licence **AGPL-3.0-or-later** de [Concat](https://github.com/jub0t/Concat).
+Aucun `push --force`, merge dangereux, suppression de worktree non fusionné ou contournement d'un refus de sécurité. Les contributions au code original CCER sont soumises à **AGPL-3.0-or-later** ([LICENSE](LICENSE)). Ne soumettre que du contenu que vous êtes autorisé à distribuer ; respecter les licences et mentions des composants tiers, notamment [Concat](https://github.com/jub0t/Concat).

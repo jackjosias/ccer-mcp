@@ -9,6 +9,7 @@
 ![MCP](https://img.shields.io/badge/Protocol-MCP-2563EB)
 ![Concat](https://img.shields.io/badge/Editor-Concat-374151)
 ![Statut](https://img.shields.io/badge/Statut-en%20d%C3%A9veloppement-E9A23B)
+[![M8ven Trust Index](https://m8ven.ai/badge/mcp/jackjosias/ccer-mcp?variant=verified)](https://m8ven.ai/mcp/jackjosias/ccer-mcp?s=readme)
 
 **[📒 CHANGELOG — historique chronologique des fonctionnalités, incidents et corrections](CHANGELOG.md)**
 
@@ -287,4 +288,4 @@ Politique : [SECURITY.md](SECURITY.md) ; [contrat GUI-FIRST](docs/CCER_GUI_FIRST
 | [Contribuer](CONTRIBUTING.md) | Tests, Git, revue et PR |
 | [Code de conduite](CODE_OF_CONDUCT.md) | Règles pour les contributeurs |
 
-**Concat** est indépendant et soumis à **AGPL-3.0-or-later** ([source amont](https://github.com/jub0t/Concat)). CCER ne revendique ni propriété ni affiliation officielle avec Concat. Aucun fichier de licence autonome CCER n'a été identifié à la racine lors de l'audit : **un dépôt accessible n'est pas, à lui seul, une autorisation de réutilisation**. Vérifier les permissions et les obligations amont avant toute redistribution.
+**Concat** est indépendant et soumis à **AGPL-3.0-or-later** ([source amont](https://github.com/jub0t/Concat)). CCER ne revendique ni propriété ni affiliation officielle avec Concat. Le code original de CCER est proposé sous **AGPL-3.0-or-later** ([LICENSE](LICENSE)). Les composants tiers conservent leurs licences et mentions d'origine ; respecter les obligations applicables avant toute redistribution.
