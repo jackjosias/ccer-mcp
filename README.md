@@ -96,7 +96,7 @@ CCER lecture / QA ────> FFmpeg / FFprobe
 | `ccer/asr_readiness.py`, `ccer/av_timeline.py` | Whisper intégré, transcriptions/SRT |
 | `ccer/controls.py`, `ccer/evidence_retention.py` | Sécurité, audit et rétention |
 
-**Nombre d'outils :** consulter le catalogue réel du serveur MCP, pas les anciens décomptes incrémentés au fil du développement.
+**Catalogue MCP vérifiable :** [schémas et profils d'accès JSON](docs/mcp-tools.json), générés depuis les réponses réelles `tools/list` hors ligne. Reproduire avec `python3 docs/render_mcp_catalog.py --check`. Les outils natifs Concat sont dynamiques et exclus de cet inventaire ; la découverte ne prouve ni leur exécution ni leur couverture de tests.
 
 <a id="fonctionnement"></a>
 ## Fonctionnement : de la capture à la vérification

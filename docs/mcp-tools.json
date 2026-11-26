@@ -1,0 +1,1782 @@
+{
+  "counts": {
+    "directControl": 35,
+    "directObserve": 34,
+    "standard": 53
+  },
+  "directNativeAllowlist": [
+    "concat_version",
+    "effects_list",
+    "export_status",
+    "media_probe",
+    "preview_frame",
+    "project_get",
+    "project_list",
+    "template_list",
+    "timeline_read"
+  ],
+  "formatVersion": 1,
+  "limitations": "Discovery is not proof of tool execution, runtime availability, or per-tool test coverage. Annotations are the runtime hints, not independent safety certifications.",
+  "profiles": {
+    "directControl": [
+      "ccer_asr_status",
+      "ccer_asset_analyze",
+      "ccer_audio_validate",
+      "ccer_audio_window",
+      "ccer_audit_report",
+      "ccer_av_events",
+      "ccer_av_replay_poll",
+      "ccer_av_timeline",
+      "ccer_beat_candidates",
+      "ccer_caption_timing_hint",
+      "ccer_caption_validate",
+      "ccer_color_report",
+      "ccer_creative_plan",
+      "ccer_cut_plan",
+      "ccer_desktop_act",
+      "ccer_desktop_capture",
+      "ccer_desktop_status",
+      "ccer_editorial_note_review",
+      "ccer_export_verify",
+      "ccer_long_review_plan",
+      "ccer_media_match",
+      "ccer_media_search",
+      "ccer_mission_status",
+      "ccer_preflight",
+      "ccer_project_inspect",
+      "ccer_scene_detect",
+      "ccer_shot_inspect",
+      "ccer_silence_map",
+      "ccer_storyboard",
+      "ccer_timecoded_review",
+      "ccer_timed_caption_context",
+      "ccer_timeline_validate",
+      "ccer_transcript_read",
+      "ccer_tts_status",
+      "ccer_visual_scan"
+    ],
+    "directObserve": [
+      "ccer_asr_status",
+      "ccer_asset_analyze",
+      "ccer_audio_validate",
+      "ccer_audio_window",
+      "ccer_audit_report",
+      "ccer_av_events",
+      "ccer_av_replay_poll",
+      "ccer_av_timeline",
+      "ccer_beat_candidates",
+      "ccer_caption_timing_hint",
+      "ccer_caption_validate",
+      "ccer_color_report",
+      "ccer_creative_plan",
+      "ccer_cut_plan",
+      "ccer_desktop_capture",
+      "ccer_desktop_status",
+      "ccer_editorial_note_review",
+      "ccer_export_verify",
+      "ccer_long_review_plan",
+      "ccer_media_match",
+      "ccer_media_search",
+      "ccer_mission_status",
+      "ccer_preflight",
+      "ccer_project_inspect",
+      "ccer_scene_detect",
+      "ccer_shot_inspect",
+      "ccer_silence_map",
+      "ccer_storyboard",
+      "ccer_timecoded_review",
+      "ccer_timed_caption_context",
+      "ccer_timeline_validate",
+      "ccer_transcript_read",
+      "ccer_tts_status",
+      "ccer_visual_scan"
+    ],
+    "standard": [
+      "ccer_asr_status",
+      "ccer_asset_analyze",
+      "ccer_audio_mix",
+      "ccer_audio_validate",
+      "ccer_audio_window",
+      "ccer_audit_report",
+      "ccer_av_events",
+      "ccer_av_replay_poll",
+      "ccer_av_timeline",
+      "ccer_batch_edit",
+      "ccer_beat_candidates",
+      "ccer_caption_timing_hint",
+      "ccer_caption_validate",
+      "ccer_checkpoint_create",
+      "ccer_checkpoint_restore",
+      "ccer_color_report",
+      "ccer_contact_sheet",
+      "ccer_creative_plan",
+      "ccer_cut_plan",
+      "ccer_delivery_transcode",
+      "ccer_desktop_act",
+      "ccer_desktop_capture",
+      "ccer_desktop_status",
+      "ccer_directed_render",
+      "ccer_editorial_note_review",
+      "ccer_export_verify",
+      "ccer_long_review_plan",
+      "ccer_media_index",
+      "ccer_media_match",
+      "ccer_media_match_render",
+      "ccer_media_search",
+      "ccer_mission_recover",
+      "ccer_mission_status",
+      "ccer_plan_save",
+      "ccer_preflight",
+      "ccer_produce",
+      "ccer_project_inspect",
+      "ccer_reframe_export",
+      "ccer_scene_detect",
+      "ccer_shot_inspect",
+      "ccer_silence_map",
+      "ccer_storyboard",
+      "ccer_studio_produce",
+      "ccer_subtitles_write",
+      "ccer_timecoded_review",
+      "ccer_timed_caption_context",
+      "ccer_timeline_validate",
+      "ccer_transcript_read",
+      "ccer_transition_export",
+      "ccer_tts_status",
+      "ccer_visual_scan",
+      "ccer_voice_flite",
+      "ccer_voice_synthesize"
+    ]
+  },
+  "scope": "CCER-owned tools, offline tools/list discovery; upstream Concat tools are dynamic and excluded",
+  "server": {
+    "name": "ccer-mcp",
+    "version": "0.1.0"
+  },
+  "tools": [
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read-only installed Concat Whisper model, optional SHA-256 verification, no transcription or download",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "verifySha256": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "ccer_asr_status"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read video/audio metadata via FFprobe",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_asset_analyze"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Normalize voice and duck background music with measured integrated loudness",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "music": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "musicGain": {
+            "type": "number"
+          },
+          "targetLufs": {
+            "type": "number"
+          },
+          "voice": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          }
+        },
+        "required": [
+          "voice",
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_audio_mix"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Scan sample for loudness and silence via FFmpeg",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "seconds": {
+            "maximum": 300,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_audio_validate"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Return requested 0.25..10s original audio as bounded WAV MCP audio part, no transcription",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "seconds": {
+            "type": "number"
+          },
+          "startSeconds": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_audio_window"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Verify the hash-linked audit journal",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
+      "name": "ccer_audit_report"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read-only paginated absolute video/audio event timecodes and optionally unverified supplied SRT; not real-time perception or ASR",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "frameCount": {
+            "maximum": 8,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "seconds": {
+            "type": "number"
+          },
+          "startSeconds": {
+            "type": "number"
+          },
+          "timelineOffsetSeconds": {
+            "type": "number"
+          },
+          "transcriptFile": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_av_events"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "One bounded recorded-video A/V window per consumer poll with cursor backpressure and adaptive frame budget; NOT a live camera stream",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "consumerReady": {
+            "type": "boolean"
+          },
+          "cursor": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "frameCount": {
+            "maximum": 4,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "includeFrames": {
+            "type": "boolean"
+          },
+          "maxEvents": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "timelineOffsetSeconds": {
+            "type": "number"
+          },
+          "transcriptFile": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "windowSeconds": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_av_replay_poll"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read-only synchronized video frames, supplied SRT and optional original WAV evidence",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "frameCount": {
+            "maximum": 8,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "includeAudio": {
+            "type": "boolean"
+          },
+          "maxCues": {
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "seconds": {
+            "type": "number"
+          },
+          "startSeconds": {
+            "type": "number"
+          },
+          "timelineOffsetSeconds": {
+            "type": "number"
+          },
+          "transcriptFile": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "transcriptFile"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_av_timeline"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Single Concat atomic undoable batch with read-after-write validation",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "commands": {
+            "items": {
+              "type": "object"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          },
+          "expectedClipDelta": {
+            "type": "integer"
+          },
+          "path": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "save": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "commands"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_batch_edit"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Find candidate audio impulses and tentative tempo without promising accurate BPM",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "seconds": {
+            "type": "number"
+          },
+          "sensitivity": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_beat_candidates"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Estimate phrase timing from nonquiet audio regions, not word-level forced alignment",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "cues": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "silenceReport": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "cues",
+          "silenceReport"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_caption_timing_hint"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Professional subtitle reading speed, safe layout, timing and overlaps",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "cues": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "cues"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_caption_validate"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Save, then snapshot the open Concat project",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_checkpoint_create"
+    },
+    {
+      "annotations": {
+        "destructiveHint": true,
+        "readOnlyHint": false
+      },
+      "description": "Restore a snapshot OFFLINE (project must be closed); explicit approval required",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "checkpointId": {
+            "type": "string"
+          },
+          "confirm": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "checkpointId",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_checkpoint_restore"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Measure frame luminance/saturation via FFmpeg; no subjective or certified grading",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "sampleInterval": {
+            "type": "number"
+          },
+          "seconds": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_color_report"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Create 3x3 PNG shot overview",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "interval": {
+            "type": "number"
+          },
+          "output": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "output"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_contact_sheet"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Reviewable story structure built from user-supplied script",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "brief": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "brief"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_creative_plan"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Propose timeline cut times near supplied onsets; never change projects",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "duration": {
+            "type": "number"
+          },
+          "maxCuts": {
+            "type": "integer"
+          },
+          "maxShot": {
+            "type": "number"
+          },
+          "minShot": {
+            "type": "number"
+          },
+          "onsets": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "targetShot": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "duration"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_cut_plan"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Safe verified video transcode to common platform aspect ratios",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "output": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "profile": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "output",
+          "profile"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_delivery_transcode"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Confirmed GUI action with fresh BEFORE/AFTER Slint images: click, move, paced drag, key, bounded type_text, scroll; file_drop uses text=absolute media path under CCER_INAPP_MEDIA_ROOT; select_export_folder uses CCER_INAPP_EXPORT_ROOT; all require confirmation and never fall back to physical X11",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "button": {
+            "type": "integer"
+          },
+          "confirm": {
+            "type": "boolean"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "expectedWindowId": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "scroll": {
+            "type": "integer"
+          },
+          "targetX": {
+            "type": "integer"
+          },
+          "targetY": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          },
+          "withCapture": {
+            "type": "boolean"
+          },
+          "x": {
+            "type": "integer"
+          },
+          "y": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expectedWindowId",
+          "action",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_desktop_act"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Capture the verified Concat window using the active GUI transport; never capture other applications",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "maxWidth": {
+            "maximum": 1600,
+            "minimum": 320,
+            "type": "integer"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "ccer_desktop_capture"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read the active Concat GUI window identity and size (private Slint if enabled; otherwise isolated X11)",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
+      "name": "ccer_desktop_status"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Frame-timed multi-scene FFmpeg composition with optional spoken audio and burned subtitles",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "audio": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "burnCaptions": {
+            "type": "boolean"
+          },
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "plan": {
+            "type": "object"
+          },
+          "preset": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan",
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_directed_render"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read-only video evidence around user timecode and note without editing or semantic inventions",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "contextSeconds": {
+            "type": "number"
+          },
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "frameCount": {
+            "maximum": 8,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "note": {
+            "maxLength": 1200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "timeSeconds": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "file",
+          "timeSeconds",
+          "note"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_editorial_note_review"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Inspect exported file and compare expected media properties",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "height": {
+            "type": "integer"
+          },
+          "maxDuration": {
+            "type": "number"
+          },
+          "minDuration": {
+            "type": "number"
+          },
+          "width": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_export_verify"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read-only paginated video timecode planning without decoding or storing images; reuse ccer_timecoded_review",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "frameCount": {
+            "maximum": 8,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "maximum": 24,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "windowSeconds": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_long_review_plan"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Index explicitly supplied footage and user-annotated tags, optionally split FFmpeg scenes; immutable JSON catalog",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "analyzeSeconds": {
+            "type": "integer"
+          },
+          "detectScenes": {
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "output": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "threshold": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "output"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_media_index"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Match an existing creative plan with annotated source shots at valid media timecodes",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "allowReuse": {
+            "type": "boolean"
+          },
+          "catalog": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "plan": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "catalog",
+          "plan"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_media_match"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "On explicit approval, match annotated assets then render a new MP4 via existing directed renderer; refuse missing scenes",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "allowReuse": {
+            "type": "boolean"
+          },
+          "audio": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "burnCaptions": {
+            "type": "boolean"
+          },
+          "catalog": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "confirm": {
+            "type": "boolean"
+          },
+          "output": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "plan": {
+            "type": "object"
+          },
+          "preset": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "catalog",
+          "plan",
+          "output",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_media_match_render"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Query annotated footage by normalized textual tokens and return evidence, not invented image semantics",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "catalog",
+          "text"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_media_search"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Get safe recovery guidance without blindly replaying edits",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "missionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "missionId"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_mission_recover"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Find an operation's recorded state",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "missionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "missionId"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_mission_status"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Write new creative plan JSON",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "plan": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "plan",
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_plan_save"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Check editing runtime, media tools and available storage",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
+      "name": "ccer_preflight"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Create, assemble, title, caption and optionally export a complete video from a declarative plan",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "captions": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "export": {
+            "type": "boolean"
+          },
+          "fast": {
+            "type": "boolean"
+          },
+          "music": {
+            "items": {
+              "description": "Absolute path inside CCER_ROOT",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "profile": {
+            "type": "string"
+          },
+          "shots": {
+            "items": {
+              "description": "Absolute path inside CCER_ROOT",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "titles": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "video": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "shots"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_produce"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Full project inspection",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_project_inspect"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Export video with non-distorting cover crop or contain padding and optional focus",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "focusX": {
+            "type": "number"
+          },
+          "focusY": {
+            "type": "number"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "output": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "profile": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "output"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_reframe_export"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "FFmpeg cut/scene change detection",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "seconds": {
+            "type": "integer"
+          },
+          "threshold": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_scene_detect"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Technical shot ranking from codec, resolution, duration",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "files": {
+            "items": {
+              "description": "Absolute path inside CCER_ROOT",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "files"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_shot_inspect"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Detect quiet and nonquiet intervals from a local audio or video file, not speech recognition",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "minSilence": {
+            "type": "number"
+          },
+          "seconds": {
+            "type": "number"
+          },
+          "thresholdDb": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_silence_map"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Shot list and visual intent for planned scenes",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "plan": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_storyboard"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Produce full local editorial plan, narration, subtitles, music mix, directed video, export QA",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "brief": {
+            "type": "object"
+          },
+          "burnCaptions": {
+            "type": "boolean"
+          },
+          "generateEnglishVoice": {
+            "type": "boolean"
+          },
+          "musicFile": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "musicGain": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "narrationFile": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "preset": {
+            "type": "string"
+          },
+          "targetLufs": {
+            "type": "number"
+          },
+          "video": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "brief"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_studio_produce"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Write validated timed SRT subtitles",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "cues": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cues",
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_subtitles_write"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read-only video eyes: deliver 1..8 authentic timestamped JPEG frames via MCP plus cuts, black/freeze/color and audio silence candidates; not semantic recognition or full video playback",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "frameCount": {
+            "maximum": 8,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "seconds": {
+            "type": "number"
+          },
+          "startSeconds": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_timecoded_review"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "User-supplied timed subtitles with bounded FFmpeg audio silence evidence; no speech recognition",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "cues": {
+            "items": {
+              "type": "object"
+            },
+            "maxItems": 2000,
+            "minItems": 1,
+            "type": "array"
+          },
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "includeAudioSilence": {
+            "type": "boolean"
+          },
+          "maxCues": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "seconds": {
+            "type": "number"
+          },
+          "startSeconds": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "file",
+          "cues"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_timed_caption_context"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Find gaps, overlaps and invalid clips",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "gapThresholdSeconds": {
+            "type": "number"
+          },
+          "path": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_timeline_validate"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read-only validated existing SRT; captions supplied, not freshly transcribed",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "timelineOffsetSeconds": {
+            "type": "number"
+          },
+          "transcriptFile": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "transcriptFile"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_transcript_read"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Produce new two-shot MP4 with FFmpeg xfade transition; source audio not preserved",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "first": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "music": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "output": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "overlapSeconds": {
+            "type": "number"
+          },
+          "profile": {
+            "type": "string"
+          },
+          "sceneSeconds": {
+            "type": "number"
+          },
+          "second": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          }
+        },
+        "required": [
+          "first",
+          "second",
+          "output"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_transition_export"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Check installed offline voice synthesis engines",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
+      "name": "ccer_tts_status"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "FFmpeg detection of black frames and frozen scenes",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "seconds": {
+            "maximum": 300,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_visual_scan"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Generate local English speech WAV with optional FFmpeg libflite",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "speaker": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_voice_flite"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Offline narration via installed eSpeak",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "engine": {
+            "type": "string"
+          },
+          "file": {
+            "description": "Absolute path inside CCER_ROOT",
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "ccer_voice_synthesize"
+    }
+  ]
+}
