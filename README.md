@@ -9,7 +9,7 @@
 ![MCP](https://img.shields.io/badge/Protocol-MCP-2563EB)
 ![Concat](https://img.shields.io/badge/Editor-Concat-374151)
 ![Statut](https://img.shields.io/badge/Statut-en%20d%C3%A9veloppement-E9A23B)
-[![M8ven Trust Index](https://m8ven.ai/badge/mcp/jackjosias/ccer-mcp?variant=verified)](https://m8ven.ai/mcp/jackjosias/ccer-mcp?s=readme)
+[![M8ven](https://m8ven.ai/badge/mcp/jackjosias-ccer-mcp-1xlke2?v=816ca74142b800a4812444039f431f08)](https://m8ven.ai/mcp/jackjosias-ccer-mcp-1xlke2?s=readme)
 
 **[📒 CHANGELOG — historique chronologique des fonctionnalités, incidents et corrections](CHANGELOG.md)**
 
