@@ -244,5 +244,59 @@ class NativeUnixWireTests(unittest.TestCase):
                     native_desktop._close()
                     server.stop()
 
+    def test_mcp_desktop_roundtrip_with_simulated_slint_peer(self):
+        # Real Unix socket and MCP dispatch, synthetic peer/frames, no live GUI.
+        from ccer.direct_gateway import DirectGateway
+        from tests.test_direct_gateway import FakeConcat
+        native_desktop._close()
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            os.chmod(root, 0o700)
+            socket_path = root / "concat.sock"
+            with patch("ccer.inapp_protocol.PRIVATE_ROOT", root):
+                server = FakeSlintServer(socket_path)
+                try:
+                    with patch.dict(os.environ, {
+                        "CCER_INAPP_SOCKET": str(socket_path),
+                        "CCER_INAPP_TOKEN": "v" * 48,
+                        "CCER_INAPP_PID": str(os.getpid()),
+                    }, clear=True), patch("ccer.desktop_gui._run",
+                        side_effect=AssertionError("No physical X11 access")):
+                        gateway = DirectGateway(FakeConcat(), root, access="control")
+                        def call(name, args):
+                            return gateway.handle({"jsonrpc": "2.0", "id": 1,
+                                "method": "tools/call",
+                                "params": {"name": name, "arguments": args}})["result"]
+                        status = call("ccer_desktop_status", {})
+                        self.assertFalse(status["isError"], status)
+                        window = status["structuredContent"]["window"]["windowId"]
+                        self.assertEqual(window, "concat-window-test")
+                        args = {"expectedWindowId": window, "action": "move",
+                                "x": 25, "y": 70, "confirm": True}
+                        self.assertTrue(call("ccer_desktop_act", args)["isError"])
+                        before = call("ccer_desktop_capture", {})
+                        self.assertFalse(before["isError"], before)
+                        self.assertTrue(before["structuredContent"]["safeForClickReceipt"])
+                        after = call("ccer_desktop_act", args)
+                        self.assertFalse(after["isError"], after)
+                        self.assertTrue(after["structuredContent"]["actionSent"])
+                        self.assertFalse(after["structuredContent"]["visualOutcomeVerified"])
+                        self.assertGreater(after["structuredContent"]["frameNo"],
+                                           before["structuredContent"]["frameNo"])
+                        for reply in (before, after):
+                            self.assertNotIn("imageBase64", reply["structuredContent"])
+                            images = [p for p in reply["content"] if p["type"] == "image"]
+                            self.assertEqual(len(images), 1)
+                            data = base64.b64decode(images[0]["data"], validate=True)
+                            self.assertEqual(hashlib.sha256(data).hexdigest(),
+                                             reply["structuredContent"]["sha256"])
+                        self.assertTrue(call("ccer_desktop_act", args)["isError"])
+                        self.assertEqual([method for method, _ in server.calls],
+                                         ["hello", "capture", "capture", "gesture"])
+                        self.assertTrue(gateway.production.journal.verify()["valid"])
+                finally:
+                    native_desktop._close()
+                    server.stop()
+
 if __name__ == "__main__":
     unittest.main()
