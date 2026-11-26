@@ -36,6 +36,8 @@ L'envoi d'une action ne prouve ni la réussite du montage ni celle de l'export.
 
 ## Confidentialité et rétention
 
+Voir la [politique de confidentialité de CCER](PRIVACY.md) pour les traitements, transmissions, durées et limites.
+
 Ne pas committer `.env`, identifiants, jetons, `automation.json`, médias privés, captures personnelles ou chemins sensibles. Ne supprimer **aucun rush ni export utilisateur** pour libérer de l'espace. Les nettoyages portent uniquement sur les artefacts temporaires CCER identifiables.
 
 Les chaînes SHA détectent certaines altérations, mais ne prouvent pas l'identité de l'auteur du journal. Les images éventuellement transmises à un client cloud ne peuvent être déclarées supprimées à distance sans preuve.
