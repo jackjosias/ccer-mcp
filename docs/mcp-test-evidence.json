@@ -9,22 +9,22 @@
   ],
   "pythonVersion": "3.12.3",
   "scope": "Offline in-process unittest discovery (test_*.py); no live_* or external Concat integration certification",
-  "sourceAndTestFingerprintSha256": "396e6c9cef98b39cd58a531732cbd7fc96251bdc5f18c984fafdbef02e1a5847",
+  "sourceAndTestFingerprintSha256": "9a6c2145e373146e03138dcffd8e2f61567e03237eeddb79334d60e322ec3f4f",
   "suite": {
     "errors": 0,
     "expectedFailures": 0,
     "failures": 0,
-    "passed": 295,
-    "run": 295,
+    "passed": 301,
+    "run": 301,
     "skipped": 0,
     "unexpectedSuccesses": 0
   },
   "summary": {
-    "dispatchObservedInPassingTest": 16,
-    "dispatchReturnedInPassingTest": 16,
-    "observedInPassingTest": 19,
+    "dispatchObservedInPassingTest": 26,
+    "dispatchReturnedInPassingTest": 17,
+    "observedInPassingTest": 53,
     "tools": 53,
-    "withLiteralTestReference": 20
+    "withLiteralTestReference": 30
   },
   "tools": [
     {
@@ -44,26 +44,138 @@
           "layer": "production",
           "outcome": "returned",
           "test": "test_asr_readiness.AsrReadinessTests.test_mcp_is_observe_only"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [
+        "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
+      ],
+      "name": "ccer_asset_analyze",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
         }
       ]
     },
     {
       "literalTestReferences": [],
-      "name": "ccer_asset_analyze",
-      "observedInOtherTests": [],
-      "observedInPassingTests": []
-    },
-    {
-      "literalTestReferences": [],
       "name": "ccer_audio_mix",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
+      ],
       "name": "ccer_audio_validate",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        }
+      ]
     },
     {
       "literalTestReferences": [
@@ -113,14 +225,62 @@
           "layer": "production",
           "outcome": "raised:PolicyError",
           "test": "test_audio_evidence.AudioEvidenceTests.test_unapproved_file_rejected_by_mcp"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
         }
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_security_matrix.py::test_audit_tool_reports_chain_tampering"
+      ],
       "name": "ccer_audit_report",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_audit_tool_reports_chain_tampering"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_audit_tool_reports_chain_tampering"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_audit_tool_reports_chain_tampering"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        }
+      ]
     },
     {
       "literalTestReferences": [
@@ -190,6 +350,26 @@
           "layer": "production",
           "outcome": "returned",
           "test": "test_av_event_cursor.EventCursorTests.test_real_ffmpeg_video_to_mcp_event_page_without_jpeg_files"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
         }
       ]
     },
@@ -220,6 +400,26 @@
           "layer": "production",
           "outcome": "returned",
           "test": "test_av_replay_poll.AVReplayPollTests.test_real_ffmpeg_pull_through_readonly_mcp"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
         }
       ]
     },
@@ -293,6 +493,26 @@
           "layer": "production",
           "outcome": "returned",
           "test": "test_av_timeline.AVTimelineTests.test_real_ffmpeg_audio_video_and_caption_time_alignment"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
         }
       ]
     },
@@ -318,26 +538,131 @@
           "layer": "production",
           "outcome": "returned",
           "test": "test_ccer.ControlsTests.test_batch_and_timeline"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [
+        "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
+      ],
+      "name": "ccer_beat_candidates",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
         }
       ]
     },
     {
       "literalTestReferences": [],
-      "name": "ccer_beat_candidates",
-      "observedInOtherTests": [],
-      "observedInPassingTests": []
-    },
-    {
-      "literalTestReferences": [],
       "name": "ccer_caption_timing_hint",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_caption_validate",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [
@@ -366,6 +691,31 @@
           "layer": "production",
           "outcome": "returned",
           "test": "test_ccer.ControlsTests.test_checkpoint_protects_existing_project"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
         }
       ]
     },
@@ -418,38 +768,195 @@
           "layer": "production",
           "outcome": "raised:PolicyError",
           "test": "test_ccer.ControlsTests.test_restore_requires_confirmation"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [
+        "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
+      ],
+      "name": "ccer_color_report",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
         }
       ]
     },
     {
       "literalTestReferences": [],
-      "name": "ccer_color_report",
-      "observedInOtherTests": [],
-      "observedInPassingTests": []
-    },
-    {
-      "literalTestReferences": [],
       "name": "ccer_contact_sheet",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_creative_plan",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_cut_plan",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_delivery_transcode",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [
@@ -464,6 +971,7 @@
         "test_direct_gateway.py::test_x11_fallback_is_viewable_but_never_authorizes_a_click",
         "test_direct_stdio_protocol.py::test_mcp_stays_online_offline_and_rejects_headless_writes",
         "test_mcp_evidence_recorder.py::test_reference_inventory_covers_all_registry_names",
+        "test_mcp_security_matrix.py::test_every_non_permitted_tool_is_refused_in_direct_profiles",
         "test_public_mcp_catalog.py::test_profiles_and_schemas"
       ],
       "name": "ccer_desktop_act",
@@ -513,6 +1021,31 @@
           "layer": "direct",
           "outcome": "raised:PolicyError",
           "test": "test_direct_gateway.DirectGatewayTests.test_x11_fallback_is_viewable_but_never_authorizes_a_click"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
         }
       ]
     },
@@ -595,6 +1128,16 @@
           "layer": "gateway",
           "outcome": "returned",
           "test": "test_direct_gateway.DirectGatewayTests.test_x11_fallback_is_viewable_but_never_authorizes_a_click"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
         }
       ]
     },
@@ -606,13 +1149,50 @@
       ],
       "name": "ccer_desktop_status",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_directed_render",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [
@@ -662,14 +1242,72 @@
           "layer": "production",
           "outcome": "returned",
           "test": "test_editorial_note_review.EditorialNoteTests.test_real_video_at_exact_requested_timecode_without_jpeg_cache"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
         }
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
+      ],
       "name": "ccer_export_verify",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        }
+      ]
     },
     {
       "literalTestReferences": [
@@ -700,6 +1338,26 @@
           "layer": "production",
           "outcome": "returned",
           "test": "test_long_form_real_seek.LongFormActualSeekTests.test_one_hour_sparse_fixture_reaches_last_window_and_decodes"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
         },
         {
           "layer": "direct",
@@ -747,13 +1405,60 @@
       "literalTestReferences": [],
       "name": "ccer_media_index",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_media_match",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [
@@ -766,6 +1471,31 @@
           "layer": "direct",
           "outcome": "raised:PolicyError",
           "test": "test_direct_gateway.DirectGatewayTests.test_control_is_visually_scoped_and_blocks_backend_writes"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
         }
       ]
     },
@@ -773,25 +1503,136 @@
       "literalTestReferences": [],
       "name": "ccer_media_search",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_mission_recover",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_mission_status",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_security_matrix.py::test_outside_root_plan_write_is_rejected"
+      ],
       "name": "ccer_plan_save",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_plan_write_is_rejected"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_plan_write_is_rejected"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_plan_write_is_rejected"
+        }
+      ]
     },
     {
       "literalTestReferences": [
@@ -814,6 +1655,16 @@
           "layer": "production",
           "outcome": "returned",
           "test": "test_ccer.ControlsTests.test_tools_and_preflight"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
         }
       ]
     },
@@ -831,6 +1682,31 @@
           "layer": "direct",
           "outcome": "raised:PolicyError",
           "test": "test_direct_gateway.DirectGatewayTests.test_control_is_visually_scoped_and_blocks_backend_writes"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
         },
         {
           "layer": "dispatch",
@@ -858,55 +1734,273 @@
       "literalTestReferences": [],
       "name": "ccer_project_inspect",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_reframe_export",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
+      ],
       "name": "ccer_scene_detect",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_shot_inspect",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
+      ],
       "name": "ccer_silence_map",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_storyboard",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_studio_produce",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_subtitles_write",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [
         "test_lightweight_visual_contract.py::test_ffmpeg_frame_delivered_as_real_mcp_image_part",
         "test_lightweight_visual_contract.py::test_image_audio_and_native_desktop_tools_retained",
         "test_long_form_real_seek.py::test_one_hour_sparse_fixture_reaches_last_window_and_decodes",
+        "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected",
         "test_timecoded_review.py::test_direct_mcp_surfaces_actual_frames_without_base64_in_metadata",
         "test_timecoded_review.py::test_root_policy_never_opens_unapproved_media"
       ],
@@ -942,6 +2036,41 @@
           "layer": "production",
           "outcome": "returned",
           "test": "test_long_form_real_seek.LongFormActualSeekTests.test_one_hour_sparse_fixture_reaches_last_window_and_decodes"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
         },
         {
           "layer": "direct",
@@ -988,6 +2117,26 @@
       "name": "ccer_timed_caption_context",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
         {
           "layer": "direct",
           "outcome": "raised:PolicyError",
@@ -1053,6 +2202,26 @@
           "test": "test_ccer.ControlsTests.test_batch_and_timeline"
         },
         {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
           "layer": "dispatch",
           "outcome": "returned",
           "test": "test_recipe.RecipeTests.test_prepare_project_with_deduplicated_sources_and_caption"
@@ -1086,6 +2255,26 @@
           "layer": "production",
           "outcome": "returned",
           "test": "test_av_timeline.AVTimelineTests.test_gateway_reads_srt_without_claiming_asr"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
         }
       ]
     },
@@ -1093,31 +2282,158 @@
       "literalTestReferences": [],
       "name": "ccer_transition_export",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_tts_status",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        }
+      ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
+      ],
       "name": "ccer_visual_scan",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_outside_root_media_and_symlink_are_rejected"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_voice_flite",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     },
     {
       "literalTestReferences": [],
       "name": "ccer_voice_synthesize",
       "observedInOtherTests": [],
-      "observedInPassingTests": []
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_non_permitted_tool_is_refused_in_direct_profiles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_registered_tool_rejects_unexpected_argument"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_security_matrix.McpSecurityMatrixTests.test_every_required_argument_is_enforced_before_dispatch"
+        }
+      ]
     }
   ]
 }
