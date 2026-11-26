@@ -9,22 +9,22 @@
   ],
   "pythonVersion": "3.12.3",
   "scope": "Offline in-process unittest discovery (test_*.py); no live_* or external Concat integration certification",
-  "sourceAndTestFingerprintSha256": "1d46b11429073b7eed44e487524be2c2d229e64813b185a177762eaeb038141f",
+  "sourceAndTestFingerprintSha256": "be1708281bfeb2862e6ce9fe0b147cbf6da4bbae7ca965b2fd3bde2ba145fff8",
   "suite": {
     "errors": 0,
     "expectedFailures": 0,
     "failures": 0,
-    "passed": 314,
-    "run": 314,
-    "skipped": 0,
+    "passed": 320,
+    "run": 321,
+    "skipped": 1,
     "unexpectedSuccesses": 0
   },
   "summary": {
-    "dispatchObservedInPassingTest": 41,
-    "dispatchReturnedInPassingTest": 41,
+    "dispatchObservedInPassingTest": 49,
+    "dispatchReturnedInPassingTest": 49,
     "observedInPassingTest": 53,
     "tools": 53,
-    "withLiteralTestReference": 45
+    "withLiteralTestReference": 53
   },
   "tools": [
     {
@@ -123,10 +123,27 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_mix_real_audio"
+      ],
       "name": "ccer_audio_mix",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_mix_real_audio"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_mix_real_audio"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_mix_real_audio"
+        },
         {
           "layer": "direct",
           "outcome": "raised:PolicyError",
@@ -1116,10 +1133,27 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_delivery_and_reframe"
+      ],
       "name": "ccer_delivery_transcode",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_delivery_and_reframe"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_delivery_and_reframe"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_delivery_and_reframe"
+        },
         {
           "layer": "direct",
           "outcome": "raised:PolicyError",
@@ -1352,10 +1386,27 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_directed_and_matched_render"
+      ],
       "name": "ccer_directed_render",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_directed_and_matched_render"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_directed_and_matched_render"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_directed_and_matched_render"
+        },
         {
           "layer": "direct",
           "outcome": "raised:PolicyError",
@@ -1481,6 +1532,66 @@
           "layer": "production",
           "outcome": "returned",
           "test": "test_mcp_functional_read.SyntheticMediaTests.test_asset_probe_and_export_verification"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_delivery_and_reframe"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_delivery_and_reframe"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_delivery_and_reframe"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_directed_and_matched_render"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_directed_and_matched_render"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_directed_and_matched_render"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_studio_real_production"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_studio_real_production"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_studio_real_production"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_transition_render"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_transition_render"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_transition_render"
         },
         {
           "layer": "gateway",
@@ -1613,7 +1724,8 @@
     },
     {
       "literalTestReferences": [
-        "test_mcp_functional_read.py::test_catalog_search_and_storyboard_matching"
+        "test_mcp_functional_read.py::test_catalog_search_and_storyboard_matching",
+        "test_mcp_functional_read.py::test_directed_and_matched_render"
       ],
       "name": "ccer_media_index",
       "observedInOtherTests": [],
@@ -1632,6 +1744,21 @@
           "layer": "production",
           "outcome": "returned",
           "test": "test_mcp_functional_read.SyntheticMediaTests.test_catalog_search_and_storyboard_matching"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_directed_and_matched_render"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_directed_and_matched_render"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_directed_and_matched_render"
         },
         {
           "layer": "direct",
@@ -1711,7 +1838,8 @@
     },
     {
       "literalTestReferences": [
-        "test_direct_gateway.py::test_control_is_visually_scoped_and_blocks_backend_writes"
+        "test_direct_gateway.py::test_control_is_visually_scoped_and_blocks_backend_writes",
+        "test_mcp_functional_read.py::test_directed_and_matched_render"
       ],
       "name": "ccer_media_match_render",
       "observedInOtherTests": [],
@@ -1720,6 +1848,21 @@
           "layer": "direct",
           "outcome": "raised:PolicyError",
           "test": "test_direct_gateway.DirectGatewayTests.test_control_is_visually_scoped_and_blocks_backend_writes"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_directed_and_matched_render"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_directed_and_matched_render"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_directed_and_matched_render"
         },
         {
           "layer": "direct",
@@ -2121,10 +2264,27 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_delivery_and_reframe"
+      ],
       "name": "ccer_reframe_export",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_delivery_and_reframe"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_delivery_and_reframe"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_delivery_and_reframe"
+        },
         {
           "layer": "direct",
           "outcome": "raised:PolicyError",
@@ -2381,10 +2541,27 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_studio_real_production"
+      ],
       "name": "ccer_studio_produce",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_studio_real_production"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_studio_real_production"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_studio_real_production"
+        },
         {
           "layer": "direct",
           "outcome": "raised:PolicyError",
@@ -2745,10 +2922,27 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_transition_render"
+      ],
       "name": "ccer_transition_export",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_transition_render"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_transition_render"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_transition_render"
+        },
         {
           "layer": "direct",
           "outcome": "raised:PolicyError",
@@ -2881,10 +3075,27 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_voice_flite_real_wav"
+      ],
       "name": "ccer_voice_flite",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_voice_flite_real_wav"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_voice_flite_real_wav"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_voice_flite_real_wav"
+        },
         {
           "layer": "direct",
           "outcome": "raised:PolicyError",
@@ -2913,7 +3124,9 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_voice_espeak_real_wav"
+      ],
       "name": "ccer_voice_synthesize",
       "observedInOtherTests": [],
       "observedInPassingTests": [

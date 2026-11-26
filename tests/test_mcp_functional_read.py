@@ -232,6 +232,120 @@ class SyntheticMediaTests(unittest.TestCase):
         self.assertEqual(image[12:16], b"IHDR")
         self.assertEqual(image[-8:-4], b"IEND")
 
+    def verify_video(self, report, width, height, duration):
+        self.assertTrue(report["verified"])
+        path = Path(report["file"])
+        self.assertGreater(path.stat().st_size, 100)
+        qa = self.call("ccer_export_verify", {"file": str(path), "width": width,
+                       "height": height, "minDuration": duration - .5,
+                       "maxDuration": duration + .5})
+        self.assertTrue(qa["passed"], qa)
+
+    def test_mix_real_audio(self):
+        self.gateway = Gateway(FakeReadBackend(), self.root)
+        output = self.root / "mix.wav"
+        result = self.call("ccer_audio_mix", {"voice": str(self.media),
+                           "file": str(output)})
+        self.assertTrue(result["verified"])
+        self.assertFalse(result["musicDuck"])
+        self.assertAlmostEqual(float(result["duration"]), 4, delta=.2)
+        self.assertTrue(math.isfinite(result["integratedLufs"]))
+        self.assertTrue(output.read_bytes().startswith(b"RIFF"))
+
+    def test_delivery_and_reframe(self):
+        self.gateway = Gateway(FakeReadBackend(), self.root)
+        source = str(self.media)
+        result = self.call("ccer_delivery_transcode", {"file": source,
+                           "output": str(self.root / "delivery.mp4"),
+                           "profile": "square-preview"})
+        self.verify_video(result, 320, 320, 4)
+        result = self.call("ccer_reframe_export", {"file": source,
+                           "output": str(self.root / "reframe.mp4"),
+                           "profile": "vertical-preview", "focusX": .25})
+        self.verify_video(result, 360, 640, 4)
+        self.assertEqual(result["focus"]["x"], .25)
+
+    def test_transition_render(self):
+        self.gateway = Gateway(FakeReadBackend(), self.root)
+        # Use a different synthetic scene so a transition can be distinguished.
+        second = self.root / "white.mp4"
+        subprocess.run(["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+                        "-f", "lavfi", "-i", "color=c=white:s=160x90:r=24:d=2",
+                        "-c:v", "libx264", "-threads", "1", "-pix_fmt", "yuv420p",
+                        str(second)], check=True, timeout=30)
+        digest = hashlib.sha256(second.read_bytes()).hexdigest()
+        result = self.call("ccer_transition_export", {"first": str(self.media),
+                           "second": str(second), "output": str(self.root / "fade.mp4"),
+                           "profile": "landscape-preview", "sceneSeconds": 1,
+                           "overlapSeconds": .25, "kind": "fade"})
+        self.verify_video(result, 640, 360, 1.75)
+        self.assertEqual(result["transition"], "fade")
+        self.assertFalse(result["originalAudioPreserved"])
+        self.assertEqual(hashlib.sha256(second.read_bytes()).hexdigest(), digest)
+
+    def test_directed_and_matched_render(self):
+        self.gateway = Gateway(FakeReadBackend(), self.root)
+        plan = {"video": {"width": 160, "height": 90, "rateNum": 10, "rateDen": 1},
+                "scenes": [{"duration": 2, "source": str(self.media),
+                            "visualIntent": "black"}],
+                "captions": [{"start": 0, "duration": 2, "text": "Synthetic"}]}
+        result = self.call("ccer_directed_render", {"plan": plan,
+                           "file": str(self.root / "directed.mp4"),
+                           "burnCaptions": False, "preset": "ultrafast"})
+        self.verify_video(result, 160, 90, 2)
+        self.assertEqual(result["sceneCount"], 1)
+        self.assertIn("Synthetic", Path(result["subtitles"]).read_text())
+        catalog = self.root / "render-catalog.json"
+        self.call("ccer_media_index", {"items": [{"file": str(self.media),
+                   "tags": ["black"]}], "output": str(catalog)})
+        match = self.call("ccer_media_match_render", {"catalog": str(catalog),
+                          "plan": plan, "output": str(self.root / "matched.mp4"),
+                          "confirm": True, "burnCaptions": False,
+                          "preset": "ultrafast"})
+        self.verify_video(match["render"], 160, 90, 2)
+        self.assertTrue(match["technicalQA"])
+        self.assertTrue(match["editorialReviewRequired"])
+        self.assertEqual(match["provenance"], "user_annotations_not_model_inference")
+
+    def test_studio_real_production(self):
+        self.gateway = Gateway(FakeReadBackend(), self.root)
+        result = self.call("ccer_studio_produce", {"name": "SyntheticStudio",
+                           "brief": {"topic": "Synthetic", "script": "Black frame.",
+                                     "durationSeconds": 3, "assets": [str(self.media)]},
+                           "video": {"width": 160, "height": 90, "rateNum": 10, "rateDen": 1},
+                           "burnCaptions": False, "preset": "ultrafast"})
+        self.assertTrue(result["passed"])
+        self.verify_video(result["render"], 160, 90, 3)
+        self.assertTrue(result["technicalQA"])
+        self.assertFalse(result["researchVerified"])
+        self.assertTrue(result["needsVisualReview"])
+        self.assertTrue(Path(result["storyboard"]).is_file())
+
+    def test_voice_flite_real_wav(self):
+        from ccer.voice_extensions import flite_available
+        if not flite_available():
+            self.skipTest("Optional FFmpeg libflite unavailable")
+        self.gateway = Gateway(FakeReadBackend(), self.root)
+        output = self.root / "flite.wav"
+        result = self.call("ccer_voice_flite", {"text": "Synthetic test.",
+                           "file": str(output), "language": "en"})
+        self.assertTrue(result["verified"])
+        self.assertGreater(result["durationSeconds"], 0)
+        self.assertFalse(result["naturalSounding"])
+        self.assertTrue(output.read_bytes().startswith(b"RIFF"))
+
+    def test_voice_espeak_real_wav(self):
+        if not (shutil.which("espeak-ng") or shutil.which("espeak")):
+            self.skipTest("Optional eSpeak unavailable")
+        self.gateway = Gateway(FakeReadBackend(), self.root)
+        output = self.root / "espeak.wav"
+        result = self.call("ccer_voice_synthesize", {"text": "Test de synthèse.",
+                           "file": str(output), "language": "fr"})
+        self.assertTrue(result["verified"])
+        self.assertIn(result["engine"], ("espeak", "espeak-ng"))
+        self.assertGreater(float(result["duration"]), 0)
+        self.assertTrue(output.read_bytes().startswith(b"RIFF"))
+
     def test_technical_shot_inspection(self):
         result = self.call("ccer_shot_inspect", {"files": [str(self.media)]})
         self.assertEqual(len(result["assets"]), 1)
