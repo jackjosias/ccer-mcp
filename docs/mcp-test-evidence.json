@@ -1,0 +1,1123 @@
+{
+  "formatVersion": 1,
+  "limitations": [
+    "Literal references are not execution or assertions.",
+    "Observed calls in passing tests may use mocks; exceptions may be expected.",
+    "A return does not establish a correct edit or production safety.",
+    "Subprocess calls, function-only tests and mocked-away methods are not captured by these hooks.",
+    "Counts are not line, branch or exhaustive per-tool functional coverage."
+  ],
+  "pythonVersion": "3.12.3",
+  "scope": "Offline in-process unittest discovery (test_*.py); no live_* or external Concat integration certification",
+  "sourceAndTestFingerprintSha256": "396e6c9cef98b39cd58a531732cbd7fc96251bdc5f18c984fafdbef02e1a5847",
+  "suite": {
+    "errors": 0,
+    "expectedFailures": 0,
+    "failures": 0,
+    "passed": 295,
+    "run": 295,
+    "skipped": 0,
+    "unexpectedSuccesses": 0
+  },
+  "summary": {
+    "dispatchObservedInPassingTest": 16,
+    "dispatchReturnedInPassingTest": 16,
+    "observedInPassingTest": 19,
+    "tools": 53,
+    "withLiteralTestReference": 20
+  },
+  "tools": [
+    {
+      "literalTestReferences": [
+        "test_asr_readiness.py::test_mcp_is_observe_only",
+        "test_lightweight_visual_contract.py::test_image_audio_and_native_desktop_tools_retained"
+      ],
+      "name": "ccer_asr_status",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_asr_readiness.AsrReadinessTests.test_mcp_is_observe_only"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_asr_readiness.AsrReadinessTests.test_mcp_is_observe_only"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_asset_analyze",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_audio_mix",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_audio_validate",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [
+        "test_audio_evidence.py::test_real_audio_without_scratch_files_and_mcp_audio_part",
+        "test_audio_evidence.py::test_unapproved_file_rejected_by_mcp",
+        "test_lightweight_visual_contract.py::test_image_audio_and_native_desktop_tools_retained"
+      ],
+      "name": "ccer_audio_window",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_audio_evidence.AudioEvidenceTests.test_real_audio_without_scratch_files_and_mcp_audio_part"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_audio_evidence.AudioEvidenceTests.test_real_audio_without_scratch_files_and_mcp_audio_part"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_audio_evidence.AudioEvidenceTests.test_real_audio_without_scratch_files_and_mcp_audio_part"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_audio_evidence.AudioEvidenceTests.test_real_audio_without_scratch_files_and_mcp_audio_part"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_audio_evidence.AudioEvidenceTests.test_unapproved_file_rejected_by_mcp"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_audio_evidence.AudioEvidenceTests.test_unapproved_file_rejected_by_mcp"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_audio_evidence.AudioEvidenceTests.test_unapproved_file_rejected_by_mcp"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_audio_evidence.AudioEvidenceTests.test_unapproved_file_rejected_by_mcp"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_audit_report",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [
+        "test_av_event_cursor.py::test_mcp_direct_gateway_exposes_readonly_event_page",
+        "test_av_event_cursor.py::test_real_detector_correlation_via_mcp_without_media_artifacts",
+        "test_av_event_cursor.py::test_real_ffmpeg_video_to_mcp_event_page_without_jpeg_files"
+      ],
+      "name": "ccer_av_events",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_av_event_cursor.EventCursorTests.test_mcp_direct_gateway_exposes_readonly_event_page"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_av_event_cursor.EventCursorTests.test_mcp_direct_gateway_exposes_readonly_event_page"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_av_event_cursor.EventCursorTests.test_mcp_direct_gateway_exposes_readonly_event_page"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_av_event_cursor.EventCursorTests.test_mcp_direct_gateway_exposes_readonly_event_page"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_av_event_cursor.EventCursorTests.test_real_detector_correlation_via_mcp_without_media_artifacts"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_av_event_cursor.EventCursorTests.test_real_detector_correlation_via_mcp_without_media_artifacts"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_av_event_cursor.EventCursorTests.test_real_detector_correlation_via_mcp_without_media_artifacts"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_av_event_cursor.EventCursorTests.test_real_detector_correlation_via_mcp_without_media_artifacts"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_av_event_cursor.EventCursorTests.test_real_ffmpeg_video_to_mcp_event_page_without_jpeg_files"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_av_event_cursor.EventCursorTests.test_real_ffmpeg_video_to_mcp_event_page_without_jpeg_files"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_av_event_cursor.EventCursorTests.test_real_ffmpeg_video_to_mcp_event_page_without_jpeg_files"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_av_event_cursor.EventCursorTests.test_real_ffmpeg_video_to_mcp_event_page_without_jpeg_files"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [
+        "test_av_replay_poll.py::test_real_ffmpeg_pull_through_readonly_mcp",
+        "test_lightweight_visual_contract.py::test_image_audio_and_native_desktop_tools_retained"
+      ],
+      "name": "ccer_av_replay_poll",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_av_replay_poll.AVReplayPollTests.test_real_ffmpeg_pull_through_readonly_mcp"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_av_replay_poll.AVReplayPollTests.test_real_ffmpeg_pull_through_readonly_mcp"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_av_replay_poll.AVReplayPollTests.test_real_ffmpeg_pull_through_readonly_mcp"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_av_replay_poll.AVReplayPollTests.test_real_ffmpeg_pull_through_readonly_mcp"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [
+        "test_av_timeline.py::test_direct_gateway_rejects_unapproved_subtitles",
+        "test_av_timeline.py::test_mcp_outputs_real_image_parts_without_base64_metadata",
+        "test_av_timeline.py::test_real_ffmpeg_audio_video_and_caption_time_alignment",
+        "test_ccer.py::test_tools_and_preflight",
+        "test_lightweight_visual_contract.py::test_image_audio_and_native_desktop_tools_retained"
+      ],
+      "name": "ccer_av_timeline",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_av_timeline.AVTimelineTests.test_direct_gateway_rejects_unapproved_subtitles"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_av_timeline.AVTimelineTests.test_direct_gateway_rejects_unapproved_subtitles"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_av_timeline.AVTimelineTests.test_direct_gateway_rejects_unapproved_subtitles"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_av_timeline.AVTimelineTests.test_direct_gateway_rejects_unapproved_subtitles"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_av_timeline.AVTimelineTests.test_mcp_outputs_real_image_parts_without_base64_metadata"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_av_timeline.AVTimelineTests.test_mcp_outputs_real_image_parts_without_base64_metadata"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_av_timeline.AVTimelineTests.test_mcp_outputs_real_image_parts_without_base64_metadata"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_av_timeline.AVTimelineTests.test_mcp_outputs_real_image_parts_without_base64_metadata"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_av_timeline.AVTimelineTests.test_real_ffmpeg_audio_video_and_caption_time_alignment"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_av_timeline.AVTimelineTests.test_real_ffmpeg_audio_video_and_caption_time_alignment"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_av_timeline.AVTimelineTests.test_real_ffmpeg_audio_video_and_caption_time_alignment"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_av_timeline.AVTimelineTests.test_real_ffmpeg_audio_video_and_caption_time_alignment"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [
+        "test_ccer.py::test_batch_and_timeline",
+        "test_public_mcp_catalog.py::test_profiles_and_schemas"
+      ],
+      "name": "ccer_batch_edit",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_batch_and_timeline"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_batch_and_timeline"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_batch_and_timeline"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_beat_candidates",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_caption_timing_hint",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_caption_validate",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [
+        "test_ccer.py::test_checkpoint_and_backup_private_under_permissive_umask",
+        "test_ccer.py::test_checkpoint_protects_existing_project"
+      ],
+      "name": "ccer_checkpoint_create",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_checkpoint_and_backup_private_under_permissive_umask"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_checkpoint_and_backup_private_under_permissive_umask"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_checkpoint_protects_existing_project"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_checkpoint_protects_existing_project"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [
+        "test_ccer.py::test_checkpoint_and_backup_private_under_permissive_umask",
+        "test_ccer.py::test_checkpoint_protects_existing_project",
+        "test_ccer.py::test_restore_requires_confirmation",
+        "test_public_mcp_catalog.py::test_profiles_and_schemas"
+      ],
+      "name": "ccer_checkpoint_restore",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_checkpoint_and_backup_private_under_permissive_umask"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_checkpoint_and_backup_private_under_permissive_umask"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_ccer.ControlsTests.test_checkpoint_protects_existing_project"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_checkpoint_protects_existing_project"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_ccer.ControlsTests.test_checkpoint_protects_existing_project"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_checkpoint_protects_existing_project"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_ccer.ControlsTests.test_restore_requires_confirmation"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_ccer.ControlsTests.test_restore_requires_confirmation"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_color_report",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_contact_sheet",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_creative_plan",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_cut_plan",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_delivery_transcode",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [
+        "test_direct_gateway.py::test_capture_gate_requires_new_before_image_for_every_action",
+        "test_direct_gateway.py::test_control_is_visually_scoped_and_blocks_backend_writes",
+        "test_direct_gateway.py::test_failed_capture_revokes_existing_native_authorization",
+        "test_direct_gateway.py::test_jsonrpc_capture_fallback_is_never_click_authorization",
+        "test_direct_gateway.py::test_observe_filters_tool_discovery",
+        "test_direct_gateway.py::test_observe_refuses_writes_even_direct_calls",
+        "test_direct_gateway.py::test_offline_then_online_mcp_catalogue_keeps_gui_only_control",
+        "test_direct_gateway.py::test_readonly_fallback_revokes_earlier_native_authorization",
+        "test_direct_gateway.py::test_x11_fallback_is_viewable_but_never_authorizes_a_click",
+        "test_direct_stdio_protocol.py::test_mcp_stays_online_offline_and_rejects_headless_writes",
+        "test_mcp_evidence_recorder.py::test_reference_inventory_covers_all_registry_names",
+        "test_public_mcp_catalog.py::test_profiles_and_schemas"
+      ],
+      "name": "ccer_desktop_act",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_direct_gateway.DirectGatewayTests.test_capture_gate_requires_new_before_image_for_every_action"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_direct_gateway.DirectGatewayTests.test_capture_gate_requires_new_before_image_for_every_action"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_direct_gateway.DirectGatewayTests.test_capture_gate_requires_new_before_image_for_every_action"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_direct_gateway.DirectGatewayTests.test_failed_capture_revokes_existing_native_authorization"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_direct_gateway.DirectGatewayTests.test_jsonrpc_capture_fallback_is_never_click_authorization"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_direct_gateway.DirectGatewayTests.test_observe_refuses_writes_even_direct_calls"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_direct_gateway.DirectGatewayTests.test_offline_then_online_mcp_catalogue_keeps_gui_only_control"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_direct_gateway.DirectGatewayTests.test_readonly_fallback_revokes_earlier_native_authorization"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_direct_gateway.DirectGatewayTests.test_x11_fallback_is_viewable_but_never_authorizes_a_click"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [
+        "test_desktop_gui.py::test_gateway_returns_real_mcp_image_block_and_no_base64_in_metadata",
+        "test_direct_gateway.py::test_capture_gate_requires_new_before_image_for_every_action",
+        "test_direct_gateway.py::test_control_is_visually_scoped_and_blocks_backend_writes",
+        "test_direct_gateway.py::test_failed_capture_revokes_existing_native_authorization",
+        "test_direct_gateway.py::test_jsonrpc_capture_fallback_is_never_click_authorization",
+        "test_direct_gateway.py::test_offline_then_online_mcp_catalogue_keeps_gui_only_control",
+        "test_direct_gateway.py::test_readonly_fallback_revokes_earlier_native_authorization",
+        "test_direct_gateway.py::test_x11_fallback_is_viewable_but_never_authorizes_a_click",
+        "test_lightweight_visual_contract.py::test_image_audio_and_native_desktop_tools_retained"
+      ],
+      "name": "ccer_desktop_capture",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_desktop_gui.DesktopGuiTests.test_gateway_returns_real_mcp_image_block_and_no_base64_in_metadata"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_direct_gateway.DirectGatewayTests.test_capture_gate_requires_new_before_image_for_every_action"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_direct_gateway.DirectGatewayTests.test_capture_gate_requires_new_before_image_for_every_action"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_direct_gateway.DirectGatewayTests.test_failed_capture_revokes_existing_native_authorization"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_direct_gateway.DirectGatewayTests.test_failed_capture_revokes_existing_native_authorization"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_direct_gateway.DirectGatewayTests.test_failed_capture_revokes_existing_native_authorization"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_direct_gateway.DirectGatewayTests.test_failed_capture_revokes_existing_native_authorization"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_direct_gateway.DirectGatewayTests.test_jsonrpc_capture_fallback_is_never_click_authorization"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_direct_gateway.DirectGatewayTests.test_jsonrpc_capture_fallback_is_never_click_authorization"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_direct_gateway.DirectGatewayTests.test_readonly_fallback_revokes_earlier_native_authorization"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_direct_gateway.DirectGatewayTests.test_readonly_fallback_revokes_earlier_native_authorization"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_direct_gateway.DirectGatewayTests.test_x11_fallback_is_viewable_but_never_authorizes_a_click"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_direct_gateway.DirectGatewayTests.test_x11_fallback_is_viewable_but_never_authorizes_a_click"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [
+        "test_direct_gateway.py::test_offline_then_online_mcp_catalogue_keeps_gui_only_control",
+        "test_direct_stdio_protocol.py::test_mcp_stays_online_offline_and_rejects_headless_writes",
+        "test_lightweight_visual_contract.py::test_image_audio_and_native_desktop_tools_retained"
+      ],
+      "name": "ccer_desktop_status",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_directed_render",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [
+        "test_direct_stdio_protocol.py::test_mcp_stays_online_offline_and_rejects_headless_writes",
+        "test_editorial_note_review.py::test_does_not_read_files_outside_approved_root",
+        "test_editorial_note_review.py::test_real_video_at_exact_requested_timecode_without_jpeg_cache"
+      ],
+      "name": "ccer_editorial_note_review",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_editorial_note_review.EditorialNoteTests.test_does_not_read_files_outside_approved_root"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_editorial_note_review.EditorialNoteTests.test_does_not_read_files_outside_approved_root"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_editorial_note_review.EditorialNoteTests.test_does_not_read_files_outside_approved_root"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_editorial_note_review.EditorialNoteTests.test_does_not_read_files_outside_approved_root"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_editorial_note_review.EditorialNoteTests.test_real_video_at_exact_requested_timecode_without_jpeg_cache"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_editorial_note_review.EditorialNoteTests.test_real_video_at_exact_requested_timecode_without_jpeg_cache"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_editorial_note_review.EditorialNoteTests.test_real_video_at_exact_requested_timecode_without_jpeg_cache"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_editorial_note_review.EditorialNoteTests.test_real_video_at_exact_requested_timecode_without_jpeg_cache"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_export_verify",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [
+        "test_direct_stdio_protocol.py::test_mcp_stays_online_offline_and_rejects_headless_writes",
+        "test_long_form_real_seek.py::test_one_hour_sparse_fixture_reaches_last_window_and_decodes",
+        "test_timecoded_review.py::test_long_review_pages_cover_complete_file_without_jpegs",
+        "test_timecoded_review.py::test_long_review_refuses_media_outside_approved_root"
+      ],
+      "name": "ccer_long_review_plan",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_long_form_real_seek.LongFormActualSeekTests.test_one_hour_sparse_fixture_reaches_last_window_and_decodes"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_long_form_real_seek.LongFormActualSeekTests.test_one_hour_sparse_fixture_reaches_last_window_and_decodes"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_long_form_real_seek.LongFormActualSeekTests.test_one_hour_sparse_fixture_reaches_last_window_and_decodes"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_long_form_real_seek.LongFormActualSeekTests.test_one_hour_sparse_fixture_reaches_last_window_and_decodes"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_long_review_pages_cover_complete_file_without_jpegs"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_long_review_pages_cover_complete_file_without_jpegs"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_long_review_pages_cover_complete_file_without_jpegs"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_long_review_pages_cover_complete_file_without_jpegs"
+        },
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_long_review_refuses_media_outside_approved_root"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_long_review_refuses_media_outside_approved_root"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_long_review_refuses_media_outside_approved_root"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_long_review_refuses_media_outside_approved_root"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_media_index",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_media_match",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [
+        "test_direct_gateway.py::test_control_is_visually_scoped_and_blocks_backend_writes"
+      ],
+      "name": "ccer_media_match_render",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_direct_gateway.DirectGatewayTests.test_control_is_visually_scoped_and_blocks_backend_writes"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_media_search",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_mission_recover",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_mission_status",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_plan_save",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [
+        "test_ccer.py::test_tools_and_preflight"
+      ],
+      "name": "ccer_preflight",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_tools_and_preflight"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_tools_and_preflight"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_tools_and_preflight"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [
+        "test_direct_gateway.py::test_control_is_visually_scoped_and_blocks_backend_writes",
+        "test_public_mcp_catalog.py::test_profiles_and_schemas",
+        "test_recipe.py::test_invalid_name_and_escape_fail_before_project_creation",
+        "test_recipe.py::test_prepare_project_with_deduplicated_sources_and_caption"
+      ],
+      "name": "ccer_produce",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_direct_gateway.DirectGatewayTests.test_control_is_visually_scoped_and_blocks_backend_writes"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_recipe.RecipeTests.test_invalid_name_and_escape_fail_before_project_creation"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_recipe.RecipeTests.test_invalid_name_and_escape_fail_before_project_creation"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_recipe.RecipeTests.test_prepare_project_with_deduplicated_sources_and_caption"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_recipe.RecipeTests.test_prepare_project_with_deduplicated_sources_and_caption"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_project_inspect",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_reframe_export",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_scene_detect",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_shot_inspect",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_silence_map",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_storyboard",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_studio_produce",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_subtitles_write",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [
+        "test_lightweight_visual_contract.py::test_ffmpeg_frame_delivered_as_real_mcp_image_part",
+        "test_lightweight_visual_contract.py::test_image_audio_and_native_desktop_tools_retained",
+        "test_long_form_real_seek.py::test_one_hour_sparse_fixture_reaches_last_window_and_decodes",
+        "test_timecoded_review.py::test_direct_mcp_surfaces_actual_frames_without_base64_in_metadata",
+        "test_timecoded_review.py::test_root_policy_never_opens_unapproved_media"
+      ],
+      "name": "ccer_timecoded_review",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_lightweight_visual_contract.LightweightVisualTests.test_ffmpeg_frame_delivered_as_real_mcp_image_part"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_lightweight_visual_contract.LightweightVisualTests.test_ffmpeg_frame_delivered_as_real_mcp_image_part"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_long_form_real_seek.LongFormActualSeekTests.test_one_hour_sparse_fixture_reaches_last_window_and_decodes"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_long_form_real_seek.LongFormActualSeekTests.test_one_hour_sparse_fixture_reaches_last_window_and_decodes"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_long_form_real_seek.LongFormActualSeekTests.test_one_hour_sparse_fixture_reaches_last_window_and_decodes"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_long_form_real_seek.LongFormActualSeekTests.test_one_hour_sparse_fixture_reaches_last_window_and_decodes"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_direct_mcp_surfaces_actual_frames_without_base64_in_metadata"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_direct_mcp_surfaces_actual_frames_without_base64_in_metadata"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_direct_mcp_surfaces_actual_frames_without_base64_in_metadata"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_direct_mcp_surfaces_actual_frames_without_base64_in_metadata"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_root_policy_never_opens_unapproved_media"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_root_policy_never_opens_unapproved_media"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_timecoded_review.TimecodedReviewTests.test_root_policy_never_opens_unapproved_media"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [
+        "test_timed_caption_context.py::test_outside_media_is_rejected_before_any_probe",
+        "test_timed_caption_context.py::test_real_audio_window_preserves_absolute_cue_times"
+      ],
+      "name": "ccer_timed_caption_context",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "raised:PolicyError",
+          "test": "test_timed_caption_context.TimedCaptionContextTests.test_outside_media_is_rejected_before_any_probe"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_timed_caption_context.TimedCaptionContextTests.test_outside_media_is_rejected_before_any_probe"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_timed_caption_context.TimedCaptionContextTests.test_outside_media_is_rejected_before_any_probe"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_timed_caption_context.TimedCaptionContextTests.test_outside_media_is_rejected_before_any_probe"
+        },
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_timed_caption_context.TimedCaptionContextTests.test_real_audio_window_preserves_absolute_cue_times"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_timed_caption_context.TimedCaptionContextTests.test_real_audio_window_preserves_absolute_cue_times"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_timed_caption_context.TimedCaptionContextTests.test_real_audio_window_preserves_absolute_cue_times"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_timed_caption_context.TimedCaptionContextTests.test_real_audio_window_preserves_absolute_cue_times"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [
+        "test_ccer.py::test_batch_and_timeline"
+      ],
+      "name": "ccer_timeline_validate",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_batch_and_timeline"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_batch_and_timeline"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_ccer.ControlsTests.test_batch_and_timeline"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_recipe.RecipeTests.test_prepare_project_with_deduplicated_sources_and_caption"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [
+        "test_av_timeline.py::test_gateway_reads_srt_without_claiming_asr",
+        "test_ccer.py::test_tools_and_preflight"
+      ],
+      "name": "ccer_transcript_read",
+      "observedInOtherTests": [],
+      "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_av_timeline.AVTimelineTests.test_gateway_reads_srt_without_claiming_asr"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_av_timeline.AVTimelineTests.test_gateway_reads_srt_without_claiming_asr"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_av_timeline.AVTimelineTests.test_gateway_reads_srt_without_claiming_asr"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_av_timeline.AVTimelineTests.test_gateway_reads_srt_without_claiming_asr"
+        }
+      ]
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_transition_export",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_tts_status",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_visual_scan",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_voice_flite",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    },
+    {
+      "literalTestReferences": [],
+      "name": "ccer_voice_synthesize",
+      "observedInOtherTests": [],
+      "observedInPassingTests": []
+    }
+  ]
+}
