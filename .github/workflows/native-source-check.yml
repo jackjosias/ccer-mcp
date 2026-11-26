@@ -41,6 +41,14 @@ jobs:
           assert any(e["layer"] == "dispatch" and e["outcome"] == "returned"
                      for e in voice["observedInPassingTests"]), "eSpeak test did not exercise real dispatch"
           assert report["suite"]["failures"] == report["suite"]["errors"] == 0
+          assert report["summary"]["dispatchReturnedInPassingTest"] == report["summary"]["tools"]
+          for tool in report["tools"]:
+              if tool["name"] in ("ccer_desktop_status", "ccer_desktop_capture", "ccer_desktop_act"):
+                  assert any(e["layer"] == "dispatch" and e["outcome"] == "returned"
+                             and e["test"].endswith("test_mcp_desktop_roundtrip_with_simulated_slint_peer")
+                             for e in tool["observedInPassingTests"]), tool["name"]
+          print("MCP dispatch evidence:", report["summary"])
+          print("Desktop evidence: simulated Slint peer, not live GUI acceptance.")
           PY
       - name: Upload MCP test evidence
         uses: actions/upload-artifact@v4
