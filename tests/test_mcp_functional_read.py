@@ -1,0 +1,157 @@
+"""MCP-level functional QA on synthetic media; no live desktop edits."""
+import hashlib
+import math
+import shutil
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+
+from ccer.direct_gateway import DirectGateway
+from ccer.controls import atomic_json, private_dir
+
+
+class FakeReadBackend:
+    def tools(self):
+        return [{"name": "project_get", "inputSchema": {"type": "object"}}]
+
+    def tool(self, name, args=None, timeout=None):
+        if name != "project_get":
+            raise AssertionError("Unexpected upstream invocation")
+        return {"structuredContent": {"project": {"name": "synthetic", "path": args["path"]}},
+                "isError": False}
+
+
+class OfflineReadTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="ccer-functional-")
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.gateway = DirectGateway(FakeReadBackend(), self.root, access="observe")
+
+    def call(self, name, args):
+        result = self.gateway.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                                     "params": {"name": name, "arguments": args}})["result"]
+        self.assertFalse(result.get("isError"), result)
+        return result["structuredContent"]
+
+    def test_project_inspection_returns_fake_backend_project(self):
+        project = self.root / "project"
+        project.mkdir()
+        report = self.call("ccer_project_inspect", {"path": str(project)})
+        self.assertEqual(report["project"]["name"], "synthetic")
+        self.assertEqual(report["project"]["path"], str(project))
+
+    def test_mission_status_is_read_only(self):
+        ident = "a" * 32
+        directory = self.root / ".ccer" / "missions"
+        private_dir(self.root / ".ccer", create=True)
+        private_dir(directory, create=True)
+        path = directory / (ident + ".json")
+        record = {"id": ident, "state": "running", "kind": "synthetic"}
+        atomic_json(path, record)
+        before = path.read_bytes()
+        self.assertEqual(self.call("ccer_mission_status", {"missionId": ident}), record)
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_caption_quality_and_cut_plan(self):
+        cues = [{"start": 0, "duration": 2, "text": "First"},
+                {"start": 2, "duration": 2, "text": "Second"}]
+        self.assertTrue(self.call("ccer_caption_validate", {"cues": cues})["passed"])
+        cues[1]["start"] = 1
+        report = self.call("ccer_caption_validate", {"cues": cues})
+        self.assertFalse(report["passed"])
+        self.assertIn("overlap", {i["issue"] for i in report["issues"]})
+        plan = self.call("ccer_cut_plan", {"duration": 8, "onsets": [2, 4, 6]})
+        self.assertEqual(plan["cutPointsSeconds"], [2., 4., 6.])
+        self.assertFalse(plan["mutated"])
+        self.assertTrue(plan["requiresEditorialApproval"])
+
+    def test_caption_timing_is_not_transcription(self):
+        result = self.call("ccer_caption_timing_hint", {
+            "cues": [{"text": "First phrase"}, {"text": "Second phrase"}],
+            "silenceReport": {"activeRegions": [{"start": .2, "end": 1.8},
+                                               {"start": 2.2, "end": 4.0}]}})
+        self.assertEqual(len(result["cues"]), 2)
+        self.assertFalse(result["forcedAligned"])
+        self.assertFalse(result["transcribed"])
+        self.assertAlmostEqual(result["cues"][0]["start"], .2, places=2)
+
+
+@unittest.skipUnless(shutil.which("ffmpeg") and shutil.which("ffprobe"),
+                     "FFmpeg and FFprobe required for synthetic media")
+class SyntheticMediaTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.temp = tempfile.TemporaryDirectory(prefix="ccer-media-qa-")
+        cls.addClassCleanup(cls.temp.cleanup)
+        cls.root = Path(cls.temp.name)
+        cls.media = cls.root / "black-tone.mp4"
+        subprocess.run(["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+                        "-f", "lavfi", "-i", "color=c=black:s=160x90:r=10:d=4",
+                        "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=16000:duration=4",
+                        "-c:v", "libx264", "-threads", "1", "-pix_fmt", "yuv420p",
+                        "-c:a", "aac", "-shortest", str(cls.media)], check=True, timeout=30)
+        cls.before = hashlib.sha256(cls.media.read_bytes()).hexdigest()
+
+    def setUp(self):
+        self.gateway = DirectGateway(FakeReadBackend(), self.root, access="observe")
+
+    def tearDown(self):
+        self.assertEqual(hashlib.sha256(self.media.read_bytes()).hexdigest(), self.before)
+
+    def call(self, name, args=None):
+        payload = {"file": str(self.media)} if args is None else args
+        result = self.gateway.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                                     "params": {"name": name, "arguments": payload}})["result"]
+        self.assertFalse(result.get("isError"), result)
+        return result["structuredContent"]
+
+    def test_asset_probe_and_export_verification(self):
+        probe = self.call("ccer_asset_analyze")
+        video = next(s for s in probe["streams"] if s["codec_type"] == "video")
+        self.assertEqual((video["width"], video["height"]), (160, 90))
+        self.assertIn("audio", {s["codec_type"] for s in probe["streams"]})
+        args = {"file": str(self.media), "width": 160, "height": 90,
+                "minDuration": 3.8, "maxDuration": 4.2}
+        self.assertTrue(self.call("ccer_export_verify", args)["passed"])
+        args["width"] = 999
+        bad = self.call("ccer_export_verify", args)
+        self.assertFalse(bad["passed"])
+        self.assertTrue(any("width" in error for error in bad["errors"]))
+
+    def test_audio_measurement_and_silence(self):
+        args = {"file": str(self.media), "seconds": 4}
+        audio = self.call("ccer_audio_validate", args)
+        self.assertTrue(audio["success"])
+        self.assertTrue(math.isfinite(audio["integratedLufs"]))
+        silence = self.call("ccer_silence_map", args)
+        self.assertTrue(silence["activeRegions"])
+        self.assertAlmostEqual(silence["analyzedSeconds"], 4, delta=.2)
+        beat = self.call("ccer_beat_candidates", args)
+        self.assertIsInstance(beat["onsetsSeconds"], list)
+        self.assertTrue(all(0 <= t <= 4.2 for t in beat["onsetsSeconds"]))
+
+    def test_black_frames_color_and_scene_analysis(self):
+        args = {"file": str(self.media), "seconds": 4}
+        visual = self.call("ccer_visual_scan", args)
+        self.assertTrue(visual["blackIntervals"])
+        self.assertTrue(visual["needsHumanReview"])
+        color = self.call("ccer_color_report", args)
+        self.assertGreater(color["sampledFrames"], 0)
+        self.assertEqual(color["lumaFlag"], "dark")
+        self.assertFalse(color["colorGradingCertified"])
+        scene = self.call("ccer_scene_detect", args)
+        self.assertEqual(scene["cutsSeconds"], [])
+        self.assertEqual(scene["count"], 0)
+
+    def test_technical_shot_inspection(self):
+        result = self.call("ccer_shot_inspect", {"files": [str(self.media)]})
+        self.assertEqual(len(result["assets"]), 1)
+        shot = result["assets"][0]
+        self.assertEqual((shot["width"], shot["height"]), (160, 90))
+        self.assertAlmostEqual(shot["duration"], 4, delta=.2)
+
+
+if __name__ == "__main__":
+    unittest.main()

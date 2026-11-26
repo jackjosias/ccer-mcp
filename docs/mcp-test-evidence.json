@@ -9,22 +9,22 @@
   ],
   "pythonVersion": "3.12.3",
   "scope": "Offline in-process unittest discovery (test_*.py); no live_* or external Concat integration certification",
-  "sourceAndTestFingerprintSha256": "9a6c2145e373146e03138dcffd8e2f61567e03237eeddb79334d60e322ec3f4f",
+  "sourceAndTestFingerprintSha256": "afed2a0c45bb5a19a4619f940899e426be3cc162772d27570d7164bb06dccb9b",
   "suite": {
     "errors": 0,
     "expectedFailures": 0,
     "failures": 0,
-    "passed": 301,
-    "run": 301,
+    "passed": 309,
+    "run": 309,
     "skipped": 0,
     "unexpectedSuccesses": 0
   },
   "summary": {
-    "dispatchObservedInPassingTest": 26,
-    "dispatchReturnedInPassingTest": 17,
+    "dispatchObservedInPassingTest": 32,
+    "dispatchReturnedInPassingTest": 31,
     "observedInPassingTest": 53,
     "tools": 53,
-    "withLiteralTestReference": 30
+    "withLiteralTestReference": 36
   },
   "tools": [
     {
@@ -59,11 +59,32 @@
     },
     {
       "literalTestReferences": [
+        "test_mcp_functional_read.py::test_asset_probe_and_export_verification",
         "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
       ],
       "name": "ccer_asset_analyze",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_asset_probe_and_export_verification"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_asset_probe_and_export_verification"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_asset_probe_and_export_verification"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_asset_probe_and_export_verification"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -135,11 +156,32 @@
     },
     {
       "literalTestReferences": [
+        "test_mcp_functional_read.py::test_audio_measurement_and_silence",
         "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
       ],
       "name": "ccer_audio_validate",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_audio_measurement_and_silence"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_audio_measurement_and_silence"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_audio_measurement_and_silence"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_audio_measurement_and_silence"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -568,11 +610,32 @@
     },
     {
       "literalTestReferences": [
+        "test_mcp_functional_read.py::test_audio_measurement_and_silence",
         "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
       ],
       "name": "ccer_beat_candidates",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_audio_measurement_and_silence"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_audio_measurement_and_silence"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_audio_measurement_and_silence"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_audio_measurement_and_silence"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -611,10 +674,32 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_caption_timing_is_not_transcription"
+      ],
       "name": "ccer_caption_timing_hint",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_caption_timing_is_not_transcription"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_caption_timing_is_not_transcription"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_caption_timing_is_not_transcription"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_caption_timing_is_not_transcription"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -638,10 +723,32 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_caption_quality_and_cut_plan"
+      ],
       "name": "ccer_caption_validate",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_caption_quality_and_cut_plan"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_caption_quality_and_cut_plan"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_caption_quality_and_cut_plan"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_caption_quality_and_cut_plan"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -798,11 +905,32 @@
     },
     {
       "literalTestReferences": [
+        "test_mcp_functional_read.py::test_black_frames_color_and_scene_analysis",
         "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
       ],
       "name": "ccer_color_report",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_black_frames_color_and_scene_analysis"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_black_frames_color_and_scene_analysis"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_black_frames_color_and_scene_analysis"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_black_frames_color_and_scene_analysis"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -900,10 +1028,32 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_caption_quality_and_cut_plan"
+      ],
       "name": "ccer_cut_plan",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_caption_quality_and_cut_plan"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_caption_quality_and_cut_plan"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_caption_quality_and_cut_plan"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_caption_quality_and_cut_plan"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -1267,11 +1417,32 @@
     },
     {
       "literalTestReferences": [
+        "test_mcp_functional_read.py::test_asset_probe_and_export_verification",
         "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
       ],
       "name": "ccer_export_verify",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_asset_probe_and_export_verification"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_asset_probe_and_export_verification"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_asset_probe_and_export_verification"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_asset_probe_and_export_verification"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -1559,10 +1730,32 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_mission_status_is_read_only"
+      ],
       "name": "ccer_mission_status",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_mission_status_is_read_only"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_mission_status_is_read_only"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_mission_status_is_read_only"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_mission_status_is_read_only"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -1731,10 +1924,32 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_project_inspection_returns_fake_backend_project"
+      ],
       "name": "ccer_project_inspect",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_project_inspection_returns_fake_backend_project"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_project_inspection_returns_fake_backend_project"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_project_inspection_returns_fake_backend_project"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_project_inspection_returns_fake_backend_project"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -1791,11 +2006,32 @@
     },
     {
       "literalTestReferences": [
+        "test_mcp_functional_read.py::test_black_frames_color_and_scene_analysis",
         "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
       ],
       "name": "ccer_scene_detect",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_black_frames_color_and_scene_analysis"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_black_frames_color_and_scene_analysis"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_black_frames_color_and_scene_analysis"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_black_frames_color_and_scene_analysis"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -1834,10 +2070,32 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_technical_shot_inspection"
+      ],
       "name": "ccer_shot_inspect",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_technical_shot_inspection"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_technical_shot_inspection"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_technical_shot_inspection"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_technical_shot_inspection"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -1862,11 +2120,32 @@
     },
     {
       "literalTestReferences": [
+        "test_mcp_functional_read.py::test_audio_measurement_and_silence",
         "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
       ],
       "name": "ccer_silence_map",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_audio_measurement_and_silence"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_audio_measurement_and_silence"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_audio_measurement_and_silence"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_audio_measurement_and_silence"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -2329,11 +2608,32 @@
     },
     {
       "literalTestReferences": [
+        "test_mcp_functional_read.py::test_black_frames_color_and_scene_analysis",
         "test_mcp_security_matrix.py::test_outside_root_media_and_symlink_are_rejected"
       ],
       "name": "ccer_visual_scan",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_black_frames_color_and_scene_analysis"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_black_frames_color_and_scene_analysis"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_black_frames_color_and_scene_analysis"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_black_frames_color_and_scene_analysis"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
