@@ -274,7 +274,7 @@ Les tests `test_*.py` couvrent les contrats Python ; les scripts `tests/live_*.p
 - **Secrets :** pas de `.env`, clés, jetons, chemins personnels ou vidéos privées dans Git.
 - **Rétention :** préserver les médias et exports, ne supprimer que les fichiers temporaires CCER reconnus.
 
-Politique : [SECURITY.md](SECURITY.md) ; [contrat GUI-FIRST](docs/CCER_GUI_FIRST_CONTRACT.md) ; [focus](docs/CCER_FOCUS_ISOLATION.md).
+Politiques : [SECURITY.md](SECURITY.md) · [Confidentialité / Privacy](PRIVACY.md) ; [contrat GUI-FIRST](docs/CCER_GUI_FIRST_CONTRACT.md) ; [focus](docs/CCER_FOCUS_ISOLATION.md).
 
 <a id="documentation"></a>
 ## Documentation, contribution et licences
