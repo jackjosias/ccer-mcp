@@ -25,12 +25,30 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install FFmpeg and FFprobe for media regression tests
+      - name: Install media and speech regression dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends ffmpeg
-      - name: Unit tests
-        run: python3 -m unittest discover -s tests -p 'test_*.py' -q
+          sudo apt-get install -y --no-install-recommends ffmpeg espeak-ng
+          command -v espeak-ng
+      - name: Instrumented unit tests and MCP evidence
+        run: |
+          python3 docs/audit_mcp_tests.py --write
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("docs/mcp-test-evidence.json").read_text())
+          voice = next(t for t in report["tools"] if t["name"] == "ccer_voice_synthesize")
+          assert any(e["layer"] == "dispatch" and e["outcome"] == "returned"
+                     for e in voice["observedInPassingTests"]), "eSpeak test did not exercise real dispatch"
+          assert report["suite"]["failures"] == report["suite"]["errors"] == 0
+          PY
+      - name: Upload MCP test evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-test-evidence
+          path: docs/mcp-test-evidence.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Architecture diagram consistency
         run: python3 docs/render_architecture.py --check
       - name: Native patch SHA-256 integrity
