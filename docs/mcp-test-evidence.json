@@ -9,22 +9,22 @@
   ],
   "pythonVersion": "3.12.3",
   "scope": "Offline in-process unittest discovery (test_*.py); no live_* or external Concat integration certification",
-  "sourceAndTestFingerprintSha256": "afed2a0c45bb5a19a4619f940899e426be3cc162772d27570d7164bb06dccb9b",
+  "sourceAndTestFingerprintSha256": "1d46b11429073b7eed44e487524be2c2d229e64813b185a177762eaeb038141f",
   "suite": {
     "errors": 0,
     "expectedFailures": 0,
     "failures": 0,
-    "passed": 309,
-    "run": 309,
+    "passed": 314,
+    "run": 314,
     "skipped": 0,
     "unexpectedSuccesses": 0
   },
   "summary": {
-    "dispatchObservedInPassingTest": 32,
-    "dispatchReturnedInPassingTest": 31,
+    "dispatchObservedInPassingTest": 41,
+    "dispatchReturnedInPassingTest": 41,
     "observedInPassingTest": 53,
     "tools": 53,
-    "withLiteralTestReference": 36
+    "withLiteralTestReference": 45
   },
   "tools": [
     {
@@ -969,10 +969,27 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_contact_sheet_real_png"
+      ],
       "name": "ccer_contact_sheet",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_contact_sheet_real_png"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_contact_sheet_real_png"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_contact_sheet_real_png"
+        },
         {
           "layer": "direct",
           "outcome": "raised:PolicyError",
@@ -1001,10 +1018,32 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_creative_plan_storyboard_and_editorial_files"
+      ],
       "name": "ccer_creative_plan",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -1573,10 +1612,27 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_catalog_search_and_storyboard_matching"
+      ],
       "name": "ccer_media_index",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_catalog_search_and_storyboard_matching"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_catalog_search_and_storyboard_matching"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_catalog_search_and_storyboard_matching"
+        },
         {
           "layer": "direct",
           "outcome": "raised:PolicyError",
@@ -1605,10 +1661,32 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_catalog_search_and_storyboard_matching"
+      ],
       "name": "ccer_media_match",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_catalog_search_and_storyboard_matching"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_catalog_search_and_storyboard_matching"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_catalog_search_and_storyboard_matching"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_catalog_search_and_storyboard_matching"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -1671,10 +1749,32 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_catalog_search_and_storyboard_matching"
+      ],
       "name": "ccer_media_search",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_catalog_search_and_storyboard_matching"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_catalog_search_and_storyboard_matching"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_catalog_search_and_storyboard_matching"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.SyntheticMediaTests.test_catalog_search_and_storyboard_matching"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -1698,10 +1798,27 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_recovery_does_not_replay_edits"
+      ],
       "name": "ccer_mission_recover",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_recovery_does_not_replay_edits"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_recovery_does_not_replay_edits"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_recovery_does_not_replay_edits"
+        },
         {
           "layer": "direct",
           "outcome": "raised:PolicyError",
@@ -1780,11 +1897,42 @@
     },
     {
       "literalTestReferences": [
+        "test_mcp_functional_read.py::test_creative_plan_storyboard_and_editorial_files",
         "test_mcp_security_matrix.py::test_outside_root_plan_write_is_rejected"
       ],
       "name": "ccer_plan_save",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
+        {
+          "layer": "production",
+          "outcome": "raised:PolicyError",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
         {
           "layer": "direct",
           "outcome": "raised:PolicyError",
@@ -2184,10 +2332,32 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_creative_plan_storyboard_and_editorial_files"
+      ],
       "name": "ccer_storyboard",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",
@@ -2243,10 +2413,27 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_creative_plan_storyboard_and_editorial_files"
+      ],
       "name": "ccer_subtitles_write",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_creative_plan_storyboard_and_editorial_files"
+        },
         {
           "layer": "direct",
           "outcome": "raised:PolicyError",
@@ -2590,10 +2777,32 @@
       ]
     },
     {
-      "literalTestReferences": [],
+      "literalTestReferences": [
+        "test_mcp_functional_read.py::test_tts_capability_report"
+      ],
       "name": "ccer_tts_status",
       "observedInOtherTests": [],
       "observedInPassingTests": [
+        {
+          "layer": "direct",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_tts_capability_report"
+        },
+        {
+          "layer": "dispatch",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_tts_capability_report"
+        },
+        {
+          "layer": "gateway",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_tts_capability_report"
+        },
+        {
+          "layer": "production",
+          "outcome": "returned",
+          "test": "test_mcp_functional_read.OfflineReadTests.test_tts_capability_report"
+        },
         {
           "layer": "gateway",
           "outcome": "raised:PolicyError",

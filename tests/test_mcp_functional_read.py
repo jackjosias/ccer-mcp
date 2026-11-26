@@ -1,5 +1,6 @@
 """MCP-level functional QA on synthetic media; no live desktop edits."""
 import hashlib
+import json
 import math
 import shutil
 import subprocess
@@ -8,6 +9,7 @@ import unittest
 from pathlib import Path
 
 from ccer.direct_gateway import DirectGateway
+from ccer.server import Gateway
 from ccer.controls import atomic_json, private_dir
 
 
@@ -53,6 +55,54 @@ class OfflineReadTests(unittest.TestCase):
         before = path.read_bytes()
         self.assertEqual(self.call("ccer_mission_status", {"missionId": ident}), record)
         self.assertEqual(path.read_bytes(), before)
+
+    def test_creative_plan_storyboard_and_editorial_files(self):
+        plan = self.call("ccer_creative_plan", {"brief": {
+            "topic": "Synthetic", "script": "Black frame. Test tone.",
+            "durationSeconds": 6, "profile": "shorts"}})
+        self.assertEqual(len(plan["scenes"]), 2)
+        self.assertAlmostEqual(sum(s["duration"] for s in plan["scenes"]), 6)
+        self.assertFalse(plan["productionReady"])
+        self.assertFalse(plan["factsExternallyVerified"])
+        board = self.call("ccer_storyboard", {"plan": plan})
+        self.assertEqual([p["narration"] for p in board["panels"]],
+                         ["Black frame.", "Test tone."])
+        # Local test-only gateway, not the restricted Direct runtime.
+        self.gateway = Gateway(FakeReadBackend(), self.root)
+        target = self.root / "plan.json"
+        args = {"file": str(target), "plan": plan}
+        result = self.call("ccer_plan_save", args)
+        self.assertEqual(result["bytes"], target.stat().st_size)
+        self.assertEqual(json.loads(target.read_text()), plan)
+        before = target.read_bytes()
+        denied = self.gateway.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+                                      "params": {"name": "ccer_plan_save", "arguments": args}})["result"]
+        self.assertTrue(denied["isError"])
+        self.assertEqual(target.read_bytes(), before)
+        captions = self.root / "captions.srt"
+        self.call("ccer_subtitles_write", {"file": str(captions), "cues": plan["captions"]})
+        self.assertIn("00:00:00,000 --> 00:00:03,000", captions.read_text())
+        self.assertIn("Test tone.", captions.read_text())
+
+    def test_recovery_does_not_replay_edits(self):
+        ident = "b" * 32
+        directory = self.root / ".ccer" / "missions"
+        private_dir(self.root / ".ccer", create=True)
+        private_dir(directory, create=True)
+        path = directory / (ident + ".json")
+        record = {"id": ident, "state": "running", "kind": "synthetic"}
+        atomic_json(path, record)
+        before = path.read_bytes()
+        self.gateway = Gateway(FakeReadBackend(), self.root)
+        report = self.call("ccer_mission_recover", {"missionId": ident})
+        self.assertIn("Do not automatically replay", report["recovery"])
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_tts_capability_report(self):
+        report = self.call("ccer_tts_status", {})
+        for name in ("espeak-ng", "espeak", "piper", "ffmpeg"):
+            self.assertIs(report[name], bool(shutil.which(name)))
+        self.assertIn("ffmpeg-flite", report)
 
     def test_caption_quality_and_cut_plan(self):
         cues = [{"start": 0, "duration": 2, "text": "First"},
@@ -144,6 +194,43 @@ class SyntheticMediaTests(unittest.TestCase):
         scene = self.call("ccer_scene_detect", args)
         self.assertEqual(scene["cutsSeconds"], [])
         self.assertEqual(scene["count"], 0)
+
+    def test_catalog_search_and_storyboard_matching(self):
+        self.gateway = Gateway(FakeReadBackend(), self.root)
+        catalog = self.root / "catalog.json"
+        indexed = self.call("ccer_media_index", {
+            "items": [{"file": str(self.media), "description": "Black frame",
+                       "tags": ["synthetic", "black"], "licenseNote": "test fixture"}],
+            "output": str(catalog)})
+        self.assertEqual(indexed["indexedCount"], 1)
+        self.assertIsNone(indexed["semanticModel"])
+        before = catalog.read_bytes()
+        self.gateway = DirectGateway(FakeReadBackend(), self.root, access="observe")
+        hit = self.call("ccer_media_search", {"catalog": str(catalog), "text": "black"})
+        self.assertEqual(hit["totalMatches"], 1)
+        self.assertEqual(hit["matches"][0]["provenance"]["semantics"], "user_annotation")
+        miss = self.call("ccer_media_search", {"catalog": str(catalog), "text": "elephant"})
+        self.assertEqual(miss["totalMatches"], 0)
+        plan = {"scenes": [{"visualIntent": "black", "duration": 2},
+                           {"visualIntent": "elephant", "duration": 2}]}
+        result = self.call("ccer_media_match", {"catalog": str(catalog), "plan": plan})
+        self.assertFalse(result["ready"])
+        self.assertEqual(len(result["matched"]), 1)
+        self.assertEqual(len(result["missing"]), 1)
+        self.assertIsNone(result["plan"]["scenes"][1]["source"])
+        self.assertEqual(result["plan"]["mediaMatchProvenance"], "user_annotations_not_model_inference")
+        self.assertEqual(catalog.read_bytes(), before)
+
+    def test_contact_sheet_real_png(self):
+        self.gateway = Gateway(FakeReadBackend(), self.root)
+        target = self.root / "contact.png"
+        result = self.call("ccer_contact_sheet", {
+            "file": str(self.media), "output": str(target), "interval": 1})
+        image = target.read_bytes()
+        self.assertEqual(result["bytes"], len(image))
+        self.assertTrue(image.startswith(b"\x89PNG\r\n\x1a\n"))
+        self.assertEqual(image[12:16], b"IHDR")
+        self.assertEqual(image[-8:-4], b"IEND")
 
     def test_technical_shot_inspection(self):
         result = self.call("ccer_shot_inspect", {"files": [str(self.media)]})
