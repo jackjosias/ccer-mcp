@@ -4,6 +4,11 @@ Historique chronologique du **Creative Engineering Runtime**, du **plus récent 
 
 > **Important : SOURCE ≠ LIVE.** Un commit ou une campagne de tests ne garantit pas que le binaire Concat utilisé actuellement, l'extension MCP ou le connecteur ChatGPT ait été activé. Les limites et blocages restent signalés.
 
+## 26 novembre 2026 — confiance et licence
+
+- Ajout du texte AGPL v3 et clarification du régime de licence du code original CCER ; conservation des licences tierces.
+- Badge M8ven dans le README ; la note et la vérification de l’éditeur restent indépendantes et ne sont pas garanties par ce badge.
+
 ## 17 novembre 2026 — préparation du Concat instrumenté
 
 - `651442a` — tests de réconciliation native et fixtures scratch rendus plus portables.
